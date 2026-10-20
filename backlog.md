@@ -2,17 +2,53 @@
 
 按「卡住什么」分组。每条写清：**缺什么、找谁、解开之后能做什么**。做完的条目直接删掉，不在这里留痕（历史在 `.dsh/logs/`）。
 
-## 卡住「真实模型下的可用性，目前无法在本机证明」
+2026-10-21 已修复的本地化与模型加载问题见 [`.dsh/logs/`](.dsh/logs/)；本文件只保留仍未完成的事。
 
-现状：全部测试都 mock 掉模型；2026-10-21 实测本机 `streamlit`/`torch` 未安装、`numpy` 导入报 `No module named 'numpy.core._multiarray_umath'`，因此 `python -m pytest` 与 `streamlit run` 都无法执行。证据见 [`.dsh/logs/2026-10-21-agent-system-bootstrap.md`](.dsh/logs/2026-10-21-agent-system-bootstrap.md)。
+## 卡住「界面完全中文化」
 
-- [ ] **在干净 venv 里跑通测试并记录结果**
-      找：任一队员，新建 `.venv`（Python 3.10/3.11）后 `pip install -r requirements-dev.txt`，跑 `python -m pytest -q` 与 `python -m compileall -q app.py matching state`。
-      为什么卡：目前没有任何一次本机测试通过记录；系统级 numpy 已损坏，直接 `pip install` 会继续混用。
+应用自己控制的页面文案已中文化（`519be8d`），但以下英文仍会出现在界面上。
 
-- [ ] **用真实权重完成一次端到端演示**（BLIP 图注 → CLIP 检索 → 追问 → 发请求 → 对方接受 → 看到联系方式），保存一条成功样例和一条失败样例。
-      找：能联网下载权重或有 GPU 的人。
-      为什么卡：README 明确「单元测试不能替代装了模型的端到端运行」，这是评审最可能追问的点。
+- [ ] **地点下拉仍是英文**
+      现状：`rooms.json` 的 12 个值（`Unknown`、`Main Entrance`、`Reception`、`Library` 等）直接作为选项显示；已入库的 `items.location` 也还是这些英文值。
+      找：演示负责人确认中文译名；再决定是否迁移旧 `items.location`。
+      为什么卡：报失/报拾获页仍出现英文；只改文件不迁移会让新旧记录混用。
+
+- [ ] **BLIP 图注是英文**
+      现状：`Salesforce/blip-image-captioning-base` 输出英文，`state/found.py` 把它预填进「物品描述」。
+      找：选择中文 caption 模型（中文微调 BLIP）或加翻译步骤。
+      为什么卡：拾获者需要手动改写；演示时第一眼仍是英文。
+
+- [ ] **Streamlit 内置控件无法本地化**
+      现状：文件上传的 `Browse files`、日期选择器月份、右上角菜单、`Press Enter to submit form` 仍是英文；Streamlit 没有本地化 API。
+      找：前端/自定义组件；或接受并在演示说明里注明。
+      为什么卡：做不到 100% 中文界面。
+
+- [ ] **`reset_db.py` 样例描述与地点是英文**
+      现状：`Set of keys`、`Water bottle`、`Headphones`、`Small notebook`、`Library` 等。
+      找：改脚本的人。
+      为什么卡：用样例数据演示时仍显示英文。
+
+- [ ] **`static/` 两张 `Lost`/`Found` 图片是英文且未被引用**
+      找：作者决定删除或重绘。
+      为什么卡：仓库整洁；若以后接入会直接显示英文。
+
+## 卡住「真实照片下的端到端演示」
+
+现状：模型权重已缓存，BLIP/CLIP/flan-t5 的加载与 GPU 推理已验证（24 个测试通过；BLIP 缓存后约 0.16 s/张）；但 `items.db` 仍没有物品，也没有真实照片。
+
+- [ ] **准备 6–8 张真实物品照片并灌入数据**
+      找：队内拍照 / 提供照片的人；或确认接受合成图。
+      为什么卡：没有数据，匹配页永远为空；纯色方块无法展示 CLIP 效果。
+
+- [ ] **完成一次真实端到端流程并留证据**
+      流程：BLIP 图注 → CLIP 候选 → 追问 → 发请求 → 对方接受 → 看到联系方式。
+      找：能跑完整演示的人。
+      为什么卡：单元测试 mock 模型，评审会追问真实效果。
+
+- [ ] **把启动环境变量固化**
+      现状：首次下载要 `HF_ENDPOINT=https://hf-mirror.com`，缓存完整后要 `HF_HUB_OFFLINE=1`；目前只写在 README 里。
+      找：加一个 `run.sh` 或一键启动命令。
+      为什么卡：忘记设置会卡 30 秒以上或下载失败。
 
 ## 卡住「排序与配对策略是否是想要的」
 
@@ -28,18 +64,13 @@
       找：产品决定。
       为什么卡：只有 `matches` 表影响 `get_unmatched_*`；pending 请求不影响，同一对可被反复「发送」（实际幂等返回 pending）。
 
-## 卡住「仓库整洁」
-
-- [ ] **确认 `static/` 三张 png 的去留**
-      找：作者。
-      为什么卡：2026-10-21 全仓 `grep -rn "static"` 无任何引用；读者会误以为它们被页面使用。
-
 ## 小项 / 待决
 
 - [ ] 比赛若有成文评分标准/提交要求，落成 `.dsh/agents/` 独立文档并在 `AGENTS.md` 路由表加一行；2026-10-21 询问未获答复。
 - [ ] `Database.get_item()` 对不存在的 id 抛 `TypeError`（对 `None` 取下标）；决定改为返回 `None` 还是保持并加调用方检查。
 - [ ] `users.password` 列始终存空字符串（登录/注册只写 `User(username, '', email)`），认证实际读 `config_auth.yaml`；确认是否删除该列或写入哈希。
 - [ ] `.dsh/skills/` 尚未创建；若要把用户级技能软链进本仓库，再建目录并在结构表登记（软链接本身不入库，见 `.gitignore`）。
+- [ ] 清理 BLIP 首次下载中断留下的约 975 MB `.incomplete` 文件；它不被加载使用，磁盘足够，可延后。
 
 ---
 

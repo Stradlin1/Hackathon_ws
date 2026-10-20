@@ -13,3 +13,4 @@
 | 2026-10-21 | [chinese-ui](2026-10-21-chinese-ui.md) | 前端文案全部中文化：页面标签、认证表单、状态/方法映射、错误消息，并更新烟测。 |
 | 2026-10-21 | [registration-form](2026-10-21-registration-form.md) | 用自建中文注册表单替换认证库表单：支持中文姓名、无验证码、中文错误。 |
 | 2026-10-21 | [caption-slow-hf](2026-10-21-caption-slow-hf.md) | 图注慢/加载失败：HF 不可达、缓存不完整、BLIP 在 CPU；改为本地优先 + GPU。 |
+| 2026-10-21 | [localization-backlog](2026-10-21-localization-backlog.md) | 盘点剩余英文化（地点下拉、BLIP 图注、Streamlit 控件等）写入 backlog，本轮不改代码。 |
