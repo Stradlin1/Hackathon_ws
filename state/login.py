@@ -11,6 +11,9 @@ def login(authenticator, config):
     st.session_state.state = 'login'
 
     st.title('404NotFound')
+    registered = st.session_state.pop('registered_username', None)
+    if registered:
+        st.success(f'账号「{registered}」注册成功，请登录。')
     st.write('这里可以登记丢失的物品，也可以登记你捡到的东西，并用 AI 辅助匹配找到可能的失主。')
 
     try:

@@ -39,7 +39,8 @@ pending --responder reject--> rejected
 - 【事实】认证读取 `config_auth.yaml`（根目录、与 `app.py` 同目录）；缺失时 `app.py` 直接 `st.error` + `st.stop()`。
 - 【事实】`config_auth.example.yaml` 是模板，密码位要求 **bcrypt 哈希**，`cookie.key` 要求随机串（README 给出两条生成命令）。
 - 【事实】`config_auth.yaml`、`.env*`、`*.pem/*.p12/*.pfx` 均被 `.gitignore` 排除；提交示例文件里的占位符不算泄露。
-- 【事实】`users.password` 列在登录/注册时写入空字符串，真实口令只在配置文件里（哈希）。**不要**因为看到空串就往里写明文。
+- 【事实】`users.password` 列在登录/注册时写入空字符串，真实口令只在配置文件里（bcrypt 哈希）。**不要**因为看到空串就往里写明文。
+- 【事实】注册页是自建表单（`state/register.py`）：支持中文姓名、不要验证码；用户名 3–20 位、密码至少 8 位且含字母和数字，重复用户名/邮箱会被拒绝。
 - 【待验证】`streamlit-authenticator` 的 cookie 是否随注册回写正确轮换——注册会重写整个 `config_auth.yaml`。
 
 ## 图像卫生

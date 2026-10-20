@@ -11,3 +11,4 @@
 | 2026-10-21 | [agent-system-bootstrap](2026-10-21-agent-system-bootstrap.md) | 建立 `.dsh/` 知识库、`AGENTS.md`、`backlog.md` 与链接校验脚本，把代码事实拆成七个主题文档。 |
 | 2026-10-21 | [readme-rewrite](2026-10-21-readme-rewrite.md) | README 覆写为中文，补页面流程、模块地图、已知限制与常见问题，并核对旧表述。 |
 | 2026-10-21 | [chinese-ui](2026-10-21-chinese-ui.md) | 前端文案全部中文化：页面标签、认证表单、状态/方法映射、错误消息，并更新烟测。 |
+| 2026-10-21 | [registration-form](2026-10-21-registration-form.md) | 用自建中文注册表单替换认证库表单：支持中文姓名、无验证码、中文错误。 |

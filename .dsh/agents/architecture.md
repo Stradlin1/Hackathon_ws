@@ -11,7 +11,7 @@
 | --- | --- | --- |
 | `app.py` | 读 `config_auth.yaml`、构造认证器、按 `st.session_state.state` 分发页面 | `st.set_page_config`、`authenticator`、末尾的 if/elif 链 |
 | `state/login.py` | 登录；把登录用户写入 `users` 表 | `login`、`change_state` |
-| `state/register.py` | 注册；把账号回写 `config_auth.yaml` 并插入 `users` | `register` |
+| `state/register.py` | 自建注册表单；校验后 bcrypt 哈希写入 `config_auth.yaml`，并尽力插入 `users` | `register`、`validate_registration` |
 | `state/lost_or_found.py` | 主菜单：报失 / 报拾获 / 我的记录 | `lost_or_found` |
 | `state/lost.py` | 失物表单 → 文本向量 → 指纹 → 入库 → 建会话 | `lost` |
 | `state/found.py` | 上传 → 清洗 → BLIP 图注 → 表单 → 图像向量 → 指纹 → 入库 → 建会话 | `found`、`_cached_caption` |
