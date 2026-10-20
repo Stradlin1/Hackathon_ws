@@ -1,97 +1,50 @@
-# set environment variable before:
-    # for windows: $env:STREAMLIT_SERVER_ENABLE_STATIC_SERVING = 'true'
-    # for linux: export STREAMLIT_SERVER_ENABLE_STATIC_SERVING=true
-# run with streamlit run app.py
+"""Streamlit entry point for multimodal lost-and-found matching."""
+
+from pathlib import Path
 
 import streamlit as st
-# import folium
-
 import streamlit_authenticator as stauth
 import yaml
-from yaml.loader import SafeLoader
-from streamlit_extras.stylable_container import stylable_container
 
-from state.login import login
-from state.register import register
-from state.lost_or_found import lost_or_found
-from state.lost import lost
 from state.found import found
+from state.interactive_match import interactive_match
+from state.login import login
+from state.lost import lost
+from state.lost_or_found import lost_or_found
 from state.profile import profile
-from state.this_your_item import this_your_item
-from state.this_description_matches import this_description_matches
-from state.someone_found import someone_found
-from state.someone_lost import someone_lost
+from state.register import register
 
-def change_state(state):
-    if 'state' in st.session_state:
-        st.session_state.state = state
+st.set_page_config(page_title='404NotFound', page_icon='🔎')
+config_file = Path(__file__).with_name('config_auth.yaml')
+if not config_file.exists():
+    st.error('Missing config_auth.yaml. Copy config_auth.example.yaml and configure a local account.')
+    st.stop()
+with config_file.open(encoding='utf-8') as file:
+    config = yaml.safe_load(file)
 
-# authenticate setup
-with open('./config_auth.yaml') as file:
-    config = yaml.load(file, Loader=SafeLoader)
 authenticator = stauth.Authenticate(
     config['credentials'],
     config['cookie']['name'],
     config['cookie']['key'],
-    config['cookie']['expiry_days']
+    config['cookie']['expiry_days'],
 )
 
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    pass
-with col3:
-    pass
-with col2:
-    with stylable_container(
-                key="logo",
-                css_styles="""
-                    button {
-                        display: inline-block;  /* Allows width adjustment */
-                        width: 150px;  /* Set a width for the logo */
-                        aspect-ratio: 1 / 1;  /* Keep a 1:1 ratio */
-                        border: none;  /* Remove border */
-                        background-image: url('./app/static/logo_rounded.png');
-                        background-size: cover;
-                        background-position: center;                    
-                        top: 50%;  /* Align to the top */
-                        left: 50%;  /* Align to the left */
-                        margin: 10px;  /* Add some spacing from the edges */
-                    }
-                    """,
-    ):
-        if 'state' not in st.session_state or st.session_state.state == 'login':
-            st.button(label="", key="logo", on_click=change_state, args=["login"])
-        else:
-            st.button(label="", key="logo", on_click=change_state, args=["lost_or_found"])
-
-# state machine
-if 'state' not in st.session_state or st.session_state.state == 'login':
-    login(authenticator, config)
-
-elif st.session_state.state == 'register':
+# Only authenticated users may access reports, matchmaking or contact details.
+state = st.session_state.get('state', 'login')
+if state == 'register':
     register(authenticator, config)
-
-elif st.session_state.state == 'lost_or_found':
+elif state == 'login' or not st.session_state.get('authentication_status'):
+    login(authenticator, config)
+elif state == 'lost_or_found':
     lost_or_found(authenticator)
-
-elif st.session_state.state == 'lost':
+elif state == 'lost':
     lost(authenticator)
-
-elif st.session_state.state == 'found':
+elif state == 'found':
     found(authenticator)
-
-elif st.session_state.state == 'profile':
+elif state == 'interactive_match':
+    interactive_match(authenticator)
+elif state == 'profile':
     profile(authenticator)
-
-elif st.session_state.state == 'this_your_item':
-    this_your_item(authenticator)
-
-elif st.session_state.state == 'this_description_matches':
-    this_description_matches(authenticator)
-
-elif st.session_state.state == 'someone_found':
-    someone_found(authenticator)
-
-elif st.session_state.state == 'someone_lost':
-    someone_lost(authenticator)
+else:
+    st.session_state.state = 'lost_or_found'
+    st.rerun()

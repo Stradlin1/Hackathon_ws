@@ -1,54 +1,63 @@
-from html import escape
+"""Item history and two-party approval of proposed matches."""
+
+from __future__ import annotations
 
 import streamlit as st
+
 from db_manager import Database
-
-
-def change_state(state):
-    if 'state' in st.session_state:
-        st.session_state.state = state
+from matching.requests import MatchRequests
 
 
 def profile(authenticator):
-    st.sidebar.markdown(st.session_state.username)
-    authenticator.logout(location='sidebar', callback=lambda _: change_state('login'))
-    st.sidebar.write('Other Options')
-    st.sidebar.button('Report an Item', on_click=change_state, args=['lost_or_found'])
-
-    st.title(st.session_state.username)
-
+    authenticator.logout(location='sidebar')
+    username = st.session_state.username
+    st.title('My items and requests')
     db = Database()
-    lost_items = db.get_user_lost_items(st.session_state.username)
-    lost_item_matches = [db.get_lost_item_matches(item.id) for item in lost_items]
-    found_items = db.get_user_found_items(st.session_state.username)
-    found_item_matches = [db.get_found_item_matches(item.id) for item in found_items]
-    db.close()
+    try:
+        lost_items = db.get_user_lost_items(username)
+        found_items = db.get_user_found_items(username)
+        st.subheader('Lost items')
+        for item in lost_items:
+            st.write(f'#{item.id}: {item.description}')
+            st.caption(f'Location: {item.location} | Date: {item.time}')
+        st.subheader('Found items')
+        for item in found_items:
+            st.write(f'#{item.id}: {item.description}')
+            if item.image is not None:
+                st.image(item.image, width=250)
+    finally:
+        db.close()
 
-    st.subheader('Items you lost')
-    for item, matches in zip(lost_items, lost_item_matches):
-        status = 'found' if matches else 'not found yet'
-        st.markdown(
-            '<div style="border: 1px solid black; padding: 10px; margin: 10px; border-radius: 10px;">'
-            f'<p><strong>Description:</strong> {escape(item.description or "")}</p>'
-            f'<p><strong>Status:</strong> {status}</p>'
-            '</div>',
-            unsafe_allow_html=True,
-        )
+    requests = MatchRequests()
+    st.subheader('Requests waiting for your confirmation')
+    incoming = requests.incoming(username)
+    if not incoming:
+        st.write('No pending requests.')
+    for req in incoming:
+        found, lost = req['found_item_id'], req['lost_item_id']
+        st.write(f'Found: {req["found_desc"]} | Lost: {req["lost_desc"]}')
+        a, b = st.columns(2)
+        with a:
+            if st.button('Accept match', key=f'accept-{found}-{lost}'):
+                if requests.respond(username, found, lost, True):
+                    st.rerun()
+        with b:
+            if st.button('Reject match', key=f'reject-{found}-{lost}'):
+                if requests.respond(username, found, lost, False):
+                    st.rerun()
 
-    st.subheader('Items you found')
-    for item, matches in zip(found_items, found_item_matches):
-        status = 'claimed' if matches else 'not claimed yet'
-        if item.image is not None:
-            st.image(item.image, use_column_width=True)
-        else:
-            st.write('No image available')
-        st.markdown(
-            '<div style="border: 1px solid black; padding: 10px; margin: 10px; border-radius: 10px;">'
-            f'<p><strong>Description:</strong> {escape(item.description or "")}</p>'
-            f'<p><strong>Status:</strong> {status}</p>'
-            '</div>',
-            unsafe_allow_html=True,
-        )
+    st.subheader('Requests you sent')
+    for req in requests.outgoing(username):
+        st.write(f'Found #{req["found_item_id"]} / Lost #{req["lost_item_id"]}: {req["status"]}')
 
-    st.subheader('Report a lost or found item')
-    st.button('Report', on_click=change_state, args=['lost_or_found'])
+    st.subheader('Confirmed matches')
+    accepted = requests.accepted(username)
+    if not accepted:
+        st.write('No mutually confirmed matches.')
+    for req in accepted:
+        st.write(f'Found #{req["found_item_id"]} / Lost #{req["lost_item_id"]}')
+        st.write(f'Contact: {req["contact_username"]} ({req["contact_email"]})')
+
+    if st.button('Report another item'):
+        st.session_state.state = 'lost_or_found'
+        st.rerun()

@@ -1,39 +1,29 @@
+"""Local account registration."""
+
 import streamlit as st
 import yaml
-from db_manager import *
 
-def change_state(state):
-    if 'state' in st.session_state:
-        st.session_state.state = state
+from db_manager import Database, User
+
 
 def register(authenticator, config):
-    st.session_state.state = 'register'
-
-    st.title('404NotFound')
-
-    st.write('This is a web app that helps you find your lost items or report items you found.')
-
+    st.title('Register an account')
     try:
-        email_of_registered_user, \
-        username_of_registered_user, \
-        name_of_registered_user = authenticator.register_user()
-        if email_of_registered_user:
-            st.success('User registered successfully')
-            
-            
-            with open('./config_auth.yaml', 'w') as file:
-                yaml.dump(config, file, default_flow_style=False)
-
-            # get database and add user to it
+        registered = authenticator.register_user(pre_authorization=False)
+        if registered and registered[0]:
+            email, username, _ = registered
+            with open('config_auth.yaml', 'w', encoding='utf-8') as file:
+                yaml.safe_dump(config, file, allow_unicode=True, sort_keys=False)
             db = Database()
-            u = User(username_of_registered_user, '', email_of_registered_user)
-            st.session_state.user = u
-            db.insert_user(u)
-            db.close()
-
-            change_state('login')
+            try:
+                db.insert_user(User(username, '', email))
+            finally:
+                db.close()
+            st.success('Account registered. You can now sign in.')
+            st.session_state.state = 'login'
             st.rerun()
-    except Exception as e:
-        st.error(e)
-
-    st.button('Login User', on_click=change_state, args=['login'])
+    except Exception as error:
+        st.error(f'Account registration failed: {error}')
+    if st.button('Back to sign in'):
+        st.session_state.state = 'login'
+        st.rerun()
