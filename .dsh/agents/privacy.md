@@ -53,7 +53,7 @@ pending --responder reject--> rejected
 
 - 【事实】`build_session` 的会话字典含 `answers`/`asked`，但**没有任何写库调用**；`FingerprintStore` 只存初始指纹。
 - 【事实】刷新页面丢失 `match_session`，追问历史一并消失；这是隐私与实现的共同结果，不是 bug。
-- 【事实】`interactive_match` 底部会把 `answers` 直接打印给当前用户看（`st.caption(f"Answers: {session['answers']}")`），这是本人可见，不是跨用户泄露。
+- 【事实】`interactive_match` 底部会把 `answers` 以中文属性名展示给当前用户看（`st.caption(f'已提问 ... 回答：{answers_text}')`），这是本人可见，不是跨用户泄露。
 
 ## 数据落盘与信任边界
 

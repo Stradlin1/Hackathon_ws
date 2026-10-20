@@ -92,6 +92,55 @@ VOCAB = {
     },
 }
 
+VALUE_ZH = {
+    "category": {
+        "earbuds": "入耳式耳机", "headphones": "头戴式耳机", "umbrella": "雨伞",
+        "water bottle": "水瓶", "cup": "杯子", "keys": "钥匙", "wallet": "钱包",
+        "backpack": "双肩包", "bag": "包", "phone": "手机", "laptop": "笔记本电脑",
+        "book": "书", "glasses": "眼镜", "watch": "手表", "notebook": "笔记本",
+    },
+    "color": {
+        "black": "黑色", "white": "白色", "red": "红色", "blue": "蓝色",
+        "green": "绿色", "yellow": "黄色", "purple": "紫色", "pink": "粉色",
+        "orange": "橙色", "gray": "灰色", "brown": "棕色", "gold": "金色",
+        "silver": "银色",
+    },
+    "material": {
+        "plastic": "塑料", "metal": "金属", "glass": "玻璃", "leather": "皮革",
+        "fabric": "布料", "ceramic": "陶瓷", "wood": "木质", "rubber": "橡胶",
+    },
+    "shape": {
+        "oval": "椭圆形", "rectangular": "长方形", "square": "正方形",
+        "round": "圆形", "cylindrical": "圆柱形", "foldable": "可折叠",
+        "curved handle": "弯钩手柄", "straight handle": "直手柄",
+    },
+    "brand": {
+        "apple": "苹果", "sony": "索尼", "jbl": "JBL", "bose": "Bose",
+        "samsung": "三星", "xiaomi": "小米", "huawei": "华为",
+        "nike": "耐克", "adidas": "阿迪达斯", "logitech": "罗技",
+    },
+    "mark": {
+        "scratch": "划痕", "sticker": "贴纸", "crack": "裂纹", "dent": "凹痕",
+        "strap": "挂绳", "logo": "标志", "engraving": "刻字", "keychain": "钥匙扣",
+        "no special mark": "无特殊标记",
+    },
+}
+
+
+def display_value(field: str, value: str) -> str:
+    """Translate a canonical attribute value for display; storage keeps the English value."""
+    if not isinstance(value, str) or not value:
+        return value
+    direct = VALUE_ZH.get(field, {}).get(value)
+    if direct:
+        return direct
+    if field == "mark":
+        color, _, mark = value.partition(" ")
+        if color in VALUE_ZH["color"] and mark in VALUE_ZH["mark"]:
+            return VALUE_ZH["color"][color] + VALUE_ZH["mark"][mark]
+    return value
+
+
 UNKNOWN = {"", "unknown", "none", "null", "n/a", "not specified", "未知", "不详", "不记得", "不知道"}
 SKIP_ANSWERS = {"", "不记得", "不知道", "不清楚", "记不清", "无法确定", "跳过", "unknown", "skip", "not sure", "no idea"}
 
@@ -146,7 +195,7 @@ def extract_colors(text: str) -> list[str]:
 
 def normalize_answer(field: str, answer: str) -> str | None:
     if field not in FIELDS:
-        raise ValueError("Unsupported attribute")
+        raise ValueError("不支持的属性")
     raw = " ".join((answer or "").strip().split())
     if not raw or raw.lower() in SKIP_ANSWERS:
         return None

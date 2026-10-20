@@ -26,18 +26,18 @@ class MatchRequests:
 
     def create(self, direction: str, query_item_id: int, candidate_item_id: int, username: str) -> str:
         if direction not in ("lost", "found"):
-            raise ValueError("Invalid report direction")
+            raise ValueError("无效的报告方向")
         found = candidate_item_id if direction == "lost" else query_item_id
         lost = query_item_id if direction == "lost" else candidate_item_id
         with sqlite3.connect(self.path) as con:
             found_owner = con.execute("SELECT user_id FROM found_items WHERE item_id=?", (found,)).fetchone()
             lost_owner = con.execute("SELECT user_id FROM lost_items WHERE item_id=?", (lost,)).fetchone()
             if found_owner is None or lost_owner is None:
-                raise ValueError("Item owner is unavailable")
+                raise ValueError("无法获取物品所有者")
             requester = lost_owner[0] if direction == "lost" else found_owner[0]
             responder = found_owner[0] if direction == "lost" else lost_owner[0]
             if requester != username:
-                raise PermissionError("Cannot request a match for another user's item")
+                raise PermissionError("不能为其他用户的物品发起匹配请求")
             con.execute(
                 "INSERT OR IGNORE INTO match_requests "
                 "(found_item_id,lost_item_id,requester,responder,status,created_at) "

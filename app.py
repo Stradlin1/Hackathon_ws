@@ -14,10 +14,10 @@ from state.lost_or_found import lost_or_found
 from state.profile import profile
 from state.register import register
 
-st.set_page_config(page_title='404NotFound', page_icon='🔎')
+st.set_page_config(page_title='404NotFound · 失物招领', page_icon='🔎')
 config_file = Path(__file__).with_name('config_auth.yaml')
 if not config_file.exists():
-    st.error('Missing config_auth.yaml. Copy config_auth.example.yaml and configure a local account.')
+    st.error('缺少 config_auth.yaml。请复制 config_auth.example.yaml 并配置本地账号。')
     st.stop()
 with config_file.open(encoding='utf-8') as file:
     config = yaml.safe_load(file)

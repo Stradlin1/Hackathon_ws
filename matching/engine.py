@@ -97,9 +97,9 @@ def choose_question(query_fp: Mapping, ranked: list[dict], asked: list[str] | No
 
 def add_answer(session: dict, field: str, raw_answer: str) -> str | None:
     if field not in QUESTIONS:
-        raise ValueError("Unknown question")
+        raise ValueError("未知的问题")
     if field in session["asked"]:
-        raise ValueError("Question already asked")
+        raise ValueError("该问题已经问过")
     normalized = normalize_answer(field, raw_answer)
     session["asked"].append(field)
     if normalized is not None:

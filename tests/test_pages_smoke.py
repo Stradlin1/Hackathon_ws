@@ -54,10 +54,10 @@ class UI(types.ModuleType):
         return (kwargs.get('key') or label) in self.clicked
 
     def form_submit_button(self, label, **kwargs):
-        return self.submit and label in {'Find possible matches', 'Submit and find possible matches', 'Update matching results'}
+        return self.submit and label in {'查找可能匹配', '提交并查找可能匹配', '更新匹配结果'}
 
     def text_area(self, label, value='', **kwargs):
-        return value or ('lost black umbrella' if label.startswith('Describe') else 'found black umbrella')
+        return value or ('lost black umbrella' if label.startswith('描述物品') else 'found black umbrella')
 
     def text_input(self, label, **kwargs):
         return '红色贴纸'
@@ -179,7 +179,7 @@ def test_interactive_question_changes_answer_and_reranks(monkeypatch):
 
 def test_interactive_match_sends_request_only_on_explicit_click(monkeypatch):
     ui = install_fake_modules(monkeypatch)
-    ui.clicked.add('Send match request')
+    ui.clicked.add('发送匹配请求')
     fp = lambda **attrs: {'attributes': attrs, 'method': 'rules'}
     ui.session_state.match_session = {
         'user': 'owner', 'direction': 'lost', 'item_id': 100,

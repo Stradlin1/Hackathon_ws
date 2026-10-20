@@ -20,8 +20,8 @@
 ## 3. 分数不是概率
 
 - **为什么**：0.72×semantic + 0.28×evidence 是线性排序分，没有归一化含义；说成概率会误导用户交付联系方式。
-- **怎么守**：页面、README、日志都写 "ranking metric"；不得新增"置信度/概率"文案。
-- **怎么查**：`grep -rn "probability" --include=*.py --include=*.md .` —— 只应出现在否定句里。
+- **怎么守**：页面文案固定为「分数是排序指标，不是所有权概率」；不得新增"置信度"或正向的"概率"表述。
+- **怎么查**：`grep -rn "probability" --include=*.py .` —— 只应出现在 `matching/engine.py` 的否定说明里；`grep -rn "置信度" --include=*.py state/ matching/` 应无输出。
 
 ## 4. 联系方式只在 accepted 之后可见
 

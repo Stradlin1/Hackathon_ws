@@ -77,11 +77,11 @@ python -m compileall -q app.py matching state
 
 | 症状 | 原因 | 动作 |
 | --- | --- | --- |
-| `Missing config_auth.yaml...` | 未复制模板 | 复制示例并填哈希/密钥 |
+| `缺少 config_auth.yaml...` | 未复制模板 | 复制示例并填哈希/密钥 |
 | `No module named 'streamlit'` | venv 未激活或依赖未装 | 激活 `.venv` 后重装 |
 | `numpy.core._multiarray_umath` | 系统 numpy 与 pip numpy 混用/损坏 | 删 `.venv` 重建，不要装进系统 Python |
 | `AttributeError: __spec__`（导入 pytest 时） | 同上，numpy 损坏的连带症状 | 同样重建 venv |
-| 图注 warning "Automatic image caption is unavailable" | BLIP 权重/网络不可用 | 手填描述，或先联网下载权重 |
+| 图注提示「自动图片描述不可用」 | BLIP 权重/网络不可用 | 手填描述，或先联网下载权重 |
 | 候选为空 | 对面还没有未匹配报告 | 用另一账号先报一件；`reset_db.py` 可造样例 |
 | `database is locked` | 多会话并发写 | 演示时单用户操作，或等待/重试 |
 | 数据"消失" | 从别的目录启动，用了另一个 `items.db` | 回到仓库根目录启动 |

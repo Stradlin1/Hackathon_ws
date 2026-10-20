@@ -38,14 +38,14 @@ def clean_image(image: Image.Image) -> Image.Image:
 def encode_image(image: Image.Image) -> np.ndarray:
     arr = np.asarray(_image_encoder().encode(image), dtype=np.float32).reshape(-1)
     if not arr.size or not np.all(np.isfinite(arr)):
-        raise ValueError("Invalid image embedding")
+        raise ValueError("无效的图像向量")
     return arr
 
 
 def encode_text(text: str) -> np.ndarray:
     arr = np.asarray(_text_encoder().encode(text), dtype=np.float32).reshape(-1)
     if not arr.size or not np.all(np.isfinite(arr)):
-        raise ValueError("Invalid text embedding")
+        raise ValueError("无效的文本向量")
     return arr
 
 

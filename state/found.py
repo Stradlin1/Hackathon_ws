@@ -26,45 +26,45 @@ def _cached_caption(image_bytes: bytes) -> str:
 
 
 def found(authenticator):
-    st.sidebar.button('Back to menu', on_click=lambda: st.session_state.update(state='lost_or_found'))
-    authenticator.logout(location='sidebar')
-    st.title('Report a found item')
-    uploaded = st.file_uploader('Upload an item photograph', type=['png', 'jpg', 'jpeg'])
+    st.sidebar.button('返回主菜单', on_click=lambda: st.session_state.update(state='lost_or_found'))
+    authenticator.logout(button_name='退出登录', location='sidebar')
+    st.title('登记拾获物品')
+    uploaded = st.file_uploader('上传物品照片', type=['png', 'jpg', 'jpeg'])
     if uploaded is None:
-        st.info('Upload an item photo to start an AI-assisted report.')
+        st.info('上传一张物品照片即可开始 AI 辅助登记。')
         return
     image_bytes = uploaded.getvalue()
     if len(image_bytes) > 8 * 1024 * 1024:
-        st.error('Please choose an image under 8 MB.')
+        st.error('请选择小于 8 MB 的图片。')
         return
     try:
         image = clean_image(Image.open(io.BytesIO(image_bytes)))
     except (OSError, UnidentifiedImageError, ValueError, Image.DecompressionBombError):
-        st.error('This image format could not be opened.')
+        st.error('无法打开这种图片格式。')
         return
-    st.image(image, caption='Item photo', width=350)
+    st.image(image, caption='物品照片', width=350)
     try:
-        with st.spinner('Generating an image caption...'):
+        with st.spinner('正在生成图片描述……'):
             caption = _cached_caption(image_bytes)
     except (ImportError, OSError, RuntimeError, ValueError) as exc:
         caption = ''
-        st.warning(f'Automatic image caption is unavailable ({exc}). Please describe the item manually.')
+        st.warning(f'自动图片描述不可用（{exc}）。请手动描述物品。')
 
     with st.form('found_report'):
-        description = st.text_area('Description (you may correct the generated caption)',
+        description = st.text_area('物品描述（可以修改自动生成的描述）',
                                    value=caption, max_chars=1000)
         with open('rooms.json', encoding='utf-8') as file:
             locations = json.load(file)
-        location = st.selectbox('Where was it found?', locations)
-        date = st.date_input('Date found', value='today', max_value=datetime.now().date(),
+        location = st.selectbox('在哪里捡到的？', locations)
+        date = st.date_input('拾获日期', value='today', max_value=datetime.now().date(),
                              min_value=datetime.now().date() - timedelta(days=30))
-        submitted = st.form_submit_button('Submit and find possible matches')
+        submitted = st.form_submit_button('提交并查找可能匹配')
     if not submitted:
         return
     if not description.strip():
-        st.error('Please provide a short description of the item.')
+        st.error('请填写物品描述。')
         return
-    with st.spinner('Creating fingerprint and searching for candidate items...'):
+    with st.spinner('正在生成指纹并搜索候选物品……'):
         try:
             vector = encode_image(image)
             fingerprint = fingerprint_from_text(description, caption=caption)
@@ -75,7 +75,7 @@ def found(authenticator):
                 db.insert_item(item)
                 owner = db.get_user(st.session_state.username)
                 if owner is None:
-                    raise ValueError('Please log in again to create a report.')
+                    raise ValueError('请重新登录后再登记物品。')
                 db.insert_found_item(item, owner)
                 store = FingerprintStore()
                 store.put(item.id, fingerprint)
@@ -85,7 +85,7 @@ def found(authenticator):
             finally:
                 db.close()
         except (OSError, ValueError, RuntimeError, ImportError) as error:
-            st.error(f'The report could not be processed: {error}')
+            st.error(f'报告处理失败：{error}')
             return
     st.session_state.match_session = session
     st.session_state.state = 'interactive_match'

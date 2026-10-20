@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from matching.engine import add_answer, choose_question, rank_candidates
-from matching.fingerprint import extract_known, fingerprint_from_text, normalize_answer
+from matching.fingerprint import display_value, extract_known, fingerprint_from_text, normalize_answer
 from matching.requests import MatchRequests
 from matching.storage import FingerprintStore
 from matching.workflow import build_session
@@ -26,6 +26,14 @@ def test_chinese_english_attribute_extraction():
     assert attrs["color"] == "black"
     assert attrs["mark"] == "red sticker"
     assert extract_known("a blue umbrella with curved handle")["shape"] == "curved handle"
+
+
+def test_display_value_translates_canonical_values():
+    assert display_value("category", "umbrella") == "雨伞"
+    assert display_value("color", "black") == "黑色"
+    assert display_value("mark", "red sticker") == "红色贴纸"
+    assert display_value("mark", "no special mark") == "无特殊标记"
+    assert display_value("brand", "acme") == "acme"
 
 
 def test_fingerprint_rejects_hallucinated_attributes():

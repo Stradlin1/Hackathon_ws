@@ -12,12 +12,12 @@ from .storage import FingerprintStore
 def build_session(*, direction: str, item_id: int, query_embedding, fingerprint: dict, username: str, db, store: FingerprintStore) -> dict:
     """Create a Streamlit-serializable session without persisting personal answers."""
     if direction not in ("lost", "found"):
-        raise ValueError("Unknown report type")
+        raise ValueError("未知的报告类型")
 
     records = db.get_unmatched_found_items() if direction == "lost" else db.get_unmatched_lost_items()
     query = np.asarray(query_embedding, dtype=np.float32).reshape(-1)
     if not query.size or not np.isfinite(query).all():
-        raise ValueError("Invalid query embedding")
+        raise ValueError("无效的查询向量")
     candidates = []
     vectors = []
     for item in records:

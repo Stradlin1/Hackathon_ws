@@ -11,17 +11,23 @@ def login(authenticator, config):
     st.session_state.state = 'login'
 
     st.title('404NotFound')
-    st.write('This is a web app that helps you find your lost items or report items you found.')
+    st.write('这里可以登记丢失的物品，也可以登记你捡到的东西，并用 AI 辅助匹配找到可能的失主。')
 
     try:
-        authenticator.login()
+        authenticator.login(fields={
+            'Form name': '登录',
+            'Username': '用户名',
+            'Password': '密码',
+            'Login': '登录',
+            'Captcha': '验证码',
+        })
     except Exception as exc:
         st.error(exc)
 
-    st.button('Register User', on_click=change_state, args=['register'])
+    st.button('注册账号', on_click=change_state, args=['register'])
 
     if st.session_state.get('authentication_status'):
-        authenticator.logout()
+        authenticator.logout(button_name='退出登录')
 
         username = st.session_state.get('username', '')
         account = config.get('credentials', {}).get('usernames', {}).get(username, {})
@@ -32,10 +38,10 @@ def login(authenticator, config):
         db.insert_user(user)
         db.close()
 
-        st.write(f'Welcome *{st.session_state.get("name", username)}*')
+        st.write(f'欢迎，*{st.session_state.get("name", username)}*')
         change_state('lost_or_found')
         st.rerun()
     elif st.session_state.get('authentication_status') is False:
-        st.error('Username/password is incorrect')
+        st.error('用户名或密码错误')
     else:
-        st.warning('Please enter your username and password')
+        st.warning('请输入用户名和密码')

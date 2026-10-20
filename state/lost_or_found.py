@@ -4,18 +4,18 @@ import streamlit as st
 
 
 def lost_or_found(authenticator):
-    authenticator.logout(location='sidebar')
+    authenticator.logout(button_name='退出登录', location='sidebar')
     st.title('404NotFound')
-    st.write('Report a missing or found item and use AI-assisted matching to find possible owners.')
+    st.write('登记丢失或拾获的物品，用 AI 辅助匹配帮你找到可能的失主。')
     left, right = st.columns(2)
     with left:
-        if st.button('I lost something', use_container_width=True):
+        if st.button('我丢了东西', use_container_width=True):
             st.session_state.state = 'lost'
             st.rerun()
     with right:
-        if st.button('I found something', use_container_width=True):
+        if st.button('我捡到东西', use_container_width=True):
             st.session_state.state = 'found'
             st.rerun()
-    if st.button('My items and requests'):
+    if st.button('我的物品与请求'):
         st.session_state.state = 'profile'
         st.rerun()

@@ -26,7 +26,7 @@
 1. **指纹只接受有原文证据的值。** 模型提案若字面没有出现在描述/图注里，必须丢弃；与用户描述冲突时以描述为准。→ [fingerprint](.dsh/agents/fingerprint.md)
 2. **缺失属性中性，矛盾才扣分。** 证据项 = `(一致 − 0.8×矛盾) / 可比项`；任一边缺失就不参与。→ [matching-engine](.dsh/agents/matching-engine.md)
 3. **语义分占 72%、证据占 28%**：证据从全一致(+1)翻到全矛盾(−1)只值 0.28 分，等价于 **0.28 ÷ 0.72 = 0.389 的 CLIP 相似度差**。相似度差超过 0.39 时，完全相反的证据也翻不过来。→ [matching-engine](.dsh/agents/matching-engine.md)
-4. **排序分不是所有权概率。** 页面与文档都必须说「ranking metric」，不得改称概率或置信度。→ [matching-engine](.dsh/agents/matching-engine.md)
+4. **排序分不是所有权概率。** 页面与文档都必须说「排序指标」（ranking metric），不得改称概率或置信度。→ [matching-engine](.dsh/agents/matching-engine.md)
 5. **联系方式只在对方 `accept` 之后可见**，且请求只能由该报告的所有者发起。→ [privacy](.dsh/agents/privacy.md)
 6. **澄清答案只存在 Streamlit session 里**，不写库、不进指纹表。→ [privacy](.dsh/agents/privacy.md)
 7. **不改既有表结构**：`items`/`users`/`lost_items`/`found_items`/`matches` 已存在；新能力只能 `CREATE TABLE IF NOT EXISTS` 新表。→ [data-model](.dsh/agents/data-model.md)

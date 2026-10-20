@@ -16,25 +16,25 @@ from matching.workflow import build_session
 
 
 def lost(authenticator):
-    st.sidebar.button('Back to menu', on_click=lambda: st.session_state.update(state='lost_or_found'))
-    authenticator.logout(location='sidebar')
-    st.title('Report a lost item')
+    st.sidebar.button('返回主菜单', on_click=lambda: st.session_state.update(state='lost_or_found'))
+    authenticator.logout(button_name='退出登录', location='sidebar')
+    st.title('登记失物')
 
     with st.form('lost_report'):
-        description = st.text_area('Describe the item, including any distinctive markings', max_chars=1000)
+        description = st.text_area('描述物品，包括任何独特标记', max_chars=1000)
         with open('rooms.json', encoding='utf-8') as file:
             locations = json.load(file)
-        location = st.selectbox('Last known location', locations)
-        date = st.date_input('Date lost', value='today', max_value=datetime.now().date(),
+        location = st.selectbox('最后出现的地点', locations)
+        date = st.date_input('丢失日期', value='today', max_value=datetime.now().date(),
                              min_value=datetime.now().date() - timedelta(days=30))
-        submitted = st.form_submit_button('Find possible matches')
+        submitted = st.form_submit_button('查找可能匹配')
 
     if not submitted:
         return
     if not description.strip():
-        st.error('Please describe the lost item before searching.')
+        st.error('请先描述丢失的物品。')
         return
-    with st.spinner('Creating fingerprint and searching for candidate items...'):
+    with st.spinner('正在生成指纹并搜索候选物品……'):
         try:
             vector = encode_text(description)
             fingerprint = fingerprint_from_text(description)
@@ -45,7 +45,7 @@ def lost(authenticator):
                 db.insert_item(item)
                 owner = db.get_user(st.session_state.username)
                 if owner is None:
-                    raise ValueError('Please log in again to create a report.')
+                    raise ValueError('请重新登录后再登记物品。')
                 db.insert_lost_item(item, owner)
                 store = FingerprintStore()
                 store.put(item.id, fingerprint)
@@ -55,7 +55,7 @@ def lost(authenticator):
             finally:
                 db.close()
         except (OSError, ValueError, RuntimeError, ImportError) as error:
-            st.error(f'The report could not be processed: {error}')
+            st.error(f'报告处理失败：{error}')
             return
     st.session_state.match_session = session
     st.session_state.state = 'interactive_match'
