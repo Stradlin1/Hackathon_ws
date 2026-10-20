@@ -9,3 +9,4 @@
 | 日期 | 日志 | 一句话 |
 | --- | --- | --- |
 | 2026-10-21 | [agent-system-bootstrap](2026-10-21-agent-system-bootstrap.md) | 建立 `.dsh/` 知识库、`AGENTS.md`、`backlog.md` 与链接校验脚本，把代码事实拆成七个主题文档。 |
+| 2026-10-21 | [readme-rewrite](2026-10-21-readme-rewrite.md) | README 覆写为中文，补页面流程、模块地图、已知限制与常见问题，并核对旧表述。 |

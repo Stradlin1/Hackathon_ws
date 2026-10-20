@@ -1,136 +1,203 @@
-# 404NotFound — Multimodal Lost-and-Found Matching
+# 404NotFound — 多模态失物招领匹配
 
-404NotFound helps match a person's description of a lost object to photographs of found objects. It uses CLIP for cross-modal retrieval, BLIP for image descriptions, evidence-checked generative fingerprints, and information-gain-driven follow-up questions. Candidates are reranked after each response rather than being accepted solely on the basis of an initial similarity score.
+404NotFound 是一个本地运行的 Streamlit 应用：失主用文字描述丢失的物品，拾获者上传物品照片，系统用 CLIP 做跨模态召回，用带证据校验的「物品指纹」重排候选，再通过信息增益驱动的追问逐步收敛，最后由双方确认后才交换联系方式。
 
-## Capabilities
+> **项目定位**：黑客松 / 课程演示用的单机原型。账号、数据与模型都跑在本机，**不包含**云端部署、多租户、真实校方系统对接或移动端适配。首次使用 CLIP/BLIP 时需要下载预训练权重。
 
-- **Multimodal search:** compares lost-item text to found-item photographs using aligned multilingual CLIP embeddings.
-- **Generative item fingerprints:** proposes structured features (category, color, material, shape, brand, distinctive marks) from reports and generated image captions. A lightweight local text model can propose values; only values supported by the report or caption are accepted. If model weights are unavailable, deterministic feature extraction is used.
-- **Active clarification:** measures the information gain of available candidate attributes and asks one open-ended question at a time without disclosing candidate-specific answers.
-- **Dynamic ranking:** combines cross-modal semantic similarity with positive and contradictory feature evidence. Unreported features remain neutral.
-- **Mutual match confirmation:** lets one account send a match request; the other account must accept before either account can view contact information.
-- **Local item history:** stores images, reports, fingerprints, and requests in SQLite.
+## 能做什么
 
-## How matching works
+- **跨模态检索**：把失物的中文/英文描述与拾获物品的照片映射到同一向量空间，用余弦相似度召回候选。
+- **证据化指纹**：从描述和图注中抽取六类属性（类型、颜色、材质、形状、品牌、特殊标记）。轻量文本模型可以补充提案，但**只有字面出现在描述或图注里的值才会被接受**；模型不可用时自动退回规则抽取。
+- **主动追问**：比较候选在不同属性上的分布，用信息增益选出最能区分它们的一个问题；一次只问一个，最多四轮，允许跳过。
+- **动态重排**：每回答一次就重新排序。语义相似度与「一致/矛盾」证据线性组合；**任一边缺失的属性保持中性**，不会被当成矛盾。
+- **双方确认**：一方发送配对请求，另一方在「我的物品与请求」里接受或拒绝；**接受之前任何人都看不到对方联系方式**。
+- **本地留存**：报告、图片、指纹、请求与配对结果都写在本地 SQLite（`items.db`）。
 
-1. A user reports a lost item by describing it, or reports a found item by uploading a photograph and reviewing an automatically generated caption.
-2. BLIP produces a caption for a found-item photograph. The text model (`google/flan-t5-small` by default) attempts to propose fingerprint fields; the extractor keeps only fields with explicit supporting evidence. No missing attribute is guessed.
-3. CLIP (`sentence-transformers/clip-ViT-B-32`) encodes found-item photographs. The aligned multilingual text model (`sentence-transformers/clip-ViT-B-32-multilingual-v1`) encodes lost-item descriptions.
-4. The top eight cross-modal candidates are reranked using the fingerprint's matching and conflicting properties. The displayed score is **not** an ownership probability.
-5. If the leading candidates differ on an unknown attribute, the system selects a question using posterior-weighted attribute entropy (information gain). The user can answer or skip; rankings update immediately. At most four questions are asked.
-6. Users can send a match request for a candidate. The other account can accept or reject it from the profile screen. Contact details appear only after acceptance.
+## 匹配流程
 
-Question wording is based on a safe template associated with the attribute chosen by the information-gain algorithm. It never reveals a candidate's distinctive marks as suggested answers.
+1. **报失**：填写描述、最后出现地点和日期。系统生成文本向量与指纹，并把报告存入数据库。
+2. **报拾获**：上传照片，BLIP 生成图注，用户可以修改后再提交。系统生成图像向量，并从「描述 + 图注」生成指纹。
+3. **召回**：只从**尚未配对**的对面类型报告里取候选，用 CLIP 语义相似度取前 8 个。
+4. **重排**：逐字段比较指纹。双方都有该字段时才计入证据：一致加分、矛盾按较轻的权重扣分、缺失不计。特殊标记（划痕、贴纸、挂绳等）权重最高。
+5. **追问**：若靠前候选在某个未知属性上明显分裂，就针对该属性问一个问题。问题来自固定模板，**不会把候选的具体取值当提示泄露出去**。用户回答或跳过后立即重排。
+6. **确认**：对满意的候选发送请求；对方接受后写入配对表，双方才能看到彼此的联系方式，且这一对不再出现在后续候选池里。
 
-## Repository layout
+> 页面上显示的分数是**排序指标，不是所有权概率**。算法细节（权重、矛盾惩罚、翻转阈值、追问门槛）见 [`.dsh/agents/matching-engine.md`](.dsh/agents/matching-engine.md)。
 
-~~~text
-.
-├── app.py                          # Streamlit entry point and navigation
-├── db_manager.py                   # Existing SQLite report storage
-├── matching/
-│   ├── fingerprint.py              # Generative feature proposals and verification
-│   ├── models.py                   # Cached CLIP, multilingual CLIP, BLIP
-│   ├── engine.py                   # Evidence-based reranking and active questions
-│   ├── workflow.py                 # Cross-modal candidate retrieval
-│   ├── storage.py                  # Structured fingerprint persistence
-│   └── requests.py                 # Request approval and privacy controls
-├── state/
-│   ├── found.py                    # Found-item submission
-│   ├── lost.py                     # Lost-item submission
-│   ├── interactive_match.py        # Follow-up questions and live ranking
-│   ├── profile.py                  # Reports and match request handling
-│   └── ...                         # Authentication and navigation
-├── config_auth.example.yaml       # Local account configuration example
-├── rooms.json                     # Location choices
-├── reset_db.py                     # Populate synthetic sample data (destructive)
-├── tests/                          # Local algorithm and data-flow tests
-├── requirements.txt
-└── requirements-dev.txt
-~~~
+## 页面与操作
 
-## Installation
+| 页面 | 能做什么 |
+| --- | --- |
+| 登录 / 注册 | 账号来自 `config_auth.yaml`；注册流程会重写该文件，并在 `users` 表插入账号 |
+| 主菜单 | 「I lost something」报失物，「I found something」报拾获，「My items and requests」查看记录 |
+| 报失 | 描述（1000 字以内）、地点下拉、近 30 天内的日期；提交后直接进入匹配页 |
+| 报拾获 | 上传 png/jpg/jpeg（≤8 MB）；图注可改；提交后进入匹配页 |
+| AI 匹配 | 查看指纹、前 5 个候选及一致/矛盾字段；回答追问；选择候选发送请求 |
+| 我的物品与请求 | 查看自己的失物/拾物、待确认请求、已发请求、已确认配对与联系方式 |
 
-Use **Python 3.10 or 3.11** for the recommended local setup. The first run requires downloading pretrained model weights and may be slow on a CPU.
+- 导航由 `st.session_state.state` 驱动，没有 URL 路由。
+- **刷新匹配页会丢失当前会话**（包括已回答的追问），需要重新提交报告；这是有意的：追问答案不落库。
 
-~~~bash
+## 快速开始
+
+### 1. 环境
+
+- **Python 3.10 或 3.11**（推荐 3.11）。
+- 不强制 GPU；CPU 可以跑，但首次加载模型与推理会明显更慢。
+- 首次使用需要联网下载 CLIP/BLIP（以及可选的 flan-t5）权重，模型缓存在用户目录，不入库。
+
+### 2. 安装依赖
+
+```bash
 python -m venv .venv
-# Linux / macOS
-source .venv/bin/activate
-# Windows PowerShell: .venv\Scripts\Activate.ps1
+source .venv/bin/activate            # Windows PowerShell: .venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-~~~
+```
 
-Copy the authentication template to a locally ignored configuration file:
+版本约束以 [`requirements.txt`](requirements.txt) 为准，本文不复制版本号。
 
-~~~bash
-# Linux / macOS
+### 3. 配置账号
+
+复制模板并填写本地测试账号：
+
+```bash
 cp config_auth.example.yaml config_auth.yaml
-# Windows PowerShell: Copy-Item config_auth.example.yaml config_auth.yaml
-~~~
+```
 
-Edit `config_auth.yaml`. Replace the demonstration account's password with a bcrypt **hash**, use a real local test account, and replace `cookie.key` with a new random value. Two sample commands:
+`config_auth.yaml` 里必须改三处：
 
-~~~bash
+1. `credentials.usernames.<用户名>.password` 填 **bcrypt 哈希**，不是明文；
+2. `cookie.key` 换成一个新的随机串；
+3. 按需修改 `cookie.expiry_days`（默认 7 天）。
+
+生成哈希与随机串：
+
+```bash
 python -c "import bcrypt; print(bcrypt.hashpw(b'choose-a-test-password', bcrypt.gensalt()).decode())"
 python -c "import secrets; print(secrets.token_urlsafe(32))"
-~~~
+```
 
-To create synthetic example records (optional):
+`config_auth.yaml` 已被 `.gitignore` 排除，**不要提交真实账号、哈希或 cookie key**。
 
-~~~bash
+### 4. 生成样例数据（可选，会删库）
+
+```bash
 python reset_db.py
-~~~
+```
 
-**Caution:** `reset_db.py` deletes the existing `items.db` database. Do not execute it if you need to keep earlier reports or match requests.
+它**先删除 `items.db`**，再写入 4 件合成物品和 1 条配对，方便直接演示。脚本会读取 `config_auth.yaml` 创建用户，所以必须先完成第 3 步。**需要保留旧报告时不要运行。**
 
-Run the app:
+### 5. 启动
 
-~~~bash
+```bash
 streamlit run app.py
-~~~
+```
 
-Open `http://localhost:8501`. Sign in or register, file a lost or found item report, answer the discriminative questions when offered, and review the ranked candidates. Send a request for the desired candidate and sign in to the other account to accept it under **My items and requests**.
+打开 `http://localhost:8501`。端口被占用时用 `streamlit run app.py --server.port 8502`。
 
-## Configuration and offline behavior
+**必须从仓库根目录启动**：`items.db` 与 `rooms.json` 都按当前工作目录解析，换目录会用到另一个空库或直接找不到地点文件。
 
-`FINGERPRINT_TEXT_MODEL` controls the optional local text generator. It defaults to `google/flan-t5-small`; set it to `off` to skip the text generator and keep the rule-based extraction:
+### 6. 走一遍完整流程
 
-~~~bash
-# Linux / macOS
-export FINGERPRINT_TEXT_MODEL=off
-# Windows PowerShell: $env:FINGERPRINT_TEXT_MODEL='off'
-~~~
+1. 用账号 A 报一件失物（例如「黑色耳机，充电盒有红色贴纸」）。
+2. 用账号 B 报一件拾获物品并上传照片。
+3. 在 A 的匹配页回答一两个追问，观察候选顺序变化。
+4. A 对 B 的物品发送请求；登录 B，在「我的物品与请求」里接受。
+5. 双方在「Confirmed matches」中看到对方联系方式。
 
-The text generator can improve structured proposals but is not required for the matching and question-selection algorithm. BLIP and the CLIP image/text encoders require their pretrained weights for full image-based matching. The first use of those functions downloads the weights through their respective Python libraries. If BLIP image captioning is unavailable, a manually entered description can be used instead.
+## 配置项
 
-## Tests
+| 配置 | 作用 | 默认 / 说明 |
+| --- | --- | --- |
+| `FINGERPRINT_TEXT_MODEL` | 指纹抽取用的文本生成模型 | `google/flan-t5-small`；设为 `off` 可跳过，只用规则抽取 |
+| `config_auth.yaml` | 账号、cookie、有效期 | 不入库；缺失时应用直接停止并提示 |
+| `items.db` | SQLite 数据库 | 相对**启动目录**；被 `.gitignore` 排除 |
+| `rooms.json` | 地点下拉选项 | 想增删地点直接改这个文件 |
 
-~~~bash
+离线或模型下载失败时的降级行为：没有 flan-t5 → 规则抽取照常；没有 BLIP → 提示手填描述；没有 CLIP → 无法生成/比较向量，报告会报错停止。详见 [`.dsh/agents/operations.md`](.dsh/agents/operations.md)。
+
+## 数据、隐私与边界
+
+- **联系方式门禁**：只有状态为 `accepted` 的配对才会 JOIN `users` 表返回用户名与邮箱；未确认请求只显示物品描述。
+- **请求权限**：只能对自己发布的报告发起请求；只有对方能接受或拒绝。
+- **图片清洗**：入库前统一做 EXIF 方向纠正、缩放到最长边 1600、转 RGB，**不保留 EXIF**（包括定位信息）；上传上限 8 MB，像素上限 2000 万。
+- **追问答案不落库**：只存在当前 Streamlit 会话里，刷新即失。
+- **本地信任边界**：`items.db` 用 Python pickle 存图片数组与向量，只应作为可信本地数据使用，不要当交换格式。
+- **不入库的内容**：`items.db`、`config_auth.yaml`、`.env*`、上传目录与模型权重；原因写在 [`.gitignore`](.gitignore) 里。
+
+## 测试与校验
+
+```bash
 python -m pip install -r requirements-dev.txt
 python -m pytest -q
 python -m compileall -q app.py matching state
-~~~
+```
 
-Tests include bilingual feature extraction, rejection of unsupported generated values, information-gain questions, reranking after answers, SQLite fingerprint migration, and two-party confirmation. Tests mock model embeddings so they can run without downloading model weights; **passing unit tests is not a substitute for an end-to-end run with installed models**.
+- 测试覆盖中英属性抽取、生成式提案的拒绝与接受、信息增益追问、回答后重排、指纹表 upsert、双方确认与拒绝、页面烟测。
+- 测试**全部 mock 掉模型权重**，可以离线运行；通过单元测试不等于真实模型下端到端可用。
+- 文档校验：`python .dsh/tools/check_links.py`，检查 `.dsh/` 与根目录 Markdown 的相对链接和锚点。
 
-## Agent knowledge base
+## 目录与模块地图
 
-The repository carries a progressive-disclosure knowledge base for agent-assisted work:
+| 路径 | 职责 |
+| --- | --- |
+| `app.py` | 入口：读配置、构造认证器、按 `state` 分发页面 |
+| `db_manager.py` | `items` / `users` / `lost_items` / `found_items` / `matches` 的访问层 |
+| `matching/models.py` | 懒加载 CLIP/BLIP；图像清洗、编码、图注 |
+| `matching/fingerprint.py` | 文本 → 六维属性；生成式提案的证据校验 |
+| `matching/workflow.py` | 取未配对候选、语义召回 top 8、组装匹配会话 |
+| `matching/engine.py` | 证据重排与信息增益追问 |
+| `matching/storage.py` | `item_fingerprints` 表读写 |
+| `matching/requests.py` | 配对请求状态机；接受时写 `matches` |
+| `state/` | 各页面的 Streamlit 流程（登录、报失、报拾获、匹配、我的记录） |
+| `tests/` | 算法测试与页面烟测（mock 模型） |
+| `reset_db.py` | 删除并重建本地样例库 |
+| `rooms.json` | 地点选项 |
+| `config_auth.example.yaml` | 账号配置模板 |
+| `static/` | 三张未被代码引用的图片，去留待定 |
+| `.dsh/` | 项目知识库：分主题事实、开发日志、校验脚本 |
+| `AGENTS.md` | 智能体索引：分支纪律、红线、路由表 |
 
-- `AGENTS.md` at the root is the always-loaded index: workflow rules, red lines, a routing table and the directory map. It is deliberately kept short.
-- `.dsh/agents/` holds the per-topic facts (architecture, matching engine, fingerprints, data model, privacy, operations, invariants), read on demand through the routing table.
-- `.dsh/logs/` records why things are the way they are; the index there is hand-maintained, not generated.
-- `backlog.md` lists what is still missing, grouped by what it blocks.
-- `python .dsh/tools/check_links.py` verifies every relative link and heading anchor in the knowledge base.
+模块的精确行为、表结构与不变量见 [`.dsh/agents/`](.dsh/agents/)，以代码为最终权威。
 
-Development happens on the `dsh` branch. `main` is the confirmed state and is merged into only after explicit confirmation.
+## 已知限制
 
-## Privacy and limitations
+- **时间与地点当前不参与排序或过滤**，只作为报告信息保存与展示。
+- **被拒绝的配对无法重新发起**：请求主键是「拾获物品 + 失物」，拒绝后没有回到待处理的路径。
+- **待处理请求不会把物品移出候选池**，只有接受后写入的 `matches` 才会。
+- 没有速率限制、邮箱验证、封禁或审计日志；适合演示，不适合直接对外服务。
+- 单进程 SQLite，没有迁移脚本；多会话并发写入的锁行为尚未实测。
+- 仓库只有单元测试与 mock 烟测，**没有真实模型下的端到端验证记录**。
+- 排名分不是所有权概率；生成属性也需要人工复核。
 
-- Authentication secrets and the SQLite database are local and excluded by `.gitignore`. Do not commit real user reports, personal photographs, or passwords.
-- The image preprocessing path removes EXIF metadata and limits image dimensions before database storage.
-- Pending requests do not reveal the other account's contact information. Contact information is visible after the receiving account accepts the request.
-- The ranking metric and generated attributes are not proof of ownership. Generated suggestions require human review; current models may miss details or misinterpret photos.
-- Time and location are recorded for reference but are **not** currently used in ranking or geographical filtering.
-- The original database persists image arrays and embeddings using Python pickle. Treat `items.db` as trusted local data, not as an untrusted exchange format.
+当前卡点与下一步要找谁，见 [`backlog.md`](backlog.md)。
+
+## 常见问题
+
+| 现象 | 处理 |
+| --- | --- |
+| `Missing config_auth.yaml` | 复制 [`config_auth.example.yaml`](config_auth.example.yaml) 并填写哈希与 cookie key |
+| `No module named 'streamlit'` | venv 未激活或依赖未装：重新 `pip install -r requirements.txt` |
+| `numpy.core._multiarray_umath` 导入失败 | 系统 Python 与 venv 的 numpy 混装或损坏：删掉 `.venv` 重建，不要装进系统环境 |
+| 图片图注提示不可用 | BLIP 权重未下载或网络不可用：先联网加载，或手填描述继续 |
+| 候选列表为空 | 对面还没有未配对的报告：换账号先报一件，或运行 `reset_db.py` |
+| 数据「消失」 | 从别的目录启动了应用，或运行过 `reset_db.py`（会删库） |
+
+更多排查见 [`.dsh/agents/operations.md`](.dsh/agents/operations.md)。
+
+## 项目知识库与开发约定
+
+这个仓库同时维护一份给智能体用的渐进披露知识库：
+
+- [`AGENTS.md`](AGENTS.md) 是每轮自动加载的索引，只放分支纪律、红线、路由表和目录表；**不要往里堆细节**。
+- [`.dsh/agents/`](.dsh/agents/) 按主题存放项目事实：架构、匹配算法、指纹、数据模型、隐私、运行、不变量。
+- [`backlog.md`](backlog.md) 记录「缺什么、找谁、卡住什么」，做完即删。
+- [`.dsh/logs/`](.dsh/logs/README.md) 是只追加的过程记录，索引手工维护。
+
+开发在 `dsh` 分支进行，`main` 只在用户明确确认后合并。提交前先确认分支：
+
+```bash
+[ "$(git branch --show-current)" = dsh ] || { echo "wrong branch, aborting"; exit 1; }
+```
+
+**为什么 README 不是智能体的入口**：DSH 只自动加载命名为 `AGENTS.md` / `CLAUDE.md` 的指令文件，`README.md` 不会被注入上下文。所以给人看的内容留在这里，给智能体的索引放在根目录的 `AGENTS.md`。
