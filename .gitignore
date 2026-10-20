@@ -1,9 +1,28 @@
-# match all pycache directories also in subfolders
-**/__pycache__/
-*.yaml
-*.db
-test.ipynb
+# Python and local tooling
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store
+
+# Local authentication and secrets
+config_auth.yaml
 .env
 .env.*
 !.env.example
-.ipynb_checkpoints/
+*.pem
+*.p12
+*.pfx
+
+# Local databases and private uploads
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+uploads/
+private_data/
+
+# Experimental notebooks and user-generated files
+*.ipynb

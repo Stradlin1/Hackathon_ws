@@ -1,0 +1,15 @@
+# Application and interface
+streamlit>=1.35,<2
+streamlit-authenticator>=0.3.3,<0.4
+streamlit-extras>=0.4,<1
+streamlit-folium>=0.20,<1
+folium>=0.17,<1
+PyYAML>=6,<7
+
+# Images and matching
+numpy>=1.26,<3
+Pillow>=10,<12
+torch>=2.1
+transformers>=4.40,<5
+sentence-transformers>=3.0,<4
+bcrypt>=4,<5
