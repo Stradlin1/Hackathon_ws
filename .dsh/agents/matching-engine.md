@@ -1,0 +1,101 @@
+# 匹配与追问（证据重排 + 信息增益）
+
+> 入口索引与工作约定在仓库根目录 [`AGENTS.md`](../../AGENTS.md)；本文件是 `.dsh/agents/` 知识库的一部分。
+> 相关：[指纹](fingerprint.md) 提供属性；[架构](architecture.md) 说明谁调用；[数据模型](data-model.md) 说明候选从哪来。
+
+**本文件状态：`【事实】`**——公式与阈值读自 `matching/engine.py`（2026-10-21），推导部分标 `【推导】`。
+
+## 输入契约
+
+- 【事实】`rank_candidates(query_fp, candidates, answers=None)` 接受两种形态的指纹：`{"attributes": {...}}` 或直接是属性字典（`_attrs` 用 `fp.get("attributes", fp)`）。
+- 【事实】只认 `FIELDS` 里的键、只认非空 `str`；其它一律丢弃。
+- 【事实】`query = {**指纹属性, **answers}`：**用户回答覆盖原始指纹**，但 `choose_question` 用的是原始指纹（回答过的字段已进 `asked`，不会重复问）。
+- 【事实】每个候选必须有 `semantic_score`（0..1）与 `item_id`。
+
+## 权重
+
+| 字段 | 权重 | 页面显示名 |
+| --- | --- | --- |
+| category | 1.3 | 类型 |
+| color | 1.2 | 颜色 |
+| material | 1.0 | 材质 |
+| shape | 1.1 | 形状 |
+| brand | 1.1 | 品牌 |
+| mark | 2.0 | 特殊标记 |
+
+【事实】权重表在 `matching/engine.py` 顶部 `WEIGHTS`。**没有任何注释解释为什么是这些数**；这是当前实现的取值，改它前先读本文件末尾的「改动后果」。
+
+## 打分公式
+
+对每个候选，逐字段比较（`casefold()` 完全相等才算一致）：
+
+```text
+comparable = agreement + conflict            # 只在双方都有该字段时累加
+evidence   = (agreement - 0.8 * conflict) / comparable   # 可比项为 0 时取 0
+score      = clamp(0.72 * semantic + 0.28 * ((evidence + 1) / 2), 0, 1)
+```
+
+等价写法：`score = 0.72·semantic + 0.14·evidence + 0.14`。
+
+| 情形 | evidence | 证据项贡献 |
+| --- | --- | --- |
+| 无任何可比字段 | 0（中性） | 0.14 |
+| 全一致 | +1 | 0.28 |
+| 全矛盾 | −1 | 0.00 |
+| 一致 2 项、矛盾 1 项（等权） | 1/3 | 0.187 |
+
+- 【事实】矛盾只按 **0.8 倍**扣分，即"矛盾比一致弱一点"，但方向相反。
+- 【事实】任一边缺失该字段 → 整个字段跳过，**不当作矛盾**（`tests/test_matching.py::test_missing_fields_not_penalized_as_conflicts`）。
+- 【推导】语义权重 0.72 是决定性的：证据从 +1 翻到 −1 只值 `0.28` 分，需要 `0.28 / 0.72 = 0.3889` 的 CLIP 相似度差才能抵消。**相似度差 > 0.39 时，完全相反的证据也翻不过来。**
+- 【推导】这不是概率：分数被 clamp 到 [0,1] 且公式是线性组合，没有归一化语义。页面必须继续写 "ranking metric, not ownership probabilities"。
+
+## 排序与输出
+
+- 【事实】按 `(-score, item_id)` 排序，平分时 **item_id 小的在前**（确定性）。
+- 【事实】每个候选附加 `score`（四舍五入到 5 位）、`matches`（一致字段的中文名）、`conflicts`（矛盾字段的中文名）。
+- 【事实】UI 只展示前 5 个；"发送请求"下拉也只列前 5 个（`state/interactive_match.py`）。
+
+## 追问选择（`choose_question`）
+
+| 门槛 | 值 | 位置 |
+| --- | --- | --- |
+| 候选少于 2 个 | 不问 | `len(ranked) < 2` |
+| 已问次数 | `MAX_QUESTIONS = 4` | 常量 |
+| 参与计算的候选 | 前 8 个 | `ranked[:8]` |
+| 后验权重 | `exp(7 × (score − max_score))` 归一化 | 温度 7 |
+| 字段至少几个不同取值 | 2 | `len(distribution) < 2` |
+| 字段覆盖率 | ≥ 0.45 | `coverage < 0.45` |
+| 跳过字段 | 已问过、或已在原始指纹里 | `asked_set`、`key in query` |
+
+```text
+gain = coverage × H(取值分布) × (1 + 0.05 × WEIGHTS[field])
+```
+
+- 【推导】`coverage × H` 是"用该字段区分候选"的互信息近似；括号里的 `1+0.05w` 只是轻微偏向高权重字段（mark 最多 ×1.1）。
+- 【事实】并列时取 `FIELDS` 顺序里靠前的字段（严格大于才替换）。
+- 【设计】问题文本来自 `QUESTIONS` 静态模板，**绝不插入候选的具体取值**；这是隐私要求，不是文案偏好。
+
+## 回答归一化（`add_answer`）
+
+- 【事实】字段必须在 `QUESTIONS` 里，否则 `ValueError("Unknown question")`。
+- 【事实】同一字段不能问第二次，否则 `ValueError`。
+- 【事实】无论答案能否识别，字段都会进 `asked`——**无法识别的答案等价于跳过**，页面对此给一句 warning。
+- 【事实】能识别时写入 `session["answers"][field]`，返回归一化值；否则返回 `None`。
+
+## 改动后果（先读再改）
+
+| 你改什么 | 会连带影响什么 |
+| --- | --- |
+| 语义/证据权重 | 0.389 阈值随之变；要同步改 `AGENTS.md` 红线 3 |
+| `MAX_QUESTIONS` | 页面标题 `{n}/{MAX_QUESTIONS}` 自动跟随；测试里没有硬编码上限 |
+| 覆盖率门槛 0.45 | 冷门字段（mark 常缺失）会更少被问到；可能问不到决定性字段 |
+| 温度 7 | 越小越"民主"，越大越只围绕 top-1，追问收益越集中 |
+| 字段权重 | 同时影响打分与追问增益（×1.05 系数） |
+
+---
+
+## 变更记录
+
+| 日期 | 变更 |
+| --- | --- |
+| 2026-10-21 | 首次建立：公式、权重、0.389 阈值推导、追问门槛、回答语义。 |

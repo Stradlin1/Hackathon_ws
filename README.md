@@ -114,6 +114,18 @@ python -m compileall -q app.py matching state
 
 Tests include bilingual feature extraction, rejection of unsupported generated values, information-gain questions, reranking after answers, SQLite fingerprint migration, and two-party confirmation. Tests mock model embeddings so they can run without downloading model weights; **passing unit tests is not a substitute for an end-to-end run with installed models**.
 
+## Agent knowledge base
+
+The repository carries a progressive-disclosure knowledge base for agent-assisted work:
+
+- `AGENTS.md` at the root is the always-loaded index: workflow rules, red lines, a routing table and the directory map. It is deliberately kept short.
+- `.dsh/agents/` holds the per-topic facts (architecture, matching engine, fingerprints, data model, privacy, operations, invariants), read on demand through the routing table.
+- `.dsh/logs/` records why things are the way they are; the index there is hand-maintained, not generated.
+- `backlog.md` lists what is still missing, grouped by what it blocks.
+- `python .dsh/tools/check_links.py` verifies every relative link and heading anchor in the knowledge base.
+
+Development happens on the `dsh` branch. `main` is the confirmed state and is merged into only after explicit confirmation.
+
 ## Privacy and limitations
 
 - Authentication secrets and the SQLite database are local and excluded by `.gitignore`. Do not commit real user reports, personal photographs, or passwords.
