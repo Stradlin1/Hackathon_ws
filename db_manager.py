@@ -223,6 +223,20 @@ class Database:
         return [match[0] for match in matches]
     
 
+    def get_lost_item_owner(self, item_id: int) -> User | None:
+        self.cur.execute('''SELECT u.username, u.password, u.email FROM users u
+                            JOIN lost_items li ON li.user_id = u.username
+                            WHERE li.item_id = ? LIMIT 1''', (item_id,))
+        row = self.cur.fetchone()
+        return User(*row) if row else None
+
+    def get_found_item_owner(self, item_id: int) -> User | None:
+        self.cur.execute('''SELECT u.username, u.password, u.email FROM users u
+                            JOIN found_items fi ON fi.user_id = u.username
+                            WHERE fi.item_id = ? LIMIT 1''', (item_id,))
+        row = self.cur.fetchone()
+        return User(*row) if row else None
+
     # close connection
     def close(self):
         self.con.close()

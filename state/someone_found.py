@@ -33,8 +33,13 @@ def someone_found(authenticator):
 
 
     st.subheader("Contact the person who found your item")
-    st.write(db.get_users()[1].username)
-    st.write(db.get_users()[1].email)
+    owner = db.get_found_item_owner(st.session_state['hit_id'])
+    if owner is not None:
+        st.write(owner.username)
+        st.write(owner.email)
+    else:
+        st.warning('Contact information is unavailable.')
+    db.close()
 
     # go back to profile page
     st.button('Profile', on_click=change_state, args=['profile'])

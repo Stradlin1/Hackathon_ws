@@ -1,0 +1,13 @@
+# Local authentication configuration template; do not use placeholder values in production.
+credentials:
+  usernames:
+    demo_user:
+      email: "demo@example.invalid"
+      name: "Demo User"
+      password: "REPLACE_WITH_A_PASSWORD_HASH"
+cookie:
+  name: "lost_found_auth"
+  key: "REPLACE_WITH_A_RANDOM_SECRET"
+  expiry_days: 7
+preauthorized:
+  emails: []

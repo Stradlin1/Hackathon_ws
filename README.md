@@ -4,7 +4,11 @@
 
 This project implements an intelligent lost and found system that leverages CLIP (Contrastive Language-Image Pre-training) for semantic image-text matching. The application enables users to report lost or found items and automatically matches them using multimodal embeddings, making it easier to reunite people with their belongings.
 
-2024, ETH Zurich Hackathon
+Originally developed as a lost-and-found hackathon prototype in 2024.
+
+Source of the adapted prototype: https://github.com/vstrozzi/hackathon-image-finder-tool-CLIP
+
+The project uses third-party libraries subject to their respective licenses. Attribution to the source project is retained; sample accounts and credentials should not be committed.
 
 ## Abstract
 

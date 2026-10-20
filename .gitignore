@@ -3,3 +3,7 @@
 *.yaml
 *.db
 test.ipynb
+.env
+.env.*
+!.env.example
+.ipynb_checkpoints/

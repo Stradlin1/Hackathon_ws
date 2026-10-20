@@ -33,5 +33,10 @@ def someone_lost(authenticator):
     
     # get user who lost the item with it_id
     st.subheader("Contact the user who lost the item")
-    st.write(db.get_users()[0].username)
-    st.write(db.get_users()[0].email)
+    owner = db.get_lost_item_owner(st.session_state['hit_id'])
+    if owner is not None:
+        st.write(owner.username)
+        st.write(owner.email)
+    else:
+        st.warning('Contact information is unavailable.')
+    db.close()

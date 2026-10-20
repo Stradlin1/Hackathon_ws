@@ -16,10 +16,7 @@ db = Database()
 
 # populate users
 users_tmp = []
-jsmith_index = 0
 for user, mail in zip(users, mails):
-    if user == 'jsmith':
-        jsmith_index = len(users_tmp)
     u = User(user, None, mail)
     db.insert_user(u)
     users_tmp.append(u)
@@ -43,16 +40,18 @@ for item in items:
     db.insert_item(item)
 print('added items')
 
-# populate lost found
-db.insert_lost_item(items[0], users_tmp[jsmith_index])
-db.insert_lost_item(items[1], users_tmp[jsmith_index])
-db.insert_found_item(items[2], users_tmp[jsmith_index])
-db.insert_found_item(items[3], users_tmp[jsmith_index])
-print('added lost found')
-
-# populate matches
-db.insert_match(12, 10)
-print('added matches')
+# Add demonstration items only when a configured account exists.
+if users_tmp:
+    demo_user = users_tmp[0]
+    db.insert_lost_item(items[0], demo_user)
+    db.insert_lost_item(items[1], demo_user)
+    db.insert_found_item(items[2], demo_user)
+    db.insert_found_item(items[3], demo_user)
+    print('added demonstration associations')
+    db.insert_match(12, 10)
+    print('added demonstration match')
+else:
+    print('no configured users; skipped demonstration associations')
 
 # close database
 db.close()
