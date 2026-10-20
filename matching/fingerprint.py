@@ -229,12 +229,24 @@ def _extract_json_object(text: str) -> dict:
 
 @lru_cache(maxsize=1)
 def _load_generator():
-    if os.environ.get("FINGERPRINT_TEXT_MODEL", "google/flan-t5-small").lower() in ("off", "none", "disabled"):
+    name = os.environ.get("FINGERPRINT_TEXT_MODEL", "google/flan-t5-small")
+    if name.lower() in ("off", "none", "disabled"):
         return None
     try:
-        from transformers import pipeline
-        return pipeline("text2text-generation", model=os.environ.get("FINGERPRINT_TEXT_MODEL", "google/flan-t5-small"), device=-1)
-    except (ImportError, OSError, RuntimeError, ValueError):
+        import torch
+        from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
+    except ImportError:
+        return None
+    device = 0 if torch.cuda.is_available() else -1
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(name, local_files_only=True)
+        model = AutoModelForSeq2SeqLM.from_pretrained(name, local_files_only=True)
+    except (OSError, ValueError, AttributeError):
+        tokenizer = AutoTokenizer.from_pretrained(name)
+        model = AutoModelForSeq2SeqLM.from_pretrained(name)
+    try:
+        return pipeline("text2text-generation", model=model, tokenizer=tokenizer, device=device)
+    except (OSError, RuntimeError, ValueError):
         return None
 
 

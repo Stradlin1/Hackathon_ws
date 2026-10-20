@@ -12,3 +12,4 @@
 | 2026-10-21 | [readme-rewrite](2026-10-21-readme-rewrite.md) | README 覆写为中文，补页面流程、模块地图、已知限制与常见问题，并核对旧表述。 |
 | 2026-10-21 | [chinese-ui](2026-10-21-chinese-ui.md) | 前端文案全部中文化：页面标签、认证表单、状态/方法映射、错误消息，并更新烟测。 |
 | 2026-10-21 | [registration-form](2026-10-21-registration-form.md) | 用自建中文注册表单替换认证库表单：支持中文姓名、无验证码、中文错误。 |
+| 2026-10-21 | [caption-slow-hf](2026-10-21-caption-slow-hf.md) | 图注慢/加载失败：HF 不可达、缓存不完整、BLIP 在 CPU；改为本地优先 + GPU。 |

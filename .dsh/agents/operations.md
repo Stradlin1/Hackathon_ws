@@ -7,16 +7,9 @@
 
 ## 本机实测（2026-10-21）
 
-```text
-python3 -V                          → Python 3.11.15
-python3 -c "import streamlit"       → ModuleNotFoundError: No module named 'streamlit'
-python3 -c "import torch"           → ModuleNotFoundError: No module named 'torch'
-python3 -c "import numpy"           → No module named 'numpy.core._multiarray_umath'
-python3 -c "import pytest"          → AttributeError: __spec__（numpy/pytest 安装损坏）
-```
-
-- 【事实】因此**本机目前既跑不了 `streamlit run app.py`，也跑不了 `pytest`**。这不是代码问题，是环境问题。
-- 【事实】系统 Python 里混着一份损坏的 numpy；**不要**继续往系统环境 `pip install`，用干净 venv。
+- 【事实】系统 Python 3.11.15 的 numpy 已损坏（`No module named 'numpy.core._multiarray_umath'`），**不要**用它装包。
+- 【事实】实际运行环境是 conda `aquacore`（Python 3.10.21）：torch 2.8.0+cu129（CUDA True，RTX 5070）、numpy 2.2.5、Pillow 12.3.0、streamlit 1.65、transformers 4.57.6、sentence-transformers 3.4.1、pytest 8.4.2。
+- 【事实】`streamlit run app.py` 已验证 HTTP 200；`pytest` 24 passed（本机 ROS Humble 的 pytest 插件缺 `lark`，需加 `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`）。
 
 ## 推荐环境
 
@@ -62,7 +55,7 @@ python -m compileall -q app.py matching state
 
 - 【事实】测试 mock 掉 embedding 与模型权重，可以离线跑；`test_pages_smoke.py` 用假 `streamlit` 模块。
 - 【事实】测试不覆盖真实模型精度、真实图片质量、SQLite 并发。
-- 【待验证】本机尚未成功执行过上述命令（见「本机实测」）。
+- 【事实】2026-10-21 在 aquacore 环境跑通：24 passed；注意 ROS 的 pytest 插件会因缺 `lark` 直接崩，必须带 `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`。
 
 ## 离线与降级
 
@@ -73,6 +66,17 @@ python -m compileall -q app.py matching state
 - 【设计】三层降级：无文本生成器 → 规则抽取；无 BLIP → 提示"请手动描述"，仍可提交；无 CLIP → 报告无法处理，页面报错并停止。
 - 【事实】所有降级都静默或一次性 warning，不会中断进程。
 
+## 模型下载与设备
+
+- 【事实】2026-10-21 实测：本机 `huggingface.co:443` 连接超时，`hf-mirror.com` 可用；未设镜像时 BLIP/CLIP 会一直卡在下载，表现为「图片描述生成很慢」。
+- 【设计】启动前 `export HF_ENDPOINT=https://hf-mirror.com`，再 `streamlit run app.py`；**已经运行的进程要重启**才会读到新环境变量。
+- 【事实】首次上传会下载 BLIP（约 1 GB）与 CLIP（约 1 GB），缓存在 `~/.cache/huggingface`；下载完成后可离线使用。
+- 【事实】即使权重已在缓存里，`from_pretrained` 默认仍会向 huggingface.co 发 HEAD 请求；在本机实测会连续重试 5 次、卡住 30 秒以上，然后报「Can't load image processor」。
+- 【设计】`matching/models.py` 统一 **先 `local_files_only=True` 读缓存**，只有抛出 `OSError/ValueError/AttributeError` 时才联网下载。这样缓存完整时优先本地，缓存缺失时仍能首次下载。
+- 【事实】仅靠 `local_files_only` 不够：sentence-transformers 的子模块仍会向 huggingface.co 发 HEAD。缓存完整后应在启动命令里加 `HF_HUB_OFFLINE=1`；实测同一个模型从「卡 45 s+」变成 **0.7 s** 加载完成。
+- 【事实】BLIP 加载后会在 CUDA 可用时 `.to("cuda")`；CLIP 由 sentence-transformers 自动选择 GPU。2026-10-21 实测（RTX 5070）：BLIP 加载约 9 s，首次图注约 2.7 s，之后约 0.16 s/张（800×800）。
+- 【事实】同一张图重复上传会命中 `st.cache_data` 的图注缓存，不再重新生成。
+
 ## 故障表
 
 | 症状 | 原因 | 动作 |
@@ -81,7 +85,8 @@ python -m compileall -q app.py matching state
 | `No module named 'streamlit'` | venv 未激活或依赖未装 | 激活 `.venv` 后重装 |
 | `numpy.core._multiarray_umath` | 系统 numpy 与 pip numpy 混用/损坏 | 删 `.venv` 重建，不要装进系统 Python |
 | `AttributeError: __spec__`（导入 pytest 时） | 同上，numpy 损坏的连带症状 | 同样重建 venv |
-| 图注提示「自动图片描述不可用」 | BLIP 权重/网络不可用 | 手填描述，或先联网下载权重 |
+| 图注提示「自动图片描述不可用」 | BLIP 权重/网络不可用 | 设置 `HF_ENDPOINT=https://hf-mirror.com` 后重启，或手填描述 |
+| 图片描述一直转圈 | 正在下载 BLIP，或缓存的权重不完整、触发了 HEAD 重试 | 设镜像后重启；确认缓存里有 `preprocessor_config.json` 与权重 |
 | 候选为空 | 对面还没有未匹配报告 | 用另一账号先报一件；`reset_db.py` 可造样例 |
 | `database is locked` | 多会话并发写 | 演示时单用户操作，或等待/重试 |
 | 数据"消失" | 从别的目录启动，用了另一个 `items.db` | 回到仓库根目录启动 |

@@ -8,23 +8,45 @@ import numpy as np
 from PIL import Image, ImageOps
 
 
+def _sentence_transformer(name: str):
+    """Load from the local cache first; only touch the network when it is missing."""
+    from sentence_transformers import SentenceTransformer
+
+    try:
+        return SentenceTransformer(name, local_files_only=True)
+    except (OSError, ValueError, AttributeError):
+        return SentenceTransformer(name)
+
+
 @lru_cache(maxsize=1)
 def _image_encoder():
-    from sentence_transformers import SentenceTransformer
-    return SentenceTransformer("sentence-transformers/clip-ViT-B-32")
+    return _sentence_transformer("sentence-transformers/clip-ViT-B-32")
 
 
 @lru_cache(maxsize=1)
 def _text_encoder():
-    from sentence_transformers import SentenceTransformer
-    return SentenceTransformer("sentence-transformers/clip-ViT-B-32-multilingual-v1")
+    return _sentence_transformer("sentence-transformers/clip-ViT-B-32-multilingual-v1")
 
 
 @lru_cache(maxsize=1)
 def _image_captioner():
+    import torch
     from transformers import BlipForConditionalGeneration, BlipProcessor
+
     name = "Salesforce/blip-image-captioning-base"
-    return BlipProcessor.from_pretrained(name), BlipForConditionalGeneration.from_pretrained(name)
+    try:
+        processor = BlipProcessor.from_pretrained(name, local_files_only=True)
+        model = BlipForConditionalGeneration.from_pretrained(name, local_files_only=True)
+    except (OSError, ValueError, AttributeError):
+        processor = BlipProcessor.from_pretrained(name)
+        model = BlipForConditionalGeneration.from_pretrained(name)
+    if torch.cuda.is_available():
+        try:
+            model = model.to("cuda")
+        except (RuntimeError, OSError):
+            pass
+    model.eval()
+    return processor, model
 
 
 def clean_image(image: Image.Image) -> Image.Image:
@@ -52,7 +74,8 @@ def encode_text(text: str) -> np.ndarray:
 def caption_image(image: Image.Image) -> str:
     import torch
     processor, model = _image_captioner()
-    inputs = processor(images=image, return_tensors="pt")
+    device = next(model.parameters()).device
+    inputs = processor(images=image, return_tensors="pt").to(device)
     with torch.inference_mode():
         output = model.generate(**inputs, max_new_tokens=70)
     return processor.decode(output[0], skip_special_tokens=True).strip()

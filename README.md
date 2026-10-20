@@ -68,6 +68,7 @@
 - **Python 3.10 或 3.11**（推荐 3.11）。
 - 不强制 GPU；CPU 可以跑，但首次加载模型与推理会明显更慢。
 - 首次使用需要联网下载 CLIP/BLIP（以及可选的 flan-t5）权重，模型缓存在用户目录，不入库。
+- 国内网络访问 `huggingface.co` 可能超时；启动前设置 `export HF_ENDPOINT=https://hf-mirror.com` 可走镜像。
 
 ### 2. 安装依赖
 
@@ -112,7 +113,17 @@ python reset_db.py
 
 ### 5. 启动
 
+首次启动（需要下载模型时）走镜像：
+
 ```bash
+export HF_ENDPOINT=https://hf-mirror.com
+streamlit run app.py
+```
+
+模型缓存到 `~/.cache/huggingface` 后，改用离线模式启动，避免每次加载都向不可达的 `huggingface.co` 发请求：
+
+```bash
+export HF_HUB_OFFLINE=1
 streamlit run app.py
 ```
 
@@ -202,7 +213,8 @@ python -m compileall -q app.py matching state
 | `缺少 config_auth.yaml` | 复制 [`config_auth.example.yaml`](config_auth.example.yaml) 并填写哈希与 cookie key |
 | `No module named 'streamlit'` | venv 未激活或依赖未装：重新 `pip install -r requirements.txt` |
 | `numpy.core._multiarray_umath` 导入失败 | 系统 Python 与 venv 的 numpy 混装或损坏：删掉 `.venv` 重建，不要装进系统环境 |
-| 图片图注提示不可用 | BLIP 权重未下载或网络不可用：先联网加载，或手填描述继续 |
+| 图片图注提示不可用 | BLIP 权重未下载或网络不可用：设置 `HF_ENDPOINT=https://hf-mirror.com` 后重启，或手填描述继续 |
+| 图片描述一直转圈 / 很慢 | 首次在下载 BLIP（约 1 GB）；若缓存已完整仍慢，是加载时在向 `huggingface.co` 发 HEAD。设 `HF_ENDPOINT` 下载，之后用 `HF_HUB_OFFLINE=1` 启动 |
 | 候选列表为空 | 对面还没有未配对的报告：换账号先报一件，或运行 `reset_db.py` |
 | 数据「消失」 | 从别的目录启动了应用，或运行过 `reset_db.py`（会删库） |
 
