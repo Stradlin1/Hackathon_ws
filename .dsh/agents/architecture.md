@@ -21,6 +21,7 @@
 | `state/interactive_match.py` | 展示指纹与 top 5、追问、重排、发请求 | `interactive_match` |
 | `state/profile.py` | 我的失物/拾物、收到/发出/已确认的请求 | `profile` |
 | `matching/models.py` | 懒加载 CLIP/BLIP；图像清洗与编码 | `_image_encoder`、`_text_encoder`、`_image_captioner`、`clean_image` |
+| `matching/vlm.py` | 可选的 DeepSeek 视觉识别：照片 → 描述 + 图上文字 | `describe_image`、`available` |
 | `matching/fingerprint.py` | 文本 → 六维属性；生成式提案校验 | `fingerprint_from_text`、`extract_known` |
 | `matching/workflow.py` | 取未匹配候选、CLIP 语义检索 top 8、惰性补指纹、组装会话 | `build_session` |
 | `matching/engine.py` | 证据重排与信息增益追问 | `rank_candidates`、`choose_question` |

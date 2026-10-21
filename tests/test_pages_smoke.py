@@ -166,7 +166,9 @@ def test_found_report_page_generates_session(monkeypatch):
     ui.uploaded = SimpleNamespace(getvalue=lambda: memory.getvalue())
     module = importlib.import_module('state.found')
     monkeypatch.setattr(module, 'st', ui)
-    monkeypatch.setattr(module, '_cached_caption', lambda data: ('a black umbrella', '一把黑伞'))
+    monkeypatch.setattr(module, '_cached_analysis', lambda data: {
+        'description': 'a black umbrella', 'visible_text': '',
+        'english': 'a black umbrella', 'source': 'blip'})
     monkeypatch.setattr(module, 'encode_image', lambda img: np.array([1., 0.]))
     monkeypatch.setattr(module, 'fingerprint_from_text',
                         lambda text, caption, caption_raw='', **kwargs: {'attributes': {'color': 'black'}, 'method': 'rules'})

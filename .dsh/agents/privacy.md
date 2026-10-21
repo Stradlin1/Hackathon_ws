@@ -43,6 +43,14 @@ pending --responder reject--> rejected
 - 【事实】注册页是自建表单（`state/register.py`）：支持中文姓名、不要验证码；用户名 3–20 位、密码至少 8 位且含字母和数字，重复用户名/邮箱会被拒绝。
 - 【事实】注册只改 `credentials.usernames` 再把整份配置写回，`cookie` 段原样保留：别人注册不会让已登录的会话失效，轮换 `cookie.key` 才会（见 [architecture](architecture.md)）。
 
+## 第三方视觉模型（可选）
+
+- 【事实】设置 `DEEPSEEK_API_KEY` 后，拾获登记会把**照片副本**（JPEG base64）发送到 DeepSeek API 做一次识别；不设置则全程不联网。
+- 【事实】发送内容只有图片与一段固定提示词，不含用户名、邮箱、坐标或历史记录。
+- 【设计】识别结果（描述、图上文字、属性）随指纹存进本机 `items.db`；API 侧是否留存由服务方政策决定，本地无法控制。
+- 【事实】页面隐私说明会随开关变化：开启时写"照片会发送到 DeepSeek API 一次"，关闭时写"不联网"。
+- 【待验证】DeepSeek API 的数据留存与训练使用条款未逐条核对；对外部署前必须核实。
+
 ## 图像卫生
 
 - 【事实】`clean_image` 依次做：`ImageOps.exif_transpose`（按方向纠正）→ `thumbnail((1600,1600))` → `convert("RGB")` → 复制成新 `Image`。EXIF 不随新图保留。

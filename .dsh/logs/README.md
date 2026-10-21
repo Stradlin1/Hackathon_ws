@@ -21,3 +21,4 @@
 | 2026-10-21 | [ui-redesign](2026-10-21-ui-redesign.md) | 界面重做：设计令牌 + 全局 CSS + 顶栏/卡片组件 + SVG 图标，登录改自建表单。 |
 | 2026-10-21 | [intake-questions](2026-10-21-intake-questions.md) | 拾获侧改为登记前主动追问：双语图注、属性确认芯片、池上信息增益选题、无标记中性。 |
 | 2026-10-21 | [merge-to-main](2026-10-21-merge-to-main.md) | 把 `dsh` 的 12 个提交 fast-forward 进 `main`：合并清单、验证结果与遗留项。 |
+| 2026-10-21 | [deepseek-vision](2026-10-21-deepseek-vision.md) | 拾获登记接入 DeepSeek 视觉模型：VLM 优先、BLIP 兜底、图上文字进指纹。 |

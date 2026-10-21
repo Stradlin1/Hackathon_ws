@@ -23,16 +23,27 @@ from db_manager import Database, Item
 from matching.engine import DISPLAY, UNSURE, propose_intake_questions
 from matching.fingerprint import display_value, fingerprint_from_text
 from matching.models import caption_image_pair, clean_image, encode_image
+from matching.vlm import available as vlm_available
+from matching.vlm import describe_image
 from matching.storage import FingerprintStore
 from matching.workflow import build_session
 from ui.components import card, page_header, topbar
 
 
 @st.cache_data(show_spinner=False)
-def _cached_caption(image_bytes: bytes) -> tuple[str, str]:
-    """(english, chinese) captions for the uploaded photo."""
+def _cached_analysis(image_bytes: bytes) -> dict:
+    """Describe the photo once: DeepSeek vision when configured, local BLIP otherwise."""
     picture = clean_image(Image.open(io.BytesIO(image_bytes)))
-    return caption_image_pair(picture)
+    remote = describe_image(picture)
+    if remote is not None:
+        return {
+            'description': remote['description'],
+            'visible_text': remote['visible_text'],
+            'english': '',
+            'source': 'vlm',
+        }
+    english, chinese = caption_image_pair(picture)
+    return {'description': chinese, 'visible_text': '', 'english': english, 'source': 'blip'}
 
 
 def _lost_pool() -> list[dict]:
@@ -71,7 +82,11 @@ def found(authenticator):
             st.caption('照片和描述会被抽成指纹（颜色、材质、标记……），再和失主的文字描述做证据比对。')
         with card('privacy'):
             st.markdown('### 隐私')
-            st.caption('照片只保存在本机 items.db；先做 EXIF 清洗，再入库。')
+            if vlm_available():
+                st.caption('照片保存在本机 items.db；识别时会把照片发送到 DeepSeek API 一次，'
+                           '检索与排序仍在本机完成。')
+            else:
+                st.caption('照片只保存在本机 items.db；未配置视觉模型时不联网，先做 EXIF 清洗再入库。')
 
     with form_col:
         uploaded = st.file_uploader('上传物品照片', type=['png', 'jpg', 'jpeg'])
@@ -92,11 +107,21 @@ def found(authenticator):
             st.image(image, caption='物品照片', width=350)
 
         try:
-            with st.spinner('正在生成图片描述……'):
-                caption_raw, caption = _cached_caption(image_bytes)
+            with st.spinner('正在识别物品……'):
+                analysis = _cached_analysis(image_bytes)
         except (ImportError, OSError, RuntimeError, ValueError) as exc:
-            caption, caption_raw = '', ''
-            st.warning(f'自动图片描述不可用（{exc}）。请手动描述物品。')
+            analysis = {'description': '', 'visible_text': '', 'english': '', 'source': 'none'}
+            st.warning(f'自动识别不可用（{exc}）。请手动描述物品。')
+        caption = analysis['description']
+        caption_raw = analysis['english']
+        visible_text = analysis['visible_text']
+        if analysis['source'] == 'vlm':
+            st.caption('由 DeepSeek 视觉模型识别，提交前请核对；断网或未配置 key 时自动改用本地 BLIP。')
+        elif analysis['source'] == 'blip':
+            st.caption('由本地 BLIP 生成，细节可能不准；配好 DeepSeek key 后会改用视觉模型识别。')
+        default_description = caption
+        if visible_text:
+            default_description = f'{caption}\n可见文字：{visible_text}'
 
         digest = hashlib.sha1(image_bytes).hexdigest()[:12]
         preview = fingerprint_from_text('', caption=caption, caption_raw=caption_raw, generate=False)
@@ -118,7 +143,7 @@ def found(authenticator):
 
         with st.form('found_report'):
             description = st.text_area('物品描述（可以修改自动生成的描述）',
-                                       value=caption, max_chars=1000,
+                                       value=default_description, max_chars=1000,
                                        placeholder='例：白色无线鼠标，底部有一道浅划痕')
             with open('rooms.json', encoding='utf-8') as file:
                 locations = json.load(file)

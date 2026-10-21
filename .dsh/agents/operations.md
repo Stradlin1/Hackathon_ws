@@ -57,6 +57,23 @@ python -m compileall -q app.py matching state
 - 【事实】测试不覆盖真实模型精度、真实图片质量、SQLite 并发。
 - 【事实】2026-10-21 在 aquacore 环境跑通：24 passed；注意 ROS 的 pytest 插件会因缺 `lark` 直接崩，必须带 `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`。
 
+## DeepSeek 视觉（可选）
+
+| 环境变量 | 默认 | 效果 |
+| --- | --- | --- |
+| `DEEPSEEK_API_KEY` | 未设置 | 未设置则整个功能关闭，拾获登记走本地 BLIP |
+| `DEEPSEEK_VISION` | `on` | 设 `off`/`0`/`false` 可在保留 key 的情况下临时关闭 |
+| `DEEPSEEK_VISION_MODEL` | `deepseek-flash` | 多模态对话模型名；`deepseek-v4-flash-vision-exp` 仍可调但已下线 |
+| `DEEPSEEK_API_URL` | `https://api.deepseek.com/chat/completions` | 换代理或自建网关时用 |
+| `DEEPSEEK_TIMEOUT` | `25` | 秒；超时按调用失败处理 |
+
+- 【事实】请求是 OpenAI 兼容格式：`content` 数组里放 `{"type": "text"}` 与 `{"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,..."}}`；图片先缩放到 1600px 内再以 JPEG 质量 85 编码。
+- 【事实】要求模型输出 json（`response_format={"type": "json_object"}`），只取 `description`、`visible_text`、`attributes` 三个键。
+- 【设计】每次登记最多调用一次，结果进 `st.cache_data` 与指纹；检索、重排、追问完全不联网。
+- 【事实】任何失败（无 key、超时、HTTP 错误、JSON 不合法、content 为空）都返回 `None`，页面自动回退本地 BLIP，不会中断登记。
+- 【事实】只用标准库 `urllib`，不依赖 openai SDK，`requirements.txt` 未新增依赖。
+- 【待验证】真实 key 下的延迟与计费未在本仓库实测；接口与模型名以 https://api-docs.deepseek.com/zh-cn/guides/vision 为准。
+
 ## 离线与降级
 
 | 环境变量 | 默认 | 效果 |
