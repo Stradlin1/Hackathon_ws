@@ -14,7 +14,9 @@
   <a href="#s1" data-dot="1"><i></i><span>封面</span></a>
   <a href="#s2" data-dot="2"><i></i><span>问题</span></a>
   <a href="#s3" data-dot="3"><i></i><span>现场匹配</span></a>
-  <a href="#s4" data-dot="4"><i></i><span>分数解释</span></a>
+  <a href="#s3b" data-dot="4"><i></i><span>语义</span></a>
+  <a href="#s3c" data-dot="5"><i></i><span>证据</span></a>
+  <a href="#s4" data-dot="6"><i></i><span>分数解释</span></a>
   <a href="#s5" data-dot="5"><i></i><span>追问</span></a>
   <a href="#s6" data-dot="6"><i></i><span>隐私</span></a>
   <a href="#s7" data-dot="7"><i></i><span>架构</span></a>
@@ -54,7 +56,7 @@
 
 <section class="slide" id="s2" data-title="问题">
   <div class="wrap">
-    <header class="sec-head"><span class="index">01</span><h2>两种人，两种信息</h2></header>
+    <header class="sec-head"><span class="index">02</span><h2>两种人，两种信息</h2></header>
     <p class="lede narrow">失主记得细节，但只有文字；拾获者手里有实物，但只拍了一张照片。中间隔着一层模态。</p>
     <div class="split">
       <article class="panel quote">
@@ -78,7 +80,7 @@
 
 <section class="slide" id="s3" data-title="现场匹配">
   <div class="wrap">
-    <header class="sec-head"><span class="index">02</span><h2>一次真实的匹配</h2><p class="sub">数据来自本机 items.db，分数由匹配引擎现场重算，页面只负责播放。</p></header>
+    <header class="sec-head"><span class="index">03</span><h2>一次真实的匹配</h2><p class="sub">数据来自本机 items.db，分数由匹配引擎现场重算，页面只负责播放。</p></header>
     <div class="match-grid">
       <article class="panel query-card">
         <span class="tag lost">失物描述</span>
@@ -101,9 +103,61 @@
   </div>
 </section>
 
+<section class="slide" id="s3b" data-title="语义">
+  <div class="wrap">
+    <header class="sec-head"><span class="index">04</span><h2>语义：把一句话和一张照片放进同一个空间</h2><p class="sub">不是关键词匹配，是 CLIP：同一个模型分别编码文字和图片，得到同维度的向量，再比方向。</p></header>
+    <div class="semantic-grid">
+      <article class="panel vec-card">
+        <span class="tag lost">失主的话</span>
+        <p class="vec-text" id="vecText"></p>
+        <div class="vec-bars" id="textBars" aria-hidden="true"></div>
+        <small id="textCaps">文本向量 · 512 维，这里画前 32 维</small>
+      </article>
+      <div class="cos-badge">
+        <b id="cosValue">0.000</b>
+        <span>cos 相似度</span>
+        <button class="btn" id="runSemantic">算一次</button>
+      </div>
+      <article class="panel vec-card">
+        <span class="tag found">拾获的照片</span>
+        <img class="vec-photo" id="vecPhoto" src="assets/img/found-01.jpg" alt="白色充电宝">
+        <div class="vec-bars" id="imageBars" aria-hidden="true"></div>
+        <small>图像向量 · 同一维度</small>
+      </article>
+    </div>
+    <p class="note">0.323 不算高：同一句描述在 12 件物品里并不是只有一件像。语义负责“把可能的都捞进来”，顺序还要靠证据拉开。</p>
+  </div>
+</section>
+
+<section class="slide" id="s3c" data-title="证据与合并">
+  <div class="wrap">
+    <header class="sec-head"><span class="index">05</span><h2>证据，是能逐项核对的事实</h2><p class="sub">从描述里只抽字面出现过的六类属性；缺了不扣分，矛盾才扣分。</p></header>
+    <div class="evidence-grid">
+      <article class="panel">
+        <div class="seg" id="exampleToggle" role="group" aria-label="选择例子">
+          <button data-i="0" class="on">完全一致</button>
+          <button data-i="1">有一项矛盾</button>
+        </div>
+        <table class="cmp">
+          <thead><tr><th>字段</th><th>失主</th><th>拾获</th><th>判定</th></tr></thead>
+          <tbody id="cmpBody"></tbody>
+        </table>
+        <p class="note">“未提及”既不进分子也不进分母；“没有特殊标记”对大多数物品都成立，按中性处理。</p>
+      </article>
+      <article class="panel formula">
+        <div class="formula-line"><span>语义</span><b id="fSem">0.323</b><i>× 0.72</i><em id="fSemPart">0.233</em></div>
+        <div class="formula-line"><span>证据</span><b id="fEv">1.000</b><i>→ (1+e)/2 × 0.28</i><em id="fEvPart">0.280</em></div>
+        <div class="formula-line"><span>时间 / 地点</span><b id="fPrior">0.050</b><i>软先验，只加不减</i><em id="fPriorPart">+0.050</em></div>
+        <div class="formula-total"><span>排序指标</span><b id="fScore">0.562</b></div>
+        <p class="note">e =（Σ一致 − 0.8 × Σ矛盾）÷ Σ可比；两边都提到的字段才参与。切换上面的例子，数字跟着变。</p>
+      </article>
+    </div>
+    <p class="note">0.72 / 0.28 是固定权重：证据从全一致翻到全矛盾，最多只值 0.28，等价于 0.389 的相似度差——语义接近时，矛盾翻不过来。</p>
+  </div>
+</section>
 <section class="slide" id="s4" data-title="分数解释">
   <div class="wrap">
-    <header class="sec-head"><span class="index">03</span><h2>分数不是黑箱</h2><p class="sub">点任意候选，看它为什么排在这里；拖动权重，看排序怎么变。</p></header>
+    <header class="sec-head"><span class="index">06</span><h2>分数不是黑箱</h2><p class="sub">点任意候选，看它为什么排在这里；拖动权重，看排序怎么变。</p></header>
     <div class="explain-grid">
       <div class="stack" id="explainList"></div>
       <article class="panel detail">
@@ -121,7 +175,7 @@
 
 <section class="slide" id="s5" data-title="追问">
   <div class="wrap">
-    <header class="sec-head"><span class="index">04</span><h2>排错了，就问一句</h2><p class="sub">这一对是真实的失败样本：只看语义，耳机掉到第 3。系统挑了一个最能分开候选的问题。</p></header>
+    <header class="sec-head"><span class="index">07</span><h2>排错了，就问一句</h2><p class="sub">这一对是真实的失败样本：只看语义，耳机掉到第 3。系统挑了一个最能分开候选的问题。</p></header>
     <div class="clarify-grid">
       <article class="panel">
         <span class="tag lost">失主补充</span>
@@ -138,7 +192,7 @@
 
 <section class="slide" id="s6" data-title="隐私">
   <div class="wrap">
-    <header class="sec-head"><span class="index">05</span><h2>联系方式，只在双方同意后出现</h2></header>
+    <header class="sec-head"><span class="index">08</span><h2>联系方式，只在双方同意后出现</h2></header>
     <div class="privacy-grid">
       <article class="panel" id="pAlice">
         <h3>失主 alice</h3>
@@ -163,7 +217,7 @@
 
 <section class="slide" id="s7" data-title="架构">
   <div class="wrap">
-    <header class="sec-head"><span class="index">06</span><h2>三层，全部跑在本机</h2><p class="sub">悬停任意模块，看它对应的真实文件。</p></header>
+    <header class="sec-head"><span class="index">09</span><h2>三层，全部跑在本机</h2><p class="sub">悬停任意模块，看它对应的真实文件。</p></header>
     <div class="layers">
       <article class="layer">
         <h3>页面</h3>
@@ -185,7 +239,7 @@
 
 <section class="slide" id="s8" data-title="数据">
   <div class="wrap">
-    <header class="sec-head"><span class="index">07</span><h2>12 对，11 对排第一</h2><p class="sub">6 个账号、30 件物品；每对都是“另一个人写的描述 + 一张照片”。</p></header>
+    <header class="sec-head"><span class="index">10</span><h2>12 对，11 对排第一</h2><p class="sub">6 个账号、30 件物品；每对都是“另一个人写的描述 + 一张照片”。</p></header>
     <div class="metrics">
       <div class="metric-row"><span class="label">时间/地点软先验 开</span><div class="track"><i style="--w:91.7%"></i></div><b>11 / 12</b></div>
       <div class="metric-row"><span class="label">时间/地点软先验 关</span><div class="track"><i style="--w:83.3%"></i></div><b>10 / 12</b></div>
@@ -201,14 +255,14 @@
 
 <section class="slide closing" id="s9" data-title="收尾">
   <div class="wrap">
-    <header class="sec-head"><span class="index">08</span><h2>所以，它到底做了什么</h2></header>
+    <header class="sec-head"><span class="index">11</span><h2>所以，它到底做了什么</h2></header>
     <ol class="takeaways">
       <li><b>跨模态召回</b><span>一句话和一张照片，进同一个向量空间。</span></li>
       <li><b>可核对证据</b><span>颜色、材质、标记逐项比对；缺失不扣分，矛盾才扣。</span></li>
       <li><b>信息增益追问</b><span>挑最能分开候选的问题，一次一个，最多四轮。</span></li>
     </ol>
     <div class="cta">
-      <a class="btn primary big" href="http://127.0.0.1:8501" target="_blank" rel="noreferrer">打开本地演示</a>
+      <a class="btn primary big" id="openApp" href="http://127.0.0.1:8501/" target="_blank" rel="noreferrer">打开本地演示</a>
       <figure class="qr"><img src="assets/img/qr.png" alt="本地演示地址二维码"><figcaption>手机扫码（同一 Wi-Fi）<br><b id="appUrl">127.0.0.1:8501</b></figcaption></figure>
     </div>
     <p class="hint">404NotFound · 单机运行 · 数据不出机器</p>

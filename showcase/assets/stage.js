@@ -412,6 +412,106 @@
     });
   }
 
+  /* ---------------- slide 03b: semantic ---------------- */
+  function initSemantic() {
+    var block = data().semantic;
+    var textBox = document.getElementById("textBars");
+    var imageBox = document.getElementById("imageBars");
+    var cos = document.getElementById("cosValue");
+    document.getElementById("vecText").textContent = data().pair.lost.desc;
+    if (data().pair.found.photo) document.getElementById("vecPhoto").src = data().pair.found.photo;
+
+    function bars(container, values) {
+      values.forEach(function (value) {
+        var bar = document.createElement("i");
+        if (value < 0) bar.className = "neg";
+        bar.dataset.h = String(Math.max(5, Math.abs(value) * 92));
+        container.appendChild(bar);
+      });
+    }
+    bars(textBox, block.text);
+    bars(imageBox, block.image);
+
+    function reveal() {
+      [textBox, imageBox].forEach(function (container) {
+        Array.prototype.forEach.call(container.children, function (bar, index) {
+          setTimeout(function () { bar.style.height = bar.dataset.h + "%"; }, index * 16);
+        });
+      });
+      var start = performance.now();
+      function step(now) {
+        var t = Math.min(1, (now - start) / 800);
+        cos.textContent = (block.cosine * t).toFixed(3);
+        if (t < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    document.getElementById("runSemantic").addEventListener("click", reveal);
+    if ("IntersectionObserver" in window) {
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) { reveal(); observer.disconnect(); }
+        });
+      }, { threshold: 0.6 });
+      observer.observe(document.getElementById("s3b"));
+    } else {
+      reveal();
+    }
+  }
+
+  /* ---------------- slide 03c: evidence ---------------- */
+  function initEvidence() {
+    var examples = data().formula.examples;
+    var body = document.getElementById("cmpBody");
+    var toggle = document.getElementById("exampleToggle");
+    var fields = ["类型", "颜色", "材质", "形状", "品牌", "特殊标记"];
+    var lostAttrs = data().pair.lost.attrs || {};
+
+    function render(index) {
+      var example = examples[index];
+      var candidate = data().candidates[example.candidate];
+      var attrs = candidate.attrs || {};
+      body.innerHTML = "";
+      fields.forEach(function (key) {
+        var left = lostAttrs[key];
+        var right = attrs[key];
+        var status = "—";
+        var cls = "na";
+        if (!left || !right) {
+          status = "未提及";
+        } else if ((candidate.matches || []).indexOf(key) >= 0) {
+          status = "一致";
+          cls = "ok";
+        } else if ((candidate.conflicts || []).indexOf(key) >= 0) {
+          status = "矛盾";
+          cls = "bad";
+        }
+        var tr = document.createElement("tr");
+        tr.innerHTML = '<td class="k">' + key + "</td><td>" + (left || "—") +
+          "</td><td>" + (right || "—") + '</td><td class="' + cls + '">' + status + "</td>";
+        body.appendChild(tr);
+      });
+      document.getElementById("fSem").textContent = example.semantic.toFixed(3);
+      document.getElementById("fEv").textContent = example.evidence.toFixed(3);
+      document.getElementById("fPrior").textContent = example.prior.toFixed(3);
+      document.getElementById("fScore").textContent = example.score.toFixed(3);
+      document.getElementById("fSemPart").textContent = (example.semantic * 0.72).toFixed(3);
+      document.getElementById("fEvPart").textContent = (((example.evidence + 1) / 2) * 0.28).toFixed(3);
+      document.getElementById("fPriorPart").textContent = "+" + example.prior.toFixed(3);
+    }
+
+    toggle.addEventListener("click", function (event) {
+      var button = event.target.closest("button[data-i]");
+      if (!button) return;
+      Array.prototype.forEach.call(toggle.querySelectorAll("button"), function (item) {
+        item.classList.toggle("on", item === button);
+      });
+      render(Number(button.dataset.i));
+    });
+    render(0);
+  }
+
   /* ---------------- boot ---------------- */
   fetch("data/demo.json", { cache: "no-store" })
     .then(function (response) {
@@ -423,13 +523,17 @@
       initNav();
       initBridge();
       initMatch();
+      initSemantic();
+      initEvidence();
       initExplain();
       initClarify();
       initPrivacy();
       initPaths();
       var appUrl = document.getElementById("appUrl");
-      if (appUrl && payload.meta && payload.meta.app_lan) {
-        appUrl.textContent = payload.meta.app_lan.replace("http://", "");
+      var openApp = document.getElementById("openApp");
+      if (payload.meta && payload.meta.app_lan) {
+        if (appUrl) appUrl.textContent = payload.meta.app_lan.replace("http://", "");
+        if (openApp) openApp.href = payload.meta.app_lan.replace(/\/$/, "") + "/";
       }
     })
     .catch(function (error) {

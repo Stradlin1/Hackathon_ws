@@ -19,6 +19,8 @@ import sys
 from datetime import date
 from pathlib import Path
 
+import numpy as np
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
@@ -185,6 +187,44 @@ def main() -> int:
         summary_on = summarize([evaluate_pair(db, store, l, f, use_priors=True) for l, f in pairs])
         summary_off = summarize([evaluate_pair(db, store, l, f, use_priors=False) for l, f in pairs])
 
+        # Real embeddings for the "what is semantic" slide: the first 32 of the
+        # 512 dimensions, scaled together so the bars are comparable.
+        lost_vec = np.asarray(primary.lost.emb, dtype=float).reshape(-1)
+        found_item = db.get_item(primary.found_id)
+        found_vec = np.asarray(found_item.emb, dtype=float).reshape(-1)
+        cosine = float(np.dot(lost_vec, found_vec) /
+                       (np.linalg.norm(lost_vec) * np.linalg.norm(found_vec)))
+        head = 32
+        scale = float(max(np.abs(lost_vec[:head]).max(), np.abs(found_vec[:head]).max())) or 1.0
+        semantic = {
+            "dim": int(lost_vec.size),
+            "head": head,
+            "text": [round(float(v) / scale, 3) for v in lost_vec[:head]],
+            "image": [round(float(v) / scale, 3) for v in found_vec[:head]],
+            "cosine": round(cosine, 3),
+        }
+
+        def weights_of(row: dict) -> tuple[float, float]:
+            agree = sum(WEIGHTS[FIELD_OF[name]] for name in row["matches"])
+            conflict = sum(WEIGHTS[FIELD_OF[name]] for name in row["conflicts"])
+            return round(agree, 2), round(conflict, 2)
+
+        examples = []
+        for index in (0, 1):
+            row = primary.ranked[index]
+            agree, conflict = weights_of(row)
+            examples.append({
+                "name": row["description"][:16],
+                "agree": agree,
+                "conflict": conflict,
+                "evidence": round((agree - 0.8 * conflict) / (agree + conflict), 3)
+                              if (agree + conflict) else 0.0,
+                "semantic": round(float(row["semantic_score"]), 3),
+                "prior": round(float(row["prior_bonus"]), 3),
+                "score": round(float(row["score"]), 3),
+                "candidate": index,
+            })
+
         lan = lan_address()
         app_lan = f"http://{lan}:8501"
         qrcode.make(app_lan).save(IMG / "qr.png")
@@ -212,6 +252,8 @@ def main() -> int:
             },
             "weights": {"semantic": 0.72, "evidence": 0.28},
             "candidates": candidates,
+            "semantic": semantic,
+            "formula": {"weights": WEIGHTS, "examples": examples},
             "clarify": clarify,
             "privacy": {"from": "alice", "to": "bob",
                         "email": "bob@example.invalid", "phone": "138 0000 0000"},

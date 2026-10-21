@@ -16,7 +16,7 @@ def payload() -> dict:
 
 def test_demo_data_shape():
     data = payload()
-    assert set(data) == {"meta", "pair", "weights", "candidates", "clarify", "privacy"}
+    assert set(data) == {"meta", "pair", "weights", "candidates", "semantic", "formula", "clarify", "privacy"}
     assert data["meta"]["pairs"] >= 10
     assert len(data["candidates"]) == 6
     assert sum(1 for row in data["candidates"] if row["expected"]) == 1
@@ -53,7 +53,7 @@ def test_clarify_is_a_real_rerank():
 
 def test_html_assets_exist():
     html = (SHOW / "index.html").read_text(encoding="utf-8")
-    assert html.count('class="slide') >= 9
+    assert html.count('class="slide') >= 11
     for rel in re.findall(r'(?:src|href)="(assets/[^"]+)"', html):
         assert (SHOW / rel).is_file(), rel
 
@@ -62,7 +62,24 @@ def test_page_has_no_network_dependencies():
     for name in ("index.html", "assets/stage.css", "assets/stage.js"):
         text = (SHOW / name).read_text(encoding="utf-8")
         for url in re.findall(r"https?://[^\s\"')]+", text):
-            assert url in ALLOWED_URLS, f"{name} references {url}"
+            assert url.rstrip("/") in ALLOWED_URLS, f"{name} references {url}"
+
+
+def test_semantic_block_is_real():
+    data = payload()
+    semantic = data["semantic"]
+    assert semantic["dim"] == 512
+    assert len(semantic["text"]) == len(semantic["image"]) == semantic["head"]
+    assert all(-1.0 <= value <= 1.0 for value in semantic["text"] + semantic["image"])
+    assert abs(semantic["cosine"] - data["candidates"][0]["semantic"]) < 0.002
+
+
+def test_formula_examples_add_up():
+    for example in payload()["formula"]["examples"]:
+        expected = (0.72 * example["semantic"]
+                    + 0.28 * ((example["evidence"] + 1) / 2)
+                    + example["prior"])
+        assert abs(expected - example["score"]) < 0.002
 
 
 def test_qr_still_points_at_the_local_app():
