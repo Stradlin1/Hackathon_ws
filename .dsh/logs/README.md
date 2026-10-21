@@ -20,3 +20,4 @@
 | 2026-10-21 | [auth-cookie-refresh](2026-10-21-auth-cookie-refresh.md) | 刷新掉登录：写 cookie 的组件被 st.rerun() 丢弃；改为下一轮补写，并用请求头 cookie 静默恢复。 |
 | 2026-10-21 | [ui-redesign](2026-10-21-ui-redesign.md) | 界面重做：设计令牌 + 全局 CSS + 顶栏/卡片组件 + SVG 图标，登录改自建表单。 |
 | 2026-10-21 | [intake-questions](2026-10-21-intake-questions.md) | 拾获侧改为登记前主动追问：双语图注、属性确认芯片、池上信息增益选题、无标记中性。 |
+| 2026-10-21 | [merge-to-main](2026-10-21-merge-to-main.md) | 把 `dsh` 的 12 个提交 fast-forward 进 `main`：合并清单、验证结果与遗留项。 |
