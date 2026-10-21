@@ -8,7 +8,7 @@
 > [!IMPORTANT]
 > 1. **本文件只是索引 + 工作方式 + 红线 + 路由表 + 目录结构**。分主题事实在 `.dsh/agents/`——动手前按路由表读对应文档，改完回来更新它。
 > 2. **每句话都必须能归类**：`【事实】`= 代码/README/实测；`【设计】`= 本仓库已实现的方案；`【待验证】`= 假设，验证前不能作为依据。**没标 `【事实】` 的数字不许写进代码常量。**
-> 3. 本仓库已在本地环境跑通（108 tests；`streamlit` HTTP 200）。本地 `items.db` 已灌入 6 个账号的演示数据：12 件拾获 + 18 件失物（每个账号 2 + 3），照片在 `demo/photos/`。当前卡点见 [`backlog.md`](backlog.md)。
+> 3. 本仓库已在本地环境跑通（115 tests；`streamlit` HTTP 200），上台演示页在 `showcase/`。本地 `items.db` 已灌入 6 个账号的演示数据：12 件拾获 + 18 件失物（每个账号 2 + 3），照片在 `demo/photos/`。当前卡点见 [`backlog.md`](backlog.md)。
 
 ## 工作方式：git 分支纪律（**先读这条**）
 
@@ -47,6 +47,7 @@
 | 改配对请求状态机、上限、冷却、自动关闭 | [`.dsh/agents/request-lifecycle.md`](.dsh/agents/request-lifecycle.md) |
 | 改发布时间、内容指纹、图片/文本查重、水印 | [`.dsh/agents/anti-copy.md`](.dsh/agents/anti-copy.md) |
 | 改界面、样式、顶栏、卡片 | [`.dsh/agents/ui.md`](.dsh/agents/ui.md) |
+| 改上台展示页、演示数据、讲稿 | [`.dsh/agents/showcase.md`](.dsh/agents/showcase.md) |
 | 加页面、改跳转、Streamlit 状态 | [`.dsh/agents/architecture.md`](.dsh/agents/architecture.md) |
 | 装环境、跑不起来、模型权重、离线 | [`.dsh/agents/operations.md`](.dsh/agents/operations.md) |
 | 接/关 DeepSeek 视觉、图片识别走哪个模型 | [`.dsh/agents/operations.md`](.dsh/agents/operations.md) |
@@ -85,6 +86,7 @@
 | `tests/` | 算法与页面烟测（模型权重被 mock） |
 | `static/` | 品牌图 `logo_rounded.png`（页面图标与顶栏） |
 | `demo/photos/` | 已提交的 12 张演示照片（8 张 CC BY 2.0，署名见 `SOURCES.md`），供 `seed_demo.py` 复现同一份数据 |
+| `showcase/` | 上台演示用的静态单页（9 屏 + 交互），数据由 `build_demo.py` 从 `items.db` 生成 |
 
 **为什么只记目录**：列到文件就成了文件系统的第二份副本，下一次提交就过期；目录职责很少变，写下来才守得住。想知道有哪些模块，代码才是权威。同理不要写「某目录下有几个文件」。
 
@@ -101,4 +103,4 @@
 
 ## 相关文档
 
-[`.dsh/agents/`](.dsh/agents/) 下的 [architecture](.dsh/agents/architecture.md)、[matching-engine](.dsh/agents/matching-engine.md)、[fingerprint](.dsh/agents/fingerprint.md)、[data-model](.dsh/agents/data-model.md)、[privacy](.dsh/agents/privacy.md)、[notifications](.dsh/agents/notifications.md)、[lifecycle](.dsh/agents/lifecycle.md)、[report-and-feed](.dsh/agents/report-and-feed.md)、[request-lifecycle](.dsh/agents/request-lifecycle.md)、[anti-copy](.dsh/agents/anti-copy.md)、[operations](.dsh/agents/operations.md)、[invariants](.dsh/agents/invariants.md)；未完成事项见 [`backlog.md`](backlog.md)，过程见 [`.dsh/logs/`](.dsh/logs/README.md)。
+[`.dsh/agents/`](.dsh/agents/) 下的 [architecture](.dsh/agents/architecture.md)、[showcase](.dsh/agents/showcase.md)、[matching-engine](.dsh/agents/matching-engine.md)、[fingerprint](.dsh/agents/fingerprint.md)、[data-model](.dsh/agents/data-model.md)、[privacy](.dsh/agents/privacy.md)、[notifications](.dsh/agents/notifications.md)、[lifecycle](.dsh/agents/lifecycle.md)、[report-and-feed](.dsh/agents/report-and-feed.md)、[request-lifecycle](.dsh/agents/request-lifecycle.md)、[anti-copy](.dsh/agents/anti-copy.md)、[operations](.dsh/agents/operations.md)、[invariants](.dsh/agents/invariants.md)；未完成事项见 [`backlog.md`](backlog.md)，过程见 [`.dsh/logs/`](.dsh/logs/README.md)。

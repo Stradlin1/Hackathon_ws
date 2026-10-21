@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>404NotFound · 拍一张照片，找到它的主人</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2316324F'/%3E%3Ccircle cx='16' cy='14' r='6' fill='none' stroke='%232DD4BF' stroke-width='2.5'/%3E%3Cpath d='M20 18l5 5' stroke='%232DD4BF' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/stage.css">
+</head>
+<body>
+<div class="ambient" aria-hidden="true"></div>
+
+<nav class="dots" aria-label="章节导航">
+  <a href="#s1" data-dot="1"><i></i><span>封面</span></a>
+  <a href="#s2" data-dot="2"><i></i><span>问题</span></a>
+  <a href="#s3" data-dot="3"><i></i><span>现场匹配</span></a>
+  <a href="#s4" data-dot="4"><i></i><span>分数解释</span></a>
+  <a href="#s5" data-dot="5"><i></i><span>追问</span></a>
+  <a href="#s6" data-dot="6"><i></i><span>隐私</span></a>
+  <a href="#s7" data-dot="7"><i></i><span>架构</span></a>
+  <a href="#s8" data-dot="8"><i></i><span>数据</span></a>
+  <a href="#s9" data-dot="9"><i></i><span>收尾</span></a>
+</nav>
+
+<main id="deck">
+
+<section class="slide hero in" id="s1" data-title="封面">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="kicker"><span class="dot"></span>404NotFound · 跨模态失物招领</p>
+      <h1>拍一张照片，<br><em>找到它的主人。</em></h1>
+      <p class="lede">失主只写一句话，拾获者只拍一张照片。我们把两边映射到同一个向量空间，再用<span class="hl">能核对的证据</span>把候选重新排一遍。</p>
+      <dl class="stats">
+        <div><dt>12</dt><dd>组演示数据</dd></div>
+        <div><dt>108</dt><dd>项自动化测试</dd></div>
+        <div><dt>0.944</dt><dd>MRR（本机评估）</dd></div>
+      </dl>
+      <p class="hint"><kbd>→</kbd> 开始，或用右侧页码跳转</p>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <div class="hv-card hv-query">
+        <span class="tag lost">失主</span>
+        <p>白色充电宝，顶部贴着红色标签</p>
+        <div class="hv-chips"><i>充电宝</i><i>白色</i><i>塑料</i></div>
+      </div>
+      <div class="hv-bridge"><b>0.562</b><span>排序指标</span></div>
+      <div class="hv-card hv-photo">
+        <img src="assets/img/found-01.jpg" alt="">
+        <div class="hv-meta"><b>4 项证据一致</b><i>类型 · 颜色 · 材质 · 特殊标记</i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s2" data-title="问题">
+  <div class="wrap">
+    <header class="sec-head"><span class="index">01</span><h2>两种人，两种信息</h2></header>
+    <p class="lede narrow">失主记得细节，但只有文字；拾获者手里有实物，但只拍了一张照片。中间隔着一层模态。</p>
+    <div class="split">
+      <article class="panel quote">
+        <span class="tag lost">失主</span>
+        <p>“白色充电宝，塑料的，顶部贴着<span class="same">红色标签</span>，一个 Type-C 一个 USB。”</p>
+        <footer>只有文字，没有照片</footer>
+      </article>
+      <button class="bridge" id="bridgeBtn" aria-describedby="bridgeNote">
+        <span>同一件东西？</span>
+        <small id="bridgeNote">悬停，看哪些词能对上</small>
+      </button>
+      <article class="panel photo-card">
+        <span class="tag found">拾获者</span>
+        <img src="assets/img/found-01.jpg" alt="白色充电宝的照片">
+        <footer>只有照片，没有描述</footer>
+      </article>
+    </div>
+    <p class="note">关键词匹配会漏掉同义说法；纯图像相似会把黑色耳机排到黑色行李箱后面。所以我们不猜，我们排序并解释。</p>
+  </div>
+</section>
+
+<section class="slide" id="s3" data-title="现场匹配">
+  <div class="wrap">
+    <header class="sec-head"><span class="index">02</span><h2>一次真实的匹配</h2><p class="sub">数据来自本机 items.db，分数由匹配引擎现场重算，页面只负责播放。</p></header>
+    <div class="match-grid">
+      <article class="panel query-card">
+        <span class="tag lost">失物描述</span>
+        <p class="desc" id="queryDesc"></p>
+        <div class="chips" id="queryChips"></div>
+        <p class="loc" id="queryLoc"></p>
+      </article>
+      <div class="cand-col">
+        <div class="controls">
+          <button class="btn primary" id="runMatch">开始匹配</button>
+          <div class="seg" role="group" aria-label="排序依据">
+            <button data-mode="evidence" class="on">语义 + 证据</button>
+            <button data-mode="semantic">只看语义</button>
+          </div>
+        </div>
+        <ol class="cand-list" id="candList"></ol>
+        <p class="note">分数是排序指标，不是所有权概率。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s4" data-title="分数解释">
+  <div class="wrap">
+    <header class="sec-head"><span class="index">03</span><h2>分数不是黑箱</h2><p class="sub">点任意候选，看它为什么排在这里；拖动权重，看排序怎么变。</p></header>
+    <div class="explain-grid">
+      <div class="stack" id="explainList"></div>
+      <article class="panel detail">
+        <header class="detail-head"><span id="explainTitle">选择一个候选</span><b id="explainScore"></b></header>
+        <ul class="attr-rows" id="attrRows"></ul>
+        <div class="mix">
+          <div class="mix-label"><span>语义 <b id="mixSem">72%</b></span><span>证据 <b id="mixEv">28%</b></span></div>
+          <input id="mixSlider" type="range" min="0" max="100" value="72" aria-label="语义权重">
+          <p class="note">拖动只演示权重的作用；系统里固定为 0.72 / 0.28。</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="s5" data-title="追问">
+  <div class="wrap">
+    <header class="sec-head"><span class="index">04</span><h2>排错了，就问一句</h2><p class="sub">这一对是真实的失败样本：只看语义，耳机掉到第 3。系统挑了一个最能分开候选的问题。</p></header>
+    <div class="clarify-grid">
+      <article class="panel">
+        <span class="tag lost">失主补充</span>
+        <p class="desc" id="clarifyLost"></p>
+        <p class="question" id="clarifyQ"></p>
+        <div class="options" id="clarifyOptions"></div>
+        <p class="verdict" id="clarifyVerdict">还没有回答。</p>
+      </article>
+      <ol class="cand-list compact" id="clarifyList"></ol>
+    </div>
+    <p class="note">回答后：错误候选（绿色 logo 的单肩包）被压下去，耳机从第 3 升到第 2。要升到第 1 还差更多证据，我们不夸大。</p>
+  </div>
+</section>
+
+<section class="slide" id="s6" data-title="隐私">
+  <div class="wrap">
+    <header class="sec-head"><span class="index">05</span><h2>联系方式，只在双方同意后出现</h2></header>
+    <div class="privacy-grid">
+      <article class="panel" id="pAlice">
+        <h3>失主 alice</h3>
+        <p class="mini">候选第 1：白色充电宝 · 排序指标 0.56</p>
+        <button class="btn primary" id="sendReq">发送配对请求</button>
+        <p class="state" id="aliceState">尚未发送</p>
+      </article>
+      <article class="panel" id="pBob">
+        <h3>拾获者 bob</h3>
+        <p class="mini">收到一条配对请求</p>
+        <div class="contact masked" id="bobContact">
+          <span class="row"><i>邮箱</i><b class="secret">••••••••••</b></span>
+          <span class="row"><i>手机</i><b class="secret">••••••••••</b></span>
+        </div>
+        <div class="row-btns"><button class="btn" id="acceptReq">接受</button><button class="btn ghost" id="rejectReq">拒绝</button></div>
+        <p class="state" id="bobState">等待处理</p>
+      </article>
+    </div>
+    <p class="note">页面里用的是 example.invalid 与占位号码；真实系统里，只有 accepted 之后才 JOIN users。</p>
+  </div>
+</section>
+
+<section class="slide" id="s7" data-title="架构">
+  <div class="wrap">
+    <header class="sec-head"><span class="index">06</span><h2>三层，全部跑在本机</h2><p class="sub">悬停任意模块，看它对应的真实文件。</p></header>
+    <div class="layers">
+      <article class="layer">
+        <h3>页面</h3>
+        <ul><li data-path="state/report.py">登记 / 浏览 / 通知</li><li data-path="state/interactive_match.py">匹配与追问</li><li data-path="ui/theme.py">设计令牌</li></ul>
+      </article>
+      <article class="layer accent">
+        <h3>匹配引擎</h3>
+        <ul><li data-path="matching/models.py">CLIP 跨模态召回</li><li data-path="matching/engine.py">证据重排</li><li data-path="matching/fingerprint.py">属性指纹</li></ul>
+      </article>
+      <article class="layer">
+        <h3>数据</h3>
+        <ul><li data-path="db_manager.py">SQLite：物品 / 用户 / 配对</li><li data-path="matching/storage.py">指纹表</li><li data-path="matching/notifications.py">订阅与通知</li></ul>
+      </article>
+    </div>
+    <div class="pathbar"><code id="pathOut">matching/engine.py</code><span>悬停上面的模块</span></div>
+    <p class="note">没有云服务：照片、向量与配对都留在本机。只有主动开启 DeepSeek 视觉时，照片才会发送出去。</p>
+  </div>
+</section>
+
+<section class="slide" id="s8" data-title="数据">
+  <div class="wrap">
+    <header class="sec-head"><span class="index">07</span><h2>12 对，11 对排第一</h2><p class="sub">6 个账号、30 件物品；每对都是“另一个人写的描述 + 一张照片”。</p></header>
+    <div class="metrics">
+      <div class="metric-row"><span class="label">时间/地点软先验 开</span><div class="track"><i style="--w:91.7%"></i></div><b>11 / 12</b></div>
+      <div class="metric-row"><span class="label">时间/地点软先验 关</span><div class="track"><i style="--w:83.3%"></i></div><b>10 / 12</b></div>
+      <div class="metric-row"><span class="label">MRR</span><div class="track"><i style="--w:94.4%"></i></div><b>0.944 / 0.903</b></div>
+    </div>
+    <ul class="facts">
+      <li>唯一的 miss 是耳机：黑色耳机被黑色行李箱压过，排第 1 的是错的。</li>
+      <li>演示集里有 6 条没有对应照片的干扰失物，专门用来检验“能不能把无关的排下去”。</li>
+      <li>指标衡量排序质量，不是所有权概率；真实用户口述下的表现还没验证。</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide closing" id="s9" data-title="收尾">
+  <div class="wrap">
+    <header class="sec-head"><span class="index">08</span><h2>所以，它到底做了什么</h2></header>
+    <ol class="takeaways">
+      <li><b>跨模态召回</b><span>一句话和一张照片，进同一个向量空间。</span></li>
+      <li><b>可核对证据</b><span>颜色、材质、标记逐项比对；缺失不扣分，矛盾才扣。</span></li>
+      <li><b>信息增益追问</b><span>挑最能分开候选的问题，一次一个，最多四轮。</span></li>
+    </ol>
+    <div class="cta">
+      <a class="btn primary big" href="http://127.0.0.1:8501" target="_blank" rel="noreferrer">打开本地演示</a>
+      <figure class="qr"><img src="assets/img/qr.png" alt="本地演示地址二维码"><figcaption>手机扫码（同一 Wi-Fi）<br><b id="appUrl">127.0.0.1:8501</b></figcaption></figure>
+    </div>
+    <p class="hint">404NotFound · 单机运行 · 数据不出机器</p>
+  </div>
+</section>
+
+</main>
+
+<div class="hud"><span id="hudPage">01 / 09</span><span class="hud-keys"><kbd>←</kbd><kbd>→</kbd> 翻页 <kbd>空格</kbd> 下一步</span></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/stage.js"></script>
+</body>
+</html>

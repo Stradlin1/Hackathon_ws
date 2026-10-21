@@ -1,0 +1,372 @@
+{
+  "meta": {
+    "built_at": "2026-10-22",
+    "items": 30,
+    "users": 6,
+    "pairs": 12,
+    "top1_on": 11,
+    "top1_off": 10,
+    "mrr_on": 0.944,
+    "mrr_off": 0.903,
+    "app_local": "http://127.0.0.1:8501",
+    "app_lan": "http://172.26.186.115:8501"
+  },
+  "pair": {
+    "lost": {
+      "desc": "白色充电宝丢了，塑料的，顶部贴着红色标签，一个 Type-C 一个 USB 接口",
+      "location": "图书馆",
+      "attrs": {
+        "类型": "充电宝",
+        "颜色": "白色",
+        "材质": "塑料",
+        "特殊标记": "红色贴纸"
+      }
+    },
+    "found": {
+      "desc": "在图书馆三楼捡到的，一个白色充电宝，塑料外壳，顶部贴了红色小标签，有 Type-C 和 USB 口",
+      "photo": "assets/img/found-01.jpg"
+    }
+  },
+  "weights": {
+    "semantic": 0.72,
+    "evidence": 0.28
+  },
+  "candidates": [
+    {
+      "id": 4166417076435335205,
+      "desc": "在图书馆三楼捡到的，一个白色充电宝，塑料外壳，顶部贴了红色小标签，有 Type-C 和 USB 口",
+      "photo": "assets/img/found-01.jpg",
+      "score": 0.562,
+      "base": 0.512,
+      "prior": 0.05,
+      "semantic": 0.323,
+      "evidence": 1.0,
+      "evidence01": 1.0,
+      "matches": [
+        "类型",
+        "颜色",
+        "材质",
+        "特殊标记"
+      ],
+      "conflicts": [],
+      "attrs": {
+        "类型": "充电宝",
+        "颜色": "白色",
+        "材质": "塑料",
+        "特殊标记": "红色贴纸"
+      },
+      "expected": true
+    },
+    {
+      "id": 3221101365277723675,
+      "desc": "实验室捡到的白色机械键盘，塑料键帽，连着一根白色数据线",
+      "photo": "assets/img/found-02.jpg",
+      "score": 0.395,
+      "base": 0.365,
+      "prior": 0.03,
+      "semantic": 0.249,
+      "evidence": 0.331,
+      "evidence01": 0.666,
+      "matches": [
+        "颜色",
+        "材质"
+      ],
+      "conflicts": [
+        "类型"
+      ],
+      "attrs": {
+        "类型": "键盘",
+        "颜色": "白色",
+        "材质": "塑料"
+      },
+      "expected": false
+    },
+    {
+      "id": 27405229979280155,
+      "desc": "图书馆捡到一个浅绿色的无线鼠标，塑料壳，滚轮下面有个电量显示屏",
+      "photo": "assets/img/found-03.jpg",
+      "score": 0.351,
+      "base": 0.301,
+      "prior": 0.05,
+      "semantic": 0.279,
+      "evidence": -0.286,
+      "evidence01": 0.357,
+      "matches": [
+        "材质"
+      ],
+      "conflicts": [
+        "类型",
+        "颜色"
+      ],
+      "attrs": {
+        "类型": "鼠标",
+        "颜色": "绿色",
+        "材质": "塑料"
+      },
+      "expected": false
+    },
+    {
+      "id": 2919707180636136701,
+      "desc": "自习区捡到一个透明塑料水杯，绿色杯盖，杯身上印着 FUGUANG",
+      "photo": "assets/img/found-04.jpg",
+      "score": 0.3,
+      "base": 0.27,
+      "prior": 0.03,
+      "semantic": 0.236,
+      "evidence": -0.286,
+      "evidence01": 0.357,
+      "matches": [
+        "材质"
+      ],
+      "conflicts": [
+        "类型",
+        "颜色"
+      ],
+      "attrs": {
+        "类型": "杯子",
+        "颜色": "绿色",
+        "材质": "塑料",
+        "品牌": "富光"
+      },
+      "expected": false
+    },
+    {
+      "id": 1832382871547313331,
+      "desc": "在图书馆捡到黑色头戴耳机，耳罩上有白色 AKG 标志，带黑色线",
+      "photo": "assets/img/found-05.jpg",
+      "score": 0.237,
+      "base": 0.187,
+      "prior": 0.05,
+      "semantic": 0.221,
+      "evidence": -0.8,
+      "evidence01": 0.1,
+      "matches": [],
+      "conflicts": [
+        "类型",
+        "颜色",
+        "特殊标记"
+      ],
+      "attrs": {
+        "类型": "入耳式耳机",
+        "颜色": "黑色",
+        "特殊标记": "标志"
+      },
+      "expected": false
+    },
+    {
+      "id": 3362646517516651,
+      "desc": "教室捡到一个黑色拉杆双肩包，布面，底部有轮子，前面有拉链袋",
+      "photo": "assets/img/found-06.jpg",
+      "score": 0.216,
+      "base": 0.186,
+      "prior": 0.03,
+      "semantic": 0.219,
+      "evidence": -0.8,
+      "evidence01": 0.1,
+      "matches": [],
+      "conflicts": [
+        "类型",
+        "颜色"
+      ],
+      "attrs": {
+        "类型": "双肩包",
+        "颜色": "黑色"
+      },
+      "expected": false
+    }
+  ],
+  "clarify": {
+    "lost": "黑色头戴式耳机丢了，耳罩侧面印着 AKG，线也是黑色的",
+    "question": "你还记得物品上的划痕、贴纸、挂绳等独特标记吗？请描述，不确定可跳过。",
+    "field": "mark",
+    "answer": "标志",
+    "options": [
+      "有，是「AKG」标志",
+      "没有特别标记"
+    ],
+    "before": [
+      {
+        "id": 3176566063757404897,
+        "desc": "停车场捡到一个黑色布面行李箱，有拉链、顶部提手和滚轮",
+        "photo": "assets/img/found-07.jpg",
+        "score": 0.459,
+        "base": 0.429,
+        "prior": 0.03,
+        "semantic": 0.207,
+        "evidence": 1.0,
+        "evidence01": 1.0,
+        "matches": [
+          "颜色"
+        ],
+        "conflicts": [],
+        "attrs": {
+          "颜色": "黑色"
+        },
+        "expected": false
+      },
+      {
+        "id": 1751876107043656186,
+        "desc": "礼堂捡到一个米色翻盖单肩包，盖子上印着绿色植物图案，包身和肩带是黑色",
+        "photo": "assets/img/found-08.jpg",
+        "score": 0.456,
+        "base": 0.426,
+        "prior": 0.03,
+        "semantic": 0.202,
+        "evidence": 1.0,
+        "evidence01": 1.0,
+        "matches": [
+          "颜色"
+        ],
+        "conflicts": [],
+        "attrs": {
+          "颜色": "黑色",
+          "特殊标记": "绿色标志"
+        },
+        "expected": false
+      },
+      {
+        "id": 1832382871547313331,
+        "desc": "在图书馆捡到黑色头戴耳机，耳罩上有白色 AKG 标志，带黑色线",
+        "photo": "assets/img/found-05.jpg",
+        "score": 0.399,
+        "base": 0.349,
+        "prior": 0.05,
+        "semantic": 0.277,
+        "evidence": 0.064,
+        "evidence01": 0.532,
+        "matches": [
+          "颜色"
+        ],
+        "conflicts": [
+          "类型"
+        ],
+        "attrs": {
+          "类型": "入耳式耳机",
+          "颜色": "黑色",
+          "特殊标记": "标志"
+        },
+        "expected": true
+      },
+      {
+        "id": 3362646517516651,
+        "desc": "教室捡到一个黑色拉杆双肩包，布面，底部有轮子，前面有拉链袋",
+        "photo": "assets/img/found-06.jpg",
+        "score": 0.334,
+        "base": 0.304,
+        "prior": 0.03,
+        "semantic": 0.215,
+        "evidence": 0.064,
+        "evidence01": 0.532,
+        "matches": [
+          "颜色"
+        ],
+        "conflicts": [
+          "类型"
+        ],
+        "attrs": {
+          "类型": "双肩包",
+          "颜色": "黑色"
+        },
+        "expected": false
+      }
+    ],
+    "after": [
+      {
+        "id": 3176566063757404897,
+        "desc": "停车场捡到一个黑色布面行李箱，有拉链、顶部提手和滚轮",
+        "photo": "assets/img/found-07.jpg",
+        "score": 0.459,
+        "base": 0.429,
+        "prior": 0.03,
+        "semantic": 0.207,
+        "evidence": 1.0,
+        "evidence01": 1.0,
+        "matches": [
+          "颜色"
+        ],
+        "conflicts": [],
+        "attrs": {
+          "颜色": "黑色"
+        },
+        "expected": false
+      },
+      {
+        "id": 1832382871547313331,
+        "desc": "在图书馆捡到黑色头戴耳机，耳罩上有白色 AKG 标志，带黑色线",
+        "photo": "assets/img/found-05.jpg",
+        "score": 0.457,
+        "base": 0.407,
+        "prior": 0.05,
+        "semantic": 0.277,
+        "evidence": 0.48,
+        "evidence01": 0.74,
+        "matches": [
+          "颜色",
+          "特殊标记"
+        ],
+        "conflicts": [
+          "类型"
+        ],
+        "attrs": {
+          "类型": "入耳式耳机",
+          "颜色": "黑色",
+          "特殊标记": "标志"
+        },
+        "expected": true
+      },
+      {
+        "id": 3362646517516651,
+        "desc": "教室捡到一个黑色拉杆双肩包，布面，底部有轮子，前面有拉链袋",
+        "photo": "assets/img/found-06.jpg",
+        "score": 0.334,
+        "base": 0.304,
+        "prior": 0.03,
+        "semantic": 0.215,
+        "evidence": 0.064,
+        "evidence01": 0.532,
+        "matches": [
+          "颜色"
+        ],
+        "conflicts": [
+          "类型"
+        ],
+        "attrs": {
+          "类型": "双肩包",
+          "颜色": "黑色"
+        },
+        "expected": false
+      },
+      {
+        "id": 1751876107043656186,
+        "desc": "礼堂捡到一个米色翻盖单肩包，盖子上印着绿色植物图案，包身和肩带是黑色",
+        "photo": "assets/img/found-08.jpg",
+        "score": 0.298,
+        "base": 0.268,
+        "prior": 0.03,
+        "semantic": 0.202,
+        "evidence": -0.125,
+        "evidence01": 0.438,
+        "matches": [
+          "颜色"
+        ],
+        "conflicts": [
+          "特殊标记"
+        ],
+        "attrs": {
+          "颜色": "黑色",
+          "特殊标记": "绿色标志"
+        },
+        "expected": false
+      }
+    ],
+    "before_rank": 3,
+    "after_rank": 2,
+    "target": 1832382871547313331
+  },
+  "privacy": {
+    "from": "alice",
+    "to": "bob",
+    "email": "bob@example.invalid",
+    "phone": "138 0000 0000"
+  }
+}
