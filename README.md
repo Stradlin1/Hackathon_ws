@@ -111,6 +111,15 @@ python reset_db.py
 
 它**先删除 `items.db`**，再写入 4 件合成物品和 1 条配对，方便直接演示。脚本会读取 `config_auth.yaml` 创建用户，所以必须先完成第 3 步。**需要保留旧报告时不要运行。**
 
+如果已经有真实照片，改用种子脚本（不会删库，已有物品时会拒绝运行）：
+
+```bash
+# 照片放在 input/：充电宝.jpg 水杯.jpg 键盘.jpg 鼠标.jpg
+HF_HUB_OFFLINE=1 python seed_demo.py
+```
+
+它会把 4 张照片写成 bob 的拾获物品，并写入 alice 的对应失物描述，同时预计算 CLIP 向量与指纹。
+
 ### 5. 启动
 
 首次启动（需要下载模型时）走镜像：
@@ -186,6 +195,7 @@ python -m compileall -q app.py matching state
 | `state/` | 各页面的 Streamlit 流程（登录、报失、报拾获、匹配、我的记录） |
 | `tests/` | 算法测试与页面烟测（mock 模型） |
 | `reset_db.py` | 删除并重建本地样例库 |
+| `seed_demo.py` | 从 `input/` 的 4 张照片灌入演示数据（bob 拾获 / alice 失物） |
 | `rooms.json` | 地点选项 |
 | `config_auth.example.yaml` | 账号配置模板 |
 | `static/` | 三张未被代码引用的图片，去留待定 |

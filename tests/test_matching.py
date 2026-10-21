@@ -26,6 +26,10 @@ def test_chinese_english_attribute_extraction():
     assert attrs["color"] == "black"
     assert attrs["mark"] == "red sticker"
     assert extract_known("a blue umbrella with curved handle")["shape"] == "curved handle"
+    assert extract_known("白色充电宝")["category"] == "power bank"
+    assert extract_known("机械键盘")["category"] == "keyboard"
+    assert extract_known("无线鼠标")["category"] == "mouse"
+    assert extract_known("FUGUANG 水杯")["brand"] == "fuguang"
 
 
 def test_display_value_translates_canonical_values():

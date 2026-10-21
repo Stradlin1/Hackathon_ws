@@ -32,6 +32,9 @@ VOCAB = {
         "glasses": ("glasses", "spectacles", "eyeglasses", "眼镜"),
         "watch": ("watch", "手表"),
         "notebook": ("notebook", "记事本", "笔记本"),
+        "power bank": ("power bank", "powerbank", "充电宝", "移动电源"),
+        "keyboard": ("keyboard", "键盘"),
+        "mouse": ("mouse", "鼠标"),
     },
     "color": {
         "black": ("black", "黑色", "黑"),
@@ -79,6 +82,7 @@ VOCAB = {
         "nike": ("nike", "耐克"),
         "adidas": ("adidas", "阿迪达斯"),
         "logitech": ("logitech", "罗技"),
+        "fuguang": ("fuguang", "富光"),
     },
     "mark": {
         "scratch": ("scratched", "scratch", "划痕", "刮痕", "划伤"),
@@ -98,6 +102,7 @@ VALUE_ZH = {
         "water bottle": "水瓶", "cup": "杯子", "keys": "钥匙", "wallet": "钱包",
         "backpack": "双肩包", "bag": "包", "phone": "手机", "laptop": "笔记本电脑",
         "book": "书", "glasses": "眼镜", "watch": "手表", "notebook": "笔记本",
+        "power bank": "充电宝", "keyboard": "键盘", "mouse": "鼠标",
     },
     "color": {
         "black": "黑色", "white": "白色", "red": "红色", "blue": "蓝色",
@@ -117,7 +122,7 @@ VALUE_ZH = {
     "brand": {
         "apple": "苹果", "sony": "索尼", "jbl": "JBL", "bose": "Bose",
         "samsung": "三星", "xiaomi": "小米", "huawei": "华为",
-        "nike": "耐克", "adidas": "阿迪达斯", "logitech": "罗技",
+        "nike": "耐克", "adidas": "阿迪达斯", "logitech": "罗技", "fuguang": "富光",
     },
     "mark": {
         "scratch": "划痕", "sticker": "贴纸", "crack": "裂纹", "dent": "凹痕",

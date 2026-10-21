@@ -25,10 +25,10 @@ for username, account in account_config.items():
 
 # Generate sample graphics locally, avoiding photographs or image metadata.
 samples = [
-    ('Set of keys', 'Reception', '#7d9bb5'),
-    ('Water bottle', 'Library', '#89bfa8'),
-    ('Headphones', 'Study Area', '#d4ae7c'),
-    ('Small notebook', 'Main Entrance', '#b8a0cc'),
+    ('钥匙串', '接待处', '#7d9bb5'),
+    ('水瓶', '图书馆', '#89bfa8'),
+    ('耳机', '自习区', '#d4ae7c'),
+    ('小笔记本', '主入口', '#b8a0cc'),
 ]
 items = []
 for i, (description, location, color) in enumerate(samples):
@@ -46,4 +46,4 @@ if users:
     db.insert_match(items[2].id, items[0].id)
 
 db.close()
-print('Local database initialized with synthetic sample items.')
+print('本地数据库已重建，并写入合成样例物品。')

@@ -27,6 +27,9 @@ private_data/
 # Experimental notebooks and user-generated files
 *.ipynb
 
+# 本地演示照片：用户私人照片，只用于灌数据，不提交
+/input/
+
 # ─────────────────────── 智能体指令的本机覆盖层 ─────────────────────────
 # DSH 除 AGENTS.md / CLAUDE.md 外还加载同名的 .local 覆盖层。那是「给智能体
 # 的本机指令」，不是项目事实；提交会把某个开发者的机器配置推给所有人。

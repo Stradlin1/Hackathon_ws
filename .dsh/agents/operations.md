@@ -77,6 +77,13 @@ python -m compileall -q app.py matching state
 - 【事实】BLIP 加载后会在 CUDA 可用时 `.to("cuda")`；CLIP 由 sentence-transformers 自动选择 GPU。2026-10-21 实测（RTX 5070）：BLIP 加载约 9 s，首次图注约 2.7 s，之后约 0.16 s/张（800×800）。
 - 【事实】同一张图重复上传会命中 `st.cache_data` 的图注缓存，不再重新生成。
 
+## 演示数据
+
+- 【事实】`seed_demo.py` 读取 `input/` 的 `充电宝.jpg`、`水杯.jpg`、`键盘.jpg`、`鼠标.jpg`：4 件拾获物品归 bob，4 件对应失物归 alice；写入时预计算 CLIP 向量与规则指纹。
+- 【事实】脚本在 `items` 已有记录时直接退出，避免重复灌入；它不会删除数据库。
+- 【设计】演示前备份一次：`cp items.db items.demo-backup.db`（`.db` 已被 `.gitignore` 排除）。
+- 【事实】`reset_db.py` 会删库，只用于重置，不要与 `seed_demo.py` 混用。
+
 ## 故障表
 
 | 症状 | 原因 | 动作 |
