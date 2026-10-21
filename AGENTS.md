@@ -8,7 +8,7 @@
 > [!IMPORTANT]
 > 1. **本文件只是索引 + 工作方式 + 红线 + 路由表 + 目录结构**。分主题事实在 `.dsh/agents/`——动手前按路由表读对应文档，改完回来更新它。
 > 2. **每句话都必须能归类**：`【事实】`= 代码/README/实测；`【设计】`= 本仓库已实现的方案；`【待验证】`= 假设，验证前不能作为依据。**没标 `【事实】` 的数字不许写进代码常量。**
-> 3. 本仓库已在本地环境跑通（108 tests；`streamlit` HTTP 200）。`demo/photos/` 有 12 张已提交的演示照片（bob 拾获 / alice 失物），本地 `items.db` 仍是早先的 4 对；重新灌库见 [`README.md`](README.md)。当前卡点见 [`backlog.md`](backlog.md)。
+> 3. 本仓库已在本地环境跑通（108 tests；`streamlit` HTTP 200）。本地 `items.db` 已灌入 6 个账号的演示数据：12 件拾获 + 18 件失物（每个账号 2 + 3），照片在 `demo/photos/`。当前卡点见 [`backlog.md`](backlog.md)。
 
 ## 工作方式：git 分支纪律（**先读这条**）
 
@@ -70,8 +70,8 @@
 | `app.py` | Streamlit 入口与页面分发 |
 | `db_manager.py` | `items.db` 既有表访问层（物品、用户、归属、匹配） |
 | `reset_db.py` | **破坏性**：删除 `items.db` 并写入合成样例 |
-| `create_demo_users.py` | 生成 `config_auth.yaml`：三个演示账号 + 随机 cookie key |
-| `seed_demo.py` | 从 `demo/photos/`（回退 `input/`）照片灌入演示数据（bob 拾获 / alice 失物），已有物品时拒绝运行 |
+| `create_demo_users.py` | 生成 `config_auth.yaml`：六个演示账号（密码=用户名）+ 随机 cookie key |
+| `seed_demo.py` | 从 `demo/photos/`（回退 `input/`）照片灌入多用户演示数据：6 个账号各 2 拾获 + 3 失物，已有物品时拒绝运行 |
 | `evaluate.py` | 离线评估：Recall@1/5、MRR；对比时间/地点软先验开关，支持自定义 labels JSON |
 | `download_models.py` | 一次性拉取所有模型权重（默认 hf-mirror，已缓存则跳过） |
 | `run.sh` | 以 `HF_HUB_OFFLINE=1` 启动 Streamlit |

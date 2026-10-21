@@ -122,7 +122,7 @@ python evaluate.py --verbose   # 需要已 seed 的 items.db；对比软先验�
 
 ## 演示数据
 
-- 【事实】`seed_demo.py` 读取 `demo/photos/`（回退 `input/`）的 12 张照片：12 件拾获物品归 bob，12 件对应失物归 alice；写入时预计算 CLIP 向量与规则指纹。其中 8 张来自 Open Images（CC BY 2.0），署名见 `demo/photos/SOURCES.md`。
+- 【事实】`seed_demo.py` 读取 `demo/photos/`（回退 `input/`）的 12 张照片，分给 6 个账号：每个账号 2 件拾获 + 3 件失物，合计 12 件拾获、18 件失物（其中 6 条失物是无照片的干扰项）；写入时预计算 CLIP 向量、规则指纹、`report_meta` 与图片哈希。其中 8 张照片来自 Open Images（CC BY 2.0），署名见 `demo/photos/SOURCES.md`。
 - 【事实】脚本在 `items` 已有记录时直接退出，避免重复灌入；它不会删除数据库。
 - 【设计】演示前备份一次：`cp items.db items.demo-backup.db`（`.db` 已被 `.gitignore` 排除）。
 - 【事实】`reset_db.py` 会删库，只用于重置，不要与 `seed_demo.py` 混用。

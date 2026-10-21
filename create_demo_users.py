@@ -1,8 +1,8 @@
-"""Create config_auth.yaml with the three demo accounts.
+"""Create config_auth.yaml with the six demo accounts.
 
-The passwords are public on purpose: this file only ever backs a local demo. A
-fresh random cookie key is generated on every run, so the file stays local and
-does not need to be shared between machines.
+Every password is the username itself (`alice` / `alice`). That is deliberate:
+the file only ever backs a local demo and is gitignored. A fresh random cookie
+key is generated on every run, so the file stays local and must not be shared.
 
     python create_demo_users.py           # refuses to overwrite
     python create_demo_users.py --force   # replace an existing config_auth.yaml
@@ -19,10 +19,14 @@ import yaml
 
 CONFIG = Path('config_auth.yaml')
 
+# username -> (display name, email, password); the password repeats the name.
 ACCOUNTS = {
-    'alice': ('Alice', 'alice@example.invalid', 'demo-pass-alice'),
-    'bob': ('Bob', 'bob@example.invalid', 'demo-pass-bob'),
-    'demo': ('Demo User', 'demo@example.invalid', 'Demo@1234'),
+    'alice': ('Alice', 'alice@example.invalid', 'alice'),
+    'bob': ('Bob', 'bob@example.invalid', 'bob'),
+    'carol': ('Carol', 'carol@example.invalid', 'carol'),
+    'david': ('David', 'david@example.invalid', 'david'),
+    'erin': ('Erin', 'erin@example.invalid', 'erin'),
+    'frank': ('Frank', 'frank@example.invalid', 'frank'),
 }
 
 
@@ -60,8 +64,8 @@ def main() -> None:
         encoding='utf-8',
     )
     CONFIG.chmod(0o600)
-    print('已写入 config_auth.yaml：alice / bob / demo')
-    print('密码见 README「3. 配置账号」；cookie key 每次随机生成。')
+    print('已写入 config_auth.yaml：' + ' / '.join(ACCOUNTS))
+    print('密码与用户名相同；cookie key 每次随机生成。')
 
 
 if __name__ == '__main__':

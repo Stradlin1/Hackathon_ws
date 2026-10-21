@@ -19,6 +19,7 @@ settings.yaml
 # Local databases and private uploads
 *.db
 *.db-*
+*.db.bak*
 *.sqlite
 *.sqlite3
 uploads/

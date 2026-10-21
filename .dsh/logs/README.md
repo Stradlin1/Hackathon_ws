@@ -38,3 +38,4 @@
 | 2026-10-22 | [publish-time-dedup-watermark](2026-10-22-publish-time-dedup-watermark.md) | 每帖显示发布时间+内容指纹；dHash 图片查重、文本近似提示、公开图水印；不能阻止截图但可追溯。 |
 | 2026-10-22 | [restore-after-zip-merge](2026-10-22-restore-after-zip-merge.md) | 压缩包合并把整个源码树记成删除；回退到 3f17878，清理 Windows 残留，再用完整目录重新导入。 |
 | 2026-10-22 | [demo-dataset-12](2026-10-22-demo-dataset-12.md) | 演示集扩到 12 对：8 张 Open Images（CC BY 2.0）照片 + 对应描述；临时库试灌 Recall@1 = 12/12。 |
+| 2026-10-22 | [multi-user-demo](2026-10-22-multi-user-demo.md) | 本地库换成 6 个账号（密码=用户名）：每人 2 拾获 + 3 失物，文案改用户口吻；evaluate Recall@1 = 11/12。 |

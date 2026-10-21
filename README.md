@@ -98,13 +98,16 @@ python -m pip install -r requirements.txt
 python create_demo_users.py
 ```
 
-会写出 `config_auth.yaml`，三个账号的密码是公开的（仅限本机演示）：
+会写出 `config_auth.yaml`，六个账号的**密码就是用户名本身**（仅限本机演示）：
 
 | 用户名 | 密码 | 用途 |
 | --- | --- | --- |
-| `alice` | `demo-pass-alice` | 失主 |
-| `bob` | `demo-pass-bob` | 拾获者 |
-| `demo` | `Demo`1234` | 随便试 |
+| `alice` | `alice` | 既报失也拾获 |
+| `bob` | `bob` | 既报失也拾获 |
+| `carol` | `carol` | 既报失也拾获 |
+| `david` | `david` | 既报失也拾获 |
+| `erin` | `erin` | 既报失也拾获 |
+| `frank` | `frank` | 既报失也拾获 |
 
 每次运行都会**重新生成随机的 `cookie.key`**，所以这个文件是本机的、不要共享。已经存在时脚本会拒绝覆盖，确实要换账号加 `--force`。
 
@@ -148,7 +151,13 @@ python reset_db.py
 HF_HUB_OFFLINE=1 python seed_demo.py
 ```
 
-它默认读 `demo/photos/` 里已提交的 12 张照片（充电宝 / 水杯 / 键盘 / 鼠标 / 耳机 / 钱包 / 棒球帽 / 背包 / 围巾 / 手提包 / 行李箱 / 雨伞），把它们写成 bob 的拾获物品，并写入 alice 的对应失物描述，同时预计算 CLIP 向量与指纹。新增的 8 张来自 Open Images，来源与 CC BY 2.0 署名见 [`demo/photos/SOURCES.md`](demo/photos/SOURCES.md)。想换成自己的照片，放进 `input/`（同名文件优先用 `demo/photos/`，缺哪张去哪张）。
+它默认读 `demo/photos/` 里已提交的 12 张照片（充电宝 / 水杯 / 键盘 / 鼠标 / 耳机 / 钱包 / 棒球帽 / 背包 / 围巾 / 手提包 / 行李箱 / 雨伞），分给 6 个账号：**每个账号 2 件拾获 + 3 件失物**，合计 12 件拾获、18 件失物。
+
+- 同一件物品的拾获者和报失者**不是同一个人**（失物池里还混了 6 条没有对应照片的干扰项）；
+- 拾获描述按“捡到的人随手打字”的口吻写，失物描述用另一套说法，只保留颜色/材质/标记这类可核对的事实；
+- 写入时预计算 CLIP 向量、规则指纹、发布时间与图片哈希。
+
+新增的 8 张来自 Open Images，来源与 CC BY 2.0 署名见 [`demo/photos/SOURCES.md`](demo/photos/SOURCES.md)。想换成自己的照片，放进 `input/`（同名文件优先用 `demo/photos/`，缺哪张去哪张）。
 
 ### 5. 下载模型（新机器/协作者只需一次）
 
