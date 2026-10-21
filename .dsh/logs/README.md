@@ -16,3 +16,4 @@
 | 2026-10-21 | [localization-backlog](2026-10-21-localization-backlog.md) | 盘点剩余英文化（地点下拉、BLIP 图注、Streamlit 控件等）写入 backlog，本轮不改代码。 |
 | 2026-10-21 | [demo-seed](2026-10-21-demo-seed.md) | 地点中文化；用 4 张照片灌入 bob 拾获 / alice 失物，4 条失物 top-1 全部命中。 |
 | 2026-10-21 | [chinese-caption](2026-10-21-chinese-caption.md) | BLIP 英文图注后接 opus-mt-en-zh 中译；模型本地缓存，失败回退英文。 |
+| 2026-10-21 | [model-bootstrap](2026-10-21-model-bootstrap.md) | 模型不入库；新增 download_models.py 与 run.sh，协作者一条命令拉齐并离线启动。 |

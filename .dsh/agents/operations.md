@@ -80,6 +80,12 @@ python -m compileall -q app.py matching state
 - 【事实】2026-10-21 实测译文：「a close up of a white computer mouse…」→「一张黑色表面白电脑鼠标的照片」；短句可读，但会出现「close up → 关闭」「table → 表格」这类误译，提交前应人工校对。
 - 【事实】同一张图重复上传会命中 `st.cache_data` 的图注缓存，不再重新生成。
 
+## 协作者首次使用
+
+- 【事实】模型权重不入库；新环境运行 `python download_models.py`，脚本默认走 `hf-mirror.com`，已缓存则跳过。
+- 【事实】`run.sh` 会设置 `HF_HUB_OFFLINE=1` 后启动 Streamlit；适合模型已缓存的日常演示。
+- 【设计】首次下载与离线启动拆成两个命令，避免「离线模式导致第一次下载失败」的混淆。
+
 ## 演示数据
 
 - 【事实】`seed_demo.py` 读取 `input/` 的 `充电宝.jpg`、`水杯.jpg`、`键盘.jpg`、`鼠标.jpg`：4 件拾获物品归 bob，4 件对应失物归 alice；写入时预计算 CLIP 向量与规则指纹。
