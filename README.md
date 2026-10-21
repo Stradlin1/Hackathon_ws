@@ -69,6 +69,7 @@
 
 - **Python 3.10 或 3.11**（推荐 3.11）。
 - 不强制 GPU；CPU 可以跑，但首次加载模型与推理会明显更慢。
+- 本仓库在一台 RTX 5070 + conda 环境 `aquacore` 上验证；用 venv 同样可以，命令区别只是激活方式。
 - 首次使用需要联网下载 CLIP/BLIP（以及可选的 flan-t5）权重，模型缓存在用户目录，不入库；图注中译模型 `Helsinki-NLP/opus-mt-en-zh` 约 300 MB，缓存在 `models/opus-mt-en-zh/` 或 HF 缓存。
 - 国内网络访问 `huggingface.co` 可能超时；启动前设置 `export HF_ENDPOINT=https://hf-mirror.com` 可走镜像。
 
@@ -136,11 +137,14 @@ python download_models.py
 
 ### 6. 启动
 
-模型就绪后，用 `run.sh` 启动（自动设置 `HF_HUB_OFFLINE=1`）：
+模型就绪后，先激活环境，再用 `run.sh` 启动（自动设置 `HF_HUB_OFFLINE=1`）：
 
 ```bash
+conda activate aquacore   # 或 source .venv/bin/activate
 ./run.sh
 ```
+
+`run.sh` 只负责设置离线变量并调用 `streamlit`；它不会替你激活环境，提示找不到 `streamlit` 时先检查这一行。
 
 也可以手动启动。首次启动（需要下载模型时）走镜像：
 
@@ -215,7 +219,7 @@ fingerprint:
 - **图片清洗**：入库前统一做 EXIF 方向纠正、缩放到最长边 1600、转 RGB，**不保留 EXIF**（包括定位信息）；上传上限 8 MB，像素上限 2000 万。
 - **追问上下文不落库**：只保存归一化后的属性值，不保存回答原话与问答历史。
 - **本地信任边界**：`items.db` 用 Python pickle 存图片数组与向量，只应作为可信本地数据使用，不要当交换格式。
-- **不入库的内容**：`items.db`、`config_auth.yaml`、`.env*`、上传目录与模型权重；原因写在 [`.gitignore`](.gitignore) 里。
+- **不入库的内容**：`items.db`、`config_auth.yaml`、`settings.yaml`、`input/` 上传目录与模型权重；原因写在 [`.gitignore`](.gitignore) 里。
 
 ## 测试与校验
 

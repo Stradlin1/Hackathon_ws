@@ -37,6 +37,10 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 ## 启动与访问
 
+- 【事实】`run.sh` 只做三件事：切到仓库根目录、设 `HF_HUB_OFFLINE=1`、调用 `streamlit`（找不到入口时回退 `python -m streamlit`）。**它不会激活 conda/venv**，先自己激活。
+- 【事实】可选配置写在根目录 `settings.yaml`（模板 `settings.example.yaml`，已 gitignore）；不建也能跑，DeepSeek 视觉与指纹生成器都会走默认/关闭。
+
+
 ```sh
 streamlit run app.py
 ```
