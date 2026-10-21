@@ -297,7 +297,7 @@ python evaluate.py --labels my_labels.json   # [{"lost_id":..., "found_id":...},
 | `rooms.json` | 地点选项 |
 | `config_auth.example.yaml` | 账号配置模板 |
 | `settings.example.yaml` | 可选配置模板（DeepSeek key、指纹生成器）；复制为 `settings.yaml` 后生效 |
-| `static/` | 品牌图 `logo_rounded.png`（页面图标与顶栏）；另有未被引用的 Lost / Found 两张图 |
+| `static/` | 品牌图 `logo_rounded.png`（页面图标与顶栏） |
 | `.streamlit/config.toml` | Streamlit 主题与工具栏默认值；只在进程启动时读取，改完要重启 |
 | `.dsh/` | 项目知识库：分主题事实、开发日志、校验脚本 |
 | `AGENTS.md` | 智能体索引：分支纪律、红线、路由表 |
