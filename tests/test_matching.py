@@ -32,6 +32,13 @@ def test_chinese_english_attribute_extraction():
     assert extract_known("FUGUANG 水杯")["brand"] == "fuguang"
 
 
+def test_translate_caption_falls_back_to_english(monkeypatch):
+    from matching import models
+
+    monkeypatch.setattr(models, "_caption_translator", lambda: (_ for _ in ()).throw(OSError("no model")))
+    assert models.translate_caption("a white cup") == "a white cup"
+
+
 def test_display_value_translates_canonical_values():
     assert display_value("category", "umbrella") == "雨伞"
     assert display_value("color", "black") == "黑色"

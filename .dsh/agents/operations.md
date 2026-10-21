@@ -64,6 +64,7 @@ python -m compileall -q app.py matching state
 | `FINGERPRINT_TEXT_MODEL` | `google/flan-t5-small` | 设 `off`/`none`/`disabled` 跳过文本生成器，只走规则抽取 |
 
 - 【设计】三层降级：无文本生成器 → 规则抽取；无 BLIP → 提示"请手动描述"，仍可提交；无 CLIP → 报告无法处理，页面报错并停止。
+- 【设计】无中译模型时保留英文图注（不是报错），用户仍可手改。
 - 【事实】所有降级都静默或一次性 warning，不会中断进程。
 
 ## 模型下载与设备
@@ -74,7 +75,9 @@ python -m compileall -q app.py matching state
 - 【事实】即使权重已在缓存里，`from_pretrained` 默认仍会向 huggingface.co 发 HEAD 请求；在本机实测会连续重试 5 次、卡住 30 秒以上，然后报「Can't load image processor」。
 - 【设计】`matching/models.py` 统一 **先 `local_files_only=True` 读缓存**，只有抛出 `OSError/ValueError/AttributeError` 时才联网下载。这样缓存完整时优先本地，缓存缺失时仍能首次下载。
 - 【事实】仅靠 `local_files_only` 不够：sentence-transformers 的子模块仍会向 huggingface.co 发 HEAD。缓存完整后应在启动命令里加 `HF_HUB_OFFLINE=1`；实测同一个模型从「卡 45 s+」变成 **0.7 s** 加载完成。
-- 【事实】BLIP 加载后会在 CUDA 可用时 `.to("cuda")`；CLIP 由 sentence-transformers 自动选择 GPU。2026-10-21 实测（RTX 5070）：BLIP 加载约 9 s，首次图注约 2.7 s，之后约 0.16 s/张（800×800）。
+- 【事实】BLIP 加载后会在 CUDA 可用时 `.to("cuda")`；CLIP 由 sentence-transformers 自动选择 GPU。2026-10-21 实测（RTX 5070）：BLIP 加载约 9 s，首次图注约 2.7 s，之后约 0.2–0.4 s/张（含中译，800×800）。
+- 【事实】图注中译使用 `Helsinki-NLP/opus-mt-en-zh`（约 300 MB），本地优先从仓库 `models/opus-mt-en-zh/` 读取（`/models/` 已 gitignore）；缺失时尝试从 HF 下载，仍失败则返回英文原文。
+- 【事实】2026-10-21 实测译文：「a close up of a white computer mouse…」→「一张黑色表面白电脑鼠标的照片」；短句可读，但会出现「close up → 关闭」「table → 表格」这类误译，提交前应人工校对。
 - 【事实】同一张图重复上传会命中 `st.cache_data` 的图注缓存，不再重新生成。
 
 ## 演示数据
@@ -93,6 +96,7 @@ python -m compileall -q app.py matching state
 | `numpy.core._multiarray_umath` | 系统 numpy 与 pip numpy 混用/损坏 | 删 `.venv` 重建，不要装进系统 Python |
 | `AttributeError: __spec__`（导入 pytest 时） | 同上，numpy 损坏的连带症状 | 同样重建 venv |
 | 图注提示「自动图片描述不可用」 | BLIP 权重/网络不可用 | 设置 `HF_ENDPOINT=https://hf-mirror.com` 后重启，或手填描述 |
+| 图注是英文而不是中文 | 中译模型缺失/加载失败（离线且无本地模型） | 确认 `models/opus-mt-en-zh/` 存在，或联网下载 |
 | 图片描述一直转圈 | 正在下载 BLIP，或缓存的权重不完整、触发了 HEAD 重试 | 设镜像后重启；确认缓存里有 `preprocessor_config.json` 与权重 |
 | 候选为空 | 对面还没有未匹配报告 | 用另一账号先报一件；`reset_db.py` 可造样例 |
 | `database is locked` | 多会话并发写 | 演示时单用户操作，或等待/重试 |

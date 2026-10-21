@@ -8,10 +8,10 @@
 
 应用自己控制的页面文案已中文化（`519be8d`）；地点下拉与 `reset_db.py` 样例也已在 2026-10-21 中文化。以下英文仍会出现在界面上。
 
-- [ ] **BLIP 图注是英文**
-      现状：`Salesforce/blip-image-captioning-base` 输出英文，`state/found.py` 把它预填进「物品描述」。
-      找：选择中文 caption 模型（中文微调 BLIP）或加翻译步骤。
-      为什么卡：拾获者需要手动改写；演示时第一眼仍是英文。
+- [ ] **图注中译质量一般**
+      现状：BLIP 英文图注 + `opus-mt-en-zh` 机翻，短句可读，但会出现「close up → 关闭」「table → 表格」这类误译。
+      找：更好的多模态中文 caption 模型（如中文微调 BLIP / Qwen-VL）或在 prompt、后处理上继续修。
+      为什么卡：演示时图注可能误导；用户可以手改，但第一眼不够专业。
 
 - [ ] **Streamlit 内置控件无法本地化**
       现状：文件上传的 `Browse files`、日期选择器月份、右上角菜单、`Press Enter to submit form` 仍是英文；Streamlit 没有本地化 API。

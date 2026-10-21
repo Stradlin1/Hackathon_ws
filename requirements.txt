@@ -11,3 +11,4 @@ torch>=2.1
 transformers>=4.40,<5
 sentencepiece>=0.2,<1
 sentence-transformers>=3.0,<4
+sacremoses>=0.1,<1

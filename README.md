@@ -38,7 +38,7 @@
 ## 匹配流程
 
 1. **报失**：填写描述、最后出现地点和日期。系统生成文本向量与指纹，并把报告存入数据库。
-2. **报拾获**：上传照片，BLIP 生成图注，用户可以修改后再提交。系统生成图像向量，并从「描述 + 图注」生成指纹。
+2. **报拾获**：上传照片，BLIP 生成英文图注，再用本地翻译模型转成中文；用户可以修改后再提交。系统生成图像向量，并从「描述 + 图注」生成指纹。
 3. **召回**：只从**尚未配对**的对面类型报告里取候选，用 CLIP 语义相似度取前 8 个。
 4. **重排**：逐字段比较指纹。双方都有该字段时才计入证据：一致加分、矛盾按较轻的权重扣分、缺失不计。特殊标记（划痕、贴纸、挂绳等）权重最高。
 5. **追问**：若靠前候选在某个未知属性上明显分裂，就针对该属性问一个问题。问题来自固定模板，**不会把候选的具体取值当提示泄露出去**。用户回答或跳过后立即重排。
@@ -67,7 +67,7 @@
 
 - **Python 3.10 或 3.11**（推荐 3.11）。
 - 不强制 GPU；CPU 可以跑，但首次加载模型与推理会明显更慢。
-- 首次使用需要联网下载 CLIP/BLIP（以及可选的 flan-t5）权重，模型缓存在用户目录，不入库。
+- 首次使用需要联网下载 CLIP/BLIP（以及可选的 flan-t5）权重，模型缓存在用户目录，不入库；图注中译模型 `Helsinki-NLP/opus-mt-en-zh` 约 300 MB，缓存在 `models/opus-mt-en-zh/` 或 HF 缓存。
 - 国内网络访问 `huggingface.co` 可能超时；启动前设置 `export HF_ENDPOINT=https://hf-mirror.com` 可走镜像。
 
 ### 2. 安装依赖
@@ -186,7 +186,7 @@ python -m compileall -q app.py matching state
 | --- | --- |
 | `app.py` | 入口：读配置、构造认证器、按 `state` 分发页面 |
 | `db_manager.py` | `items` / `users` / `lost_items` / `found_items` / `matches` 的访问层 |
-| `matching/models.py` | 懒加载 CLIP/BLIP；图像清洗、编码、图注 |
+| `matching/models.py` | 懒加载 CLIP/BLIP；图像清洗、编码、图注与中译 |
 | `matching/fingerprint.py` | 文本 → 六维属性；生成式提案的证据校验 |
 | `matching/workflow.py` | 取未配对候选、语义召回 top 8、组装匹配会话 |
 | `matching/engine.py` | 证据重排与信息增益追问 |
@@ -209,6 +209,7 @@ python -m compileall -q app.py matching state
 - **时间与地点当前不参与排序或过滤**，只作为报告信息保存与展示。
 - **被拒绝的配对无法重新发起**：请求主键是「拾获物品 + 失物」，拒绝后没有回到待处理的路径。
 - **待处理请求不会把物品移出候选池**，只有接受后写入的 `matches` 才会。
+- **图注是机器翻译**：BLIP 先出英文，再由 `opus-mt-en-zh` 翻成中文，可能出现「close up → 关闭」这类误译；提交前可以手动修改，模型本身不保证准确。
 - 没有速率限制、邮箱验证、封禁或审计日志；适合演示，不适合直接对外服务。
 - 单进程 SQLite，没有迁移脚本；多会话并发写入的锁行为尚未实测。
 - 仓库只有单元测试与 mock 烟测，**没有真实模型下的端到端验证记录**。
@@ -224,6 +225,7 @@ python -m compileall -q app.py matching state
 | `No module named 'streamlit'` | venv 未激活或依赖未装：重新 `pip install -r requirements.txt` |
 | `numpy.core._multiarray_umath` 导入失败 | 系统 Python 与 venv 的 numpy 混装或损坏：删掉 `.venv` 重建，不要装进系统环境 |
 | 图片图注提示不可用 | BLIP 权重未下载或网络不可用：设置 `HF_ENDPOINT=https://hf-mirror.com` 后重启，或手填描述继续 |
+| 图注仍是英文 | 中译模型 `models/opus-mt-en-zh` 缺失且无法下载；补模型或手动改描述 |
 | 图片描述一直转圈 / 很慢 | 首次在下载 BLIP（约 1 GB）；若缓存已完整仍慢，是加载时在向 `huggingface.co` 发 HEAD。设 `HF_ENDPOINT` 下载，之后用 `HF_HUB_OFFLINE=1` 启动 |
 | 候选列表为空 | 对面还没有未配对的报告：换账号先报一件，或运行 `reset_db.py` |
 | 数据「消失」 | 从别的目录启动了应用，或运行过 `reset_db.py`（会删库） |

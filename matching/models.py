@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageOps
+
+TRANSLATION_LOCAL = Path(__file__).resolve().parents[1] / 'models' / 'opus-mt-en-zh'
+TRANSLATION_REMOTE = 'Helsinki-NLP/opus-mt-en-zh'
 
 
 def _sentence_transformer(name: str):
@@ -49,6 +53,48 @@ def _image_captioner():
     return processor, model
 
 
+@lru_cache(maxsize=1)
+def _caption_translator():
+    import torch
+    from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+
+    source = str(TRANSLATION_LOCAL) if TRANSLATION_LOCAL.exists() else TRANSLATION_REMOTE
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(source, local_files_only=True)
+        model = AutoModelForSeq2SeqLM.from_pretrained(source, local_files_only=True)
+    except (OSError, ValueError, AttributeError):
+        tokenizer = AutoTokenizer.from_pretrained(TRANSLATION_REMOTE)
+        model = AutoModelForSeq2SeqLM.from_pretrained(TRANSLATION_REMOTE)
+    if torch.cuda.is_available():
+        try:
+            model = model.to('cuda')
+        except (RuntimeError, OSError):
+            pass
+    model.eval()
+    return tokenizer, model
+
+
+def translate_caption(text: str) -> str:
+    """Translate an English BLIP caption to Chinese; fall back to the original text."""
+    if not text.strip():
+        return text
+    cleaned = text.replace('a close up of', 'a photo of').replace('close-up of', 'photo of')
+    try:
+        import torch
+        tokenizer, model = _caption_translator()
+        inputs = tokenizer(cleaned, return_tensors='pt', truncation=True, max_length=128).to(model.device)
+        with torch.inference_mode():
+            output = model.generate(**inputs, max_new_tokens=64)
+        translated = tokenizer.decode(output[0], skip_special_tokens=True).strip()
+        if translated.startswith('a. '):
+            translated = translated[3:].strip()
+        elif translated.startswith('a '):
+            translated = translated[2:].strip()
+        return translated or text
+    except (ImportError, OSError, RuntimeError, ValueError):
+        return text
+
+
 def clean_image(image: Image.Image) -> Image.Image:
     """Remove uploaded EXIF metadata before storing or embedding the image."""
     oriented = ImageOps.exif_transpose(image)
@@ -78,4 +124,5 @@ def caption_image(image: Image.Image) -> str:
     inputs = processor(images=image, return_tensors="pt").to(device)
     with torch.inference_mode():
         output = model.generate(**inputs, max_new_tokens=70)
-    return processor.decode(output[0], skip_special_tokens=True).strip()
+    english = processor.decode(output[0], skip_special_tokens=True).strip()
+    return translate_caption(english)
