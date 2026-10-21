@@ -7,7 +7,13 @@ import urllib.error
 
 import pytest
 
-from matching import vlm
+from matching import settings, vlm
+
+
+def _isolate(monkeypatch, tmp_path):
+    """Ignore whatever settings.yaml the developer has on this machine."""
+    monkeypatch.setattr(settings, 'PATH', tmp_path / 'missing.yaml')
+    monkeypatch.setattr(settings, '_cache', None)
 
 
 class FakeResponse:
@@ -32,7 +38,8 @@ class Picture:
         buffer.write(b'fake-jpeg')
 
 
-def test_integration_is_off_without_a_key(monkeypatch):
+def test_integration_is_off_without_a_key(monkeypatch, tmp_path):
+    _isolate(monkeypatch, tmp_path)
     monkeypatch.delenv('DEEPSEEK_API_KEY', raising=False)
     assert vlm.available() is False
     assert vlm.describe_image(Picture()) is None

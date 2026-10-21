@@ -25,6 +25,28 @@ class FingerprintStore:
                 (item_id, payload),
             )
 
+    def merge(self, item_id: int, values: dict, source: str = 'user') -> dict:
+        """Merge confirmed attribute values into a stored fingerprint.
+
+        Only normalised attribute values are written; the question text and the
+        user's raw wording are never stored. Merged fields are recorded in
+        `confirmed` so the UI can tell user-supplied values from extracted ones.
+        """
+        fingerprint = self.get(item_id) or {'attributes': {}, 'method': 'rules'}
+        attributes = dict(fingerprint.get('attributes') or {})
+        used = []
+        for field, value in values.items():
+            if isinstance(value, str) and value:
+                attributes[field] = value
+                used.append(field)
+        fingerprint['attributes'] = attributes
+        if used:
+            confirmed = set(fingerprint.get('confirmed') or [])
+            confirmed.update(used)
+            fingerprint['confirmed'] = sorted(confirmed)
+        self.put(item_id, fingerprint)
+        return fingerprint
+
     def get(self, item_id: int) -> dict | None:
         with sqlite3.connect(self.path) as connection:
             row = connection.execute(

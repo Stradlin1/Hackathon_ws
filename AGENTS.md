@@ -8,7 +8,7 @@
 > [!IMPORTANT]
 > 1. **本文件只是索引 + 工作方式 + 红线 + 路由表 + 目录结构**。分主题事实在 `.dsh/agents/`——动手前按路由表读对应文档，改完回来更新它。
 > 2. **每句话都必须能归类**：`【事实】`= 代码/README/实测；`【设计】`= 本仓库已实现的方案；`【待验证】`= 假设，验证前不能作为依据。**没标 `【事实】` 的数字不许写进代码常量。**
-> 3. 本仓库已在 conda `aquacore` 环境跑通（55 tests；`streamlit` HTTP 200），并已灌入 4 张演示照片（bob 拾获 / alice 失物）。当前卡点见 [`backlog.md`](backlog.md)。
+> 3. 本仓库已在 conda `aquacore` 环境跑通（58 tests；`streamlit` HTTP 200），并已灌入 4 张演示照片（bob 拾获 / alice 失物）。当前卡点见 [`backlog.md`](backlog.md)。
 
 ## 工作方式：git 分支纪律（**先读这条**）
 
@@ -28,7 +28,7 @@
 3. **语义分占 72%、证据占 28%**：证据从全一致(+1)翻到全矛盾(−1)只值 0.28 分，等价于 **0.28 ÷ 0.72 = 0.389 的 CLIP 相似度差**。相似度差超过 0.39 时，完全相反的证据也翻不过来。→ [matching-engine](.dsh/agents/matching-engine.md)
 4. **排序分不是所有权概率。** 页面与文档都必须说「排序指标」（ranking metric），不得改称概率或置信度。→ [matching-engine](.dsh/agents/matching-engine.md)
 5. **联系方式只在对方 `accept` 之后可见**，且请求只能由该报告的所有者发起。→ [privacy](.dsh/agents/privacy.md)
-6. **澄清答案只存在 Streamlit session 里**，不写库、不进指纹表。→ [privacy](.dsh/agents/privacy.md)
+6. **澄清答案只以「属性」形式落库**：存归一化值 + `confirmed` 字段名，不存回答原文与问答历史；这些属性对匹配对象可见。→ [privacy](.dsh/agents/privacy.md)
 7. **不改既有表结构**：`items`/`users`/`lost_items`/`found_items`/`matches` 已存在；新能力只能 `CREATE TABLE IF NOT EXISTS` 新表。→ [data-model](.dsh/agents/data-model.md)
 8. **上传图片先去 EXIF 再存储/编码**（`clean_image`），模型不可用时必须降级而不是崩溃。→ [privacy](.dsh/agents/privacy.md)、[operations](.dsh/agents/operations.md)
 

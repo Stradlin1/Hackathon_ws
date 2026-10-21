@@ -23,3 +23,4 @@
 | 2026-10-21 | [merge-to-main](2026-10-21-merge-to-main.md) | 把 `dsh` 的 12 个提交 fast-forward 进 `main`：合并清单、验证结果与遗留项。 |
 | 2026-10-21 | [deepseek-vision](2026-10-21-deepseek-vision.md) | 拾获登记接入 DeepSeek 视觉模型：VLM 优先、BLIP 兜底、图上文字进指纹。 |
 | 2026-10-21 | [settings-file](2026-10-21-settings-file.md) | 手工配置收进 settings.yaml：环境变量优先、.env 方案放弃、run.sh 兜底 python -m。 |
+| 2026-10-21 | [profile-enrichment](2026-10-21-profile-enrichment.md) | 失物也问登记前问题；追问答案以属性形式落库；候选卡与「补全信息」让双方看到同一份属性。 |

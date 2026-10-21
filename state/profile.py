@@ -7,14 +7,54 @@ from datetime import datetime
 import streamlit as st
 
 from db_manager import Database
+from matching.engine import DISPLAY
+from matching.fingerprint import FIELDS, display_value, normalize_answer
 from matching.requests import MatchRequests
-from ui.components import card, empty, esc, page_header, stat_row, status_badge, topbar
+from matching.storage import FingerprintStore
+from ui.components import card, empty, esc, page_header, pill, pills, stat_row, status_badge, topbar
 
 STATUS_DISPLAY = {'pending': '待确认', 'accepted': '已接受', 'rejected': '已拒绝'}
 
 
 def _date_text(item) -> str:
     return datetime.fromtimestamp(item.time).strftime('%Y-%m-%d') if item.time else '未填写'
+
+
+@st.dialog('补全物品信息')
+def _enrich_dialog(item_id: int) -> None:
+    """Let the owner add or correct attributes; saved values are shared with matches."""
+    store = FingerprintStore()
+    fingerprint = store.get(item_id) or {}
+    attributes = fingerprint.get('attributes') or {}
+    values = {}
+    with st.form(f'enrich-{item_id}'):
+        st.caption('留空表示不确定；写「无标记」表示没有特殊标记。保存后立刻参与匹配，对方也能看到。')
+        for field in FIELDS:
+            values[field] = st.text_input(
+                DISPLAY.get(field, field),
+                value=display_value(field, attributes.get(field, '')),
+                key=f'enrich-input-{item_id}-{field}',
+            )
+        submitted = st.form_submit_button('保存', type='primary', use_container_width=True)
+    if not submitted:
+        return
+    updates = {}
+    unknown = []
+    for field, raw in values.items():
+        text = (raw or '').strip()
+        if not text:
+            continue
+        normalized = normalize_answer(field, text)
+        if normalized:
+            updates[field] = normalized
+        else:
+            unknown.append(DISPLAY.get(field, field))
+    if updates:
+        store.merge(item_id, updates)
+    if unknown:
+        st.warning('这些没看懂，已跳过：' + '、'.join(unknown))
+    else:
+        st.rerun()
 
 
 def _item_card(key, item, show_image=False):
@@ -29,6 +69,13 @@ def _item_card(key, item, show_image=False):
             with cols[1]:
                 st.write(item.description)
                 st.caption(f'地点：{item.location} | 日期：{_date_text(item)} | #{item.id}')
+        attributes = (FingerprintStore().get(item.id) or {}).get('attributes') or {}
+        chips = ''.join(pill(f'{DISPLAY.get(field, field)}：{display_value(field, value)}')
+                        for field, value in attributes.items())
+        if chips:
+            pills(chips)
+        if st.button('补全信息', key=f'enrich-{item.id}', type='secondary'):
+            _enrich_dialog(item.id)
 
 
 def profile(authenticator):

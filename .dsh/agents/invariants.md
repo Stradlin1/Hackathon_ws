@@ -31,11 +31,11 @@
 - **怎么守**：任何展示邮箱的查询都必须带 `status='accepted'`；不要把 `users.email` JOIN 进 `incoming`/`outgoing`。
 - **怎么查**：`grep -n "contact_email\|u.email" matching/requests.py` —— 只应在 `accepted()` 的 SELECT 里。
 
-## 5. 澄清答案不落库
+## 5. 澄清答案只以「属性」形式落库
 
-- **为什么**：答案可能包含失主才知道的细节（划痕位置、贴纸内容），属于个人线索；落库会扩大泄露面。
-- **怎么守**：答案只进 `session["answers"]`；不要给 `item_fingerprints` 或 `match_requests` 加 answers 列。
-- **怎么查**：`grep -rn "answers" --include=*.py matching/storage.py matching/requests.py` —— 应无输出。
+- **为什么**：对侧必须看到失主补充的颜色/标记，否则匹配永远是"水杯"两个字对一张照片；但"谁在什么时候回答了哪个问题"属于会话上下文，不该被保存。
+- **怎么守**：只写归一化后的属性值（`item_fingerprints.attributes`）与字段名（`confirmed`）；不写回答原文、不写提问顺序、不写问答时间。任何展示给对侧的都只是属性。
+- **怎么查**：`grep -rn "answers" --include=*.py matching/storage.py` 应无输出；`match_requests` 不应出现属性列。
 
 ## 6. 只新增表，不改既有表
 

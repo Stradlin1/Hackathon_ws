@@ -26,7 +26,7 @@ from matching.models import caption_image_pair, clean_image, encode_image
 from matching.vlm import available as vlm_available
 from matching.vlm import describe_image
 from matching.storage import FingerprintStore
-from matching.workflow import build_session
+from matching.workflow import build_session, counterpart_fingerprints
 from ui.components import card, page_header, topbar
 
 
@@ -51,17 +51,9 @@ def _lost_pool() -> list[dict]:
     try:
         db = Database()
         try:
-            items = db.get_unmatched_lost_items()
+            return counterpart_fingerprints('found', db, FingerprintStore())
         finally:
             db.close()
-        store = FingerprintStore()
-        pool = []
-        for item in items:
-            fingerprint = store.get(item.id)
-            if fingerprint is None:
-                fingerprint = fingerprint_from_text(item.description or '', generate=False)
-            pool.append(fingerprint)
-        return pool
     except Exception:
         return []
 

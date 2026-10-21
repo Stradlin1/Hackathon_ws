@@ -21,6 +21,15 @@ def candidate(cid, score, **kw):
     return {"item_id": cid, "semantic_score": score, "fingerprint": fp(**kw), "description": f"item-{cid}"}
 
 
+def test_fingerprint_store_merge_records_confirmed_fields(tmp_path):
+    store = FingerprintStore(tmp_path / 'items.db')
+    store.put(7, {'attributes': {'color': 'black'}, 'method': 'rules'})
+    merged = store.merge(7, {'mark': 'red sticker'})
+    assert merged['attributes'] == {'color': 'black', 'mark': 'red sticker'}
+    assert merged['confirmed'] == ['mark']
+    assert store.get(7)['attributes']['mark'] == 'red sticker'
+
+
 def test_two_confirmed_absences_are_neutral_but_absence_vs_finding_conflicts():
     query = fp(mark=ABSENT_MARK)
     by_id = {item["item_id"]: item for item in rank_candidates(query, [

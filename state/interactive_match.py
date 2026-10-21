@@ -8,6 +8,7 @@ from db_manager import Database
 from matching.engine import DISPLAY, MAX_QUESTIONS, QUESTIONS, add_answer, choose_question, rank_candidates
 from matching.fingerprint import display_value
 from matching.requests import MatchRequests
+from matching.storage import FingerprintStore
 from ui.components import card, page_header, pill, pills, topbar
 
 METHOD_DISPLAY = {
@@ -75,6 +76,13 @@ def interactive_match(authenticator):
                         st.image(item.image, width=220)
                 with body[1]:
                     st.write(item.description)
+                    attributes = (result.get('fingerprint') or {}).get('attributes') or {}
+                    attr_chips = ''.join(
+                        pill(f'{DISPLAY.get(key, key)}：{display_value(key, value)}', 'brand')
+                        for key, value in list(attributes.items())[:6]
+                    )
+                    if attr_chips:
+                        pills(attr_chips)
                     chips = _chips(result['matches'], 'found') + _chips(result['conflicts'], 'warn')
                     if chips:
                         pills(chips)
@@ -87,6 +95,7 @@ def interactive_match(authenticator):
         with card('question'):
             st.markdown(f'### 追问 {len(session["asked"]) + 1} / {MAX_QUESTIONS}')
             st.write(QUESTIONS[question_field])
+            st.caption('回答会并入这件物品的信息，对方匹配时能看到；只保存属性值，不保存原话。')
             with st.form(f'clarification_{len(session["asked"])}'):
                 answer = st.text_input('你的回答', max_chars=100,
                                        placeholder='例：有，红色圆贴纸')
@@ -100,6 +109,12 @@ def interactive_match(authenticator):
                 normalized = add_answer(session, question_field, '' if skipped else answer)
                 if answered and normalized is None:
                     st.warning('这个回答无法识别，已按跳过处理。')
+                if normalized is not None:
+                    try:
+                        session['fingerprint'] = FingerprintStore().merge(
+                            session['item_id'], {question_field: normalized})
+                    except Exception:
+                        pass
                 st.session_state.match_session = session
                 st.rerun()
     else:

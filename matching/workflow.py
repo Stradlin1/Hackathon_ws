@@ -9,6 +9,26 @@ from .fingerprint import fingerprint_from_text
 from .storage import FingerprintStore
 
 
+def counterpart_fingerprints(direction: str, db, store: FingerprintStore) -> list[dict]:
+    """Fingerprints of the unmatched reports on the other side of the match.
+
+    Used to pick pre-registration questions and to enrich an existing report.
+    """
+    if direction == "lost":
+        items = db.get_unmatched_found_items()
+    elif direction == "found":
+        items = db.get_unmatched_lost_items()
+    else:
+        raise ValueError("未知的报告类型")
+    pool = []
+    for item in items:
+        fingerprint = store.get(item.id)
+        if fingerprint is None:
+            fingerprint = fingerprint_from_text(item.description or "", generate=False)
+        pool.append(fingerprint)
+    return pool
+
+
 def build_session(*, direction: str, item_id: int, query_embedding, fingerprint: dict, username: str, db, store: FingerprintStore) -> dict:
     """Create a Streamlit-serializable session without persisting personal answers."""
     if direction not in ("lost", "found"):

@@ -91,6 +91,7 @@ gain = coverage × H(取值分布) × (1 + 0.05 × WEIGHTS[field])
 - 【事实】同一字段不能问第二次，否则 `ValueError`。
 - 【事实】无论答案能否识别，字段都会进 `asked`——**无法识别的答案等价于跳过**，页面对此给一句 warning。
 - 【事实】能识别时写入 `session["answers"][field]`，返回归一化值；否则返回 `None`。
+- 【事实】能识别时还会调用 `FingerprintStore.merge(item_id, {field: value})` 把属性写回物品，并用 `confirmed` 记录字段名；对侧因此能看到这条补充。
 
 ## 改动后果（先读再改）
 

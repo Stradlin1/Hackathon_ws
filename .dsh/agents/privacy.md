@@ -13,7 +13,7 @@
 | 谁能发起请求？ | 只能由**自己那件报告**的所有者发起 | `MatchRequests.create` 的 `PermissionError` |
 | 谁能接受/拒绝？ | 只有 `responder` 本人，且状态必须是 `pending` | `respond` 的 `WHERE responder=? AND status='pending'` |
 | 邮箱何时出现？ | 只在 `status='accepted'` 的查询里 JOIN `users` | `MatchRequests.accepted` |
-| 追问答案会入库吗？ | 不会，只在 `st.session_state.match_session` | `matching/workflow.py` 文档字符串、`state/interactive_match.py` |
+| 追问答案会入库吗？ | **会，但只存归一化后的属性值**（`item_fingerprints` 的 attributes + `confirmed` 列表），不存回答原文与问答历史；这些属性对匹配对象可见 | `matching/storage.py::merge`、`state/interactive_match.py` |
 | 上传照片的 EXIF 会保留吗？ | 不会，存库前先 `clean_image` | `matching/models.py` |
 
 ## 请求状态机
@@ -60,9 +60,10 @@ pending --responder reject--> rejected
 
 ## 追问答案
 
-- 【事实】`build_session` 的会话字典含 `answers`/`asked`，但**没有任何写库调用**；`FingerprintStore` 只存初始指纹。
-- 【事实】刷新页面丢失 `match_session`，追问历史一并消失；这是隐私与实现的共同结果，不是 bug。
-- 【事实】`interactive_match` 底部会把 `answers` 以中文属性名展示给当前用户看（`st.caption(f'已提问 ... 回答：{answers_text}')`），这是本人可见，不是跨用户泄露。
+- 【事实】回答归一化成功后，`FingerprintStore.merge(item_id, {字段: 值})` 把它写进 `item_fingerprints` 的 attributes，并在 `confirmed` 里记下字段名；**原文与问答历史不落库**。
+- 【事实】登记前追问的答案（`state/lost.py`、`state/found.py`）在入库前就直接并进指纹；追问页的答案在回答时写回。
+- 【事实】合并后的属性会展示给匹配对象（候选卡片的属性胶囊），也会成为对方登记前追问的选项来源。这是有意为之：物品属性本来就该共享，共享的不是"谁回答了什么"。
+- 【事实】`match_session.answers` 仍然只用于当前会话的排序；刷新后问答上下文消失，但已合并的属性留在库里。
 
 ## 数据落盘与信任边界
 
@@ -77,7 +78,7 @@ pending --responder reject--> rejected
 | --- | --- |
 | 页面能看到对方邮箱但状态不是 accepted | `grep -rn "contact_email" matching/requests.py`，确认没有第二处查询 |
 | 自己能给别人报告发请求 | `MatchRequests.create` 的 `requester != username` 分支是否被绕过 |
-| 刷新后追问没了 | 预期行为；`match_session` 不持久化 |
+| 刷新后追问没了 | 问答上下文不持久化，这是预期；已确认的属性仍在 `item_fingerprints` 里，可在「我的记录 → 补全信息」查看 |
 | 图片带定位信息 | 是否绕过了 `clean_image`（只有 `state/found.py` 一处入口） |
 
 ---
