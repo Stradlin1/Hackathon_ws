@@ -88,6 +88,28 @@ class MatchRequests:
             """, (username, username, username)).fetchall()
             return [dict(row) for row in rows]
 
+    def statuses_for_item(self, item_id: int) -> list[str]:
+        """Statuses of every request that references the item (either side)."""
+        with sqlite3.connect(self.path) as con:
+            rows = con.execute(
+                "SELECT status FROM match_requests WHERE found_item_id=? OR lost_item_id=?",
+                (item_id, item_id),
+            ).fetchall()
+        return [row[0] for row in rows]
+
+    def cancel_for_item(self, item_id: int) -> None:
+        """Remove every request and match that references a withdrawn item."""
+        with sqlite3.connect(self.path) as con:
+            con.execute(
+                "DELETE FROM match_requests WHERE found_item_id=? OR lost_item_id=?",
+                (item_id, item_id),
+            )
+            try:
+                con.execute(
+                    "DELETE FROM matches WHERE item1_id=? OR item2_id=?", (item_id, item_id))
+            except sqlite3.OperationalError:
+                pass  # matches is created by Database; nothing to clean up yet
+
     def respond(self, username: str, found: int, lost: int, accept: bool) -> bool:
         with sqlite3.connect(self.path) as con:
             result = con.execute(

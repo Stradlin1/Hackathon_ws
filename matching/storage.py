@@ -25,6 +25,11 @@ class FingerprintStore:
                 (item_id, payload),
             )
 
+    def delete(self, item_id: int) -> None:
+        """Drop the stored fingerprint, e.g. when an owner withdraws a report."""
+        with sqlite3.connect(self.path) as connection:
+            connection.execute("DELETE FROM item_fingerprints WHERE item_id = ?", (item_id,))
+
     def merge(self, item_id: int, values: dict, source: str = 'user') -> dict:
         """Merge confirmed attribute values into a stored fingerprint.
 

@@ -41,6 +41,12 @@
 - 【待验证】多浏览器会话同时写入时是否会出现 `database is locked`——未实测，演示前建议单用户操作。
 - 【事实】`get_item(id)` 在 id 不存在时对 `None` 取下标，抛 `TypeError`（见 backlog）。
 
+## 删除（撤销登记）
+
+- 【事实】撤销走 `state/profile.py::_remove_report`：先验归属，再删 `lost_items`/`found_items`、`items`、`item_fingerprints`，最后 `MatchRequests.cancel_for_item` 清掉 `match_requests` 与 `matches` 里的相关行。
+- 【事实】没有软删除。既有表不加列（红线 7），所以撤销就是真删；已 `accepted` 的物品拒绝撤销，避免单方面抹掉双方的配对记录。
+- 【事实】删除后如果当前 `match_session.item_id` 指向它，session 会被清空。
+
 ## 兼容与演进规则
 
 - 【事实】仓库没有任何迁移脚本；`CREATE TABLE IF NOT EXISTS` 是唯一的建表手段。

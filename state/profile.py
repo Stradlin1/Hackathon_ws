@@ -57,6 +57,46 @@ def _enrich_dialog(item_id: int) -> None:
         st.rerun()
 
 
+def _remove_report(item_id: int, username: str) -> None:
+    """Delete a report the user owns, together with its requests and fingerprint."""
+    db = Database()
+    try:
+        owns = (db.lost_item_exists(item_id, username)
+                or db.found_item_exists(item_id, username))
+        if not owns:
+            raise PermissionError('只能撤销自己登记的物品。')
+        db.remove_lost_item(item_id)
+        db.remove_found_item(item_id)
+        db.remove_item(item_id)
+    finally:
+        db.close()
+    MatchRequests().cancel_for_item(item_id)
+    FingerprintStore().delete(item_id)
+    session = st.session_state.get('match_session')
+    if isinstance(session, dict) and session.get('item_id') == item_id:
+        st.session_state.pop('match_session', None)
+
+
+@st.dialog('撤销登记')
+def _withdraw_dialog(item) -> None:
+    statuses = MatchRequests().statuses_for_item(item.id)
+    if 'accepted' in statuses:
+        st.warning('这条物品已经有双方确认的配对，不能撤销；留着记录或先和对方沟通。')
+        return
+    st.write(item.description)
+    st.caption(f'地点：{item.location} | 日期：{_date_text(item)} | #{item.id}')
+    if statuses:
+        st.caption(f'撤销后会同时删除 {len(statuses)} 条相关配对请求。')
+    st.caption('物品、指纹与相关请求会从本地数据库删除，无法恢复。')
+    if st.button('确认撤销', type='primary', use_container_width=True):
+        try:
+            _remove_report(item.id, st.session_state.username)
+        except (OSError, ValueError, PermissionError) as error:
+            st.error(f'撤销失败：{error}')
+        else:
+            st.rerun()
+
+
 def _item_card(key, item, show_image=False):
     with st.container(border=True, key=key):
         cols = st.columns([1, 3], gap='medium') if show_image and item.image is not None else None
@@ -74,8 +114,14 @@ def _item_card(key, item, show_image=False):
                         for field, value in attributes.items())
         if chips:
             pills(chips)
-        if st.button('补全信息', key=f'enrich-{item.id}', type='secondary'):
-            _enrich_dialog(item.id)
+        actions = st.columns(2, gap='small')
+        with actions[0]:
+            if st.button('补全信息', key=f'enrich-{item.id}', type='secondary',
+                         use_container_width=True):
+                _enrich_dialog(item.id)
+        with actions[1]:
+            if st.button('撤销登记', key=f'withdraw-{item.id}', use_container_width=True):
+                _withdraw_dialog(item)
 
 
 def profile(authenticator):

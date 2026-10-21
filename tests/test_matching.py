@@ -21,6 +21,30 @@ def candidate(cid, score, **kw):
     return {"item_id": cid, "semantic_score": score, "fingerprint": fp(**kw), "description": f"item-{cid}"}
 
 
+def test_fingerprint_store_delete_removes_the_row(tmp_path):
+    store = FingerprintStore(tmp_path / 'items.db')
+    store.put(9, {'attributes': {'color': 'black'}, 'method': 'rules'})
+    store.delete(9)
+    assert store.get(9) is None
+
+
+def test_cancel_for_item_drops_its_requests(tmp_path):
+    path = tmp_path / 'items.db'
+    with sqlite3.connect(path) as con:
+        con.execute("CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY)")
+        con.execute("CREATE TABLE IF NOT EXISTS matches (item1_id INTEGER, item2_id INTEGER)")
+        con.execute("INSERT INTO items (id) VALUES (100), (200), (300)")
+    requests = MatchRequests(path)
+    with sqlite3.connect(path) as con:
+        con.execute(
+            "INSERT INTO match_requests (found_item_id, lost_item_id, requester, responder,"
+            " status, created_at) VALUES (200, 100, 'alice', 'bob', 'pending', 0)")
+    assert requests.statuses_for_item(100) == ['pending']
+    requests.cancel_for_item(100)
+    assert requests.statuses_for_item(100) == []
+    assert requests.statuses_for_item(200) == []
+
+
 def test_fingerprint_store_merge_records_confirmed_fields(tmp_path):
     store = FingerprintStore(tmp_path / 'items.db')
     store.put(7, {'attributes': {'color': 'black'}, 'method': 'rules'})
