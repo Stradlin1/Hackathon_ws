@@ -234,7 +234,11 @@ def _extract_json_object(text: str) -> dict:
 
 @lru_cache(maxsize=1)
 def _load_generator():
-    name = os.environ.get("FINGERPRINT_TEXT_MODEL", "google/flan-t5-small")
+    from .settings import get
+    name = get("fingerprint.text_model", "google/flan-t5-small", env="FINGERPRINT_TEXT_MODEL")
+    if not isinstance(name, str):
+        # YAML reads a bare off/on as a boolean.
+        name = "off" if name is False else str(name)
     if name.lower() in ("off", "none", "disabled"):
         return None
     try:

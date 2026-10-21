@@ -59,9 +59,19 @@ python -m compileall -q app.py matching state
 
 ## DeepSeek 视觉（可选）
 
-| 环境变量 | 默认 | 效果 |
-| --- | --- | --- |
-| `DEEPSEEK_API_KEY` | 未设置 | 未设置则整个功能关闭，拾获登记走本地 BLIP |
+配置写在仓库根目录的 `settings.yaml`（模板 `settings.example.yaml`，真文件已 gitignore）；环境变量优先，便于临时覆盖。
+
+| `settings.yaml` 键 | 环境变量 | 默认 | 效果 |
+| --- | --- | --- | --- |
+| `deepseek.api_key` | `DEEPSEEK_API_KEY` | 空 | 留空则整个功能关闭，拾获登记走本地 BLIP |
+| `deepseek.enabled` | `DEEPSEEK_VISION` | true | 保留 key 但临时关闭 |
+| `deepseek.model` | `DEEPSEEK_VISION_MODEL` | `deepseek-flash` | 多模态对话模型名 |
+| `deepseek.url` | `DEEPSEEK_API_URL` | DeepSeek chat/completions | 换代理或自建网关 |
+| `deepseek.timeout` | `DEEPSEEK_TIMEOUT` | 25 | 秒；超时按调用失败处理 |
+| `fingerprint.text_model` | `FINGERPRINT_TEXT_MODEL` | `google/flan-t5-small` | 指纹提案生成器；`off` 关闭 |
+
+- 【事实】优先级是环境变量 > `settings.yaml` > 默认值；文件在 `matching/settings.py` 里只读一次，改完要重启进程。
+- 【事实】YAML 会把裸写的 `off` 读成布尔 `false`，`_load_generator` 已按"关闭"处理。
 | `DEEPSEEK_VISION` | `on` | 设 `off`/`0`/`false` 可在保留 key 的情况下临时关闭 |
 | `DEEPSEEK_VISION_MODEL` | `deepseek-flash` | 多模态对话模型名；`deepseek-v4-flash-vision-exp` 仍可调但已下线 |
 | `DEEPSEEK_API_URL` | `https://api.deepseek.com/chat/completions` | 换代理或自建网关时用 |

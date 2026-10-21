@@ -172,16 +172,29 @@ streamlit run app.py
 
 不配置也能跑，走本地 BLIP；配置后拾获登记会用视觉模型识图，能读出型号、序列号这类图注写不出的细节。
 
+**需要手工填的东西统一放在仓库根目录的 `settings.yaml`**（已 gitignore，不会提交）：
+
 ```bash
-export DEEPSEEK_API_KEY='sk-...'        # 必填，未设置则整个功能关闭
-export DEEPSEEK_VISION=on               # 设为 off/0/false 可临时关闭
-export DEEPSEEK_VISION_MODEL=deepseek-flash   # 默认值，一般不用改
-export DEEPSEEK_TIMEOUT=25              # 秒，超时即回退本地
+cp settings.example.yaml settings.yaml
 ```
 
+```yaml
+deepseek:
+  enabled: true
+  api_key: ""                      # 填 sk-... 才启用；留空则整个功能关闭
+  model: deepseek-flash
+  url: https://api.deepseek.com/chat/completions
+  timeout: 25                      # 秒，超时回退本地 BLIP
+
+fingerprint:
+  text_model: google/flan-t5-small  # off = 只用规则抽取
+```
+
+- 环境变量优先级更高，临时改不用动文件：`DEEPSEEK_API_KEY`、`DEEPSEEK_VISION`、`DEEPSEEK_VISION_MODEL`、`DEEPSEEK_API_URL`、`DEEPSEEK_TIMEOUT`、`FINGERPRINT_TEXT_MODEL`。
+- `settings.yaml` 只在进程启动时读一次：改完要重启 `./run.sh`。
 - 只在**登记时**调用一次，结果随指纹入库；检索、重排、追问全部仍在本机。
 - 失败、超时、没有 key 都只是回退 BLIP，不会让登记失败。
-- **隐私**：开启后照片会发送到 DeepSeek API；不想让照片离开本机就别设 key。页面上的隐私说明会随开关变化。
+- **隐私**：开启后照片会发送到 DeepSeek API；不想让照片离开本机就别填 key。页面上的隐私说明会随开关变化。
 - 实现只用标准库 `urllib`，不引入 openai SDK。
 
 ## 配置项
@@ -237,6 +250,7 @@ python -m compileall -q app.py matching state
 | `run.sh` | 以 `HF_HUB_OFFLINE=1` 启动 Streamlit |
 | `rooms.json` | 地点选项 |
 | `config_auth.example.yaml` | 账号配置模板 |
+| `settings.example.yaml` | 可选配置模板（DeepSeek key、指纹生成器）；复制为 `settings.yaml` 后生效 |
 | `static/` | 品牌图 `logo_rounded.png`（页面图标与顶栏）；另有未被引用的 Lost / Found 两张图 |
 | `.streamlit/config.toml` | Streamlit 主题与工具栏默认值；只在进程启动时读取，改完要重启 |
 | `.dsh/` | 项目知识库：分主题事实、开发日志、校验脚本 |

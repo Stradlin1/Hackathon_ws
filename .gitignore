@@ -9,9 +9,9 @@ venv/
 
 # Local authentication and secrets
 config_auth.yaml
+settings.yaml
 .env
 .env.*
-!.env.example
 *.pem
 *.p12
 *.pfx

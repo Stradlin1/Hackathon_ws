@@ -19,9 +19,12 @@ import os
 import urllib.error
 import urllib.request
 
-DEFAULT_MODEL = os.environ.get('DEEPSEEK_VISION_MODEL', 'deepseek-flash')
-ENDPOINT = os.environ.get('DEEPSEEK_API_URL', 'https://api.deepseek.com/chat/completions')
-TIMEOUT = float(os.environ.get('DEEPSEEK_TIMEOUT', '25'))
+from .settings import flag, get, number
+
+DEFAULT_MODEL = get('deepseek.model', 'deepseek-flash', env='DEEPSEEK_VISION_MODEL')
+ENDPOINT = get('deepseek.url', 'https://api.deepseek.com/chat/completions',
+               env='DEEPSEEK_API_URL')
+TIMEOUT = number('deepseek.timeout', 25.0, env='DEEPSEEK_TIMEOUT')
 
 PROMPT = """你是失物招领系统的视觉助手。看这张物品照片，只输出 json，格式：
 {
@@ -32,11 +35,15 @@ PROMPT = """你是失物招领系统的视觉助手。看这张物品照片，�
 只写照片里确实看得到的；不确定就留空字符串，不要猜。"""
 
 
+def _api_key() -> str:
+    return str(get('deepseek.api_key', '', env='DEEPSEEK_API_KEY') or '')
+
+
 def available() -> bool:
-    """True when a key is configured and the integration was not switched off."""
-    if os.environ.get('DEEPSEEK_VISION', 'on').lower() in ('off', '0', 'false', 'no'):
+    """True when settings.yaml (or the environment) provides a key and enables it."""
+    if not flag('deepseek.enabled', True, env='DEEPSEEK_VISION'):
         return False
-    return bool(os.environ.get('DEEPSEEK_API_KEY'))
+    return bool(_api_key())
 
 
 def _encode(image) -> str:
@@ -104,7 +111,7 @@ def describe_image(image) -> dict | None:
         data=json.dumps(payload).encode('utf-8'),
         headers={
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + os.environ['DEEPSEEK_API_KEY'],
+            'Authorization': 'Bearer ' + _api_key(),
         },
         method='POST',
     )

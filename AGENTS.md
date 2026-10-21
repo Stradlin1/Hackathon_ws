@@ -8,7 +8,7 @@
 > [!IMPORTANT]
 > 1. **本文件只是索引 + 工作方式 + 红线 + 路由表 + 目录结构**。分主题事实在 `.dsh/agents/`——动手前按路由表读对应文档，改完回来更新它。
 > 2. **每句话都必须能归类**：`【事实】`= 代码/README/实测；`【设计】`= 本仓库已实现的方案；`【待验证】`= 假设，验证前不能作为依据。**没标 `【事实】` 的数字不许写进代码常量。**
-> 3. 本仓库已在 conda `aquacore` 环境跑通（42 tests；`streamlit` HTTP 200），并已灌入 4 张演示照片（bob 拾获 / alice 失物）。当前卡点见 [`backlog.md`](backlog.md)。
+> 3. 本仓库已在 conda `aquacore` 环境跑通（55 tests；`streamlit` HTTP 200），并已灌入 4 张演示照片（bob 拾获 / alice 失物）。当前卡点见 [`backlog.md`](backlog.md)。
 
 ## 工作方式：git 分支纪律（**先读这条**）
 
@@ -69,7 +69,7 @@
 | `run.sh` | 以 `HF_HUB_OFFLINE=1` 启动 Streamlit |
 | `rooms.json` | 地点下拉选项 |
 | `config_auth.example.yaml` | 本地账号配置模板（真配置 `config_auth.yaml` 不入库） |
-| `.env.example` | 可选环境变量模板（DeepSeek key、指纹生成器开关） |
+| `settings.example.yaml` | 可选配置模板（DeepSeek key、指纹生成器）；复制为 `settings.yaml` 后生效，真文件不入库 |
 | `requirements.txt` / `requirements-dev.txt` | 运行 / 测试依赖 |
 | `matching/` | 指纹、模型、检索、重排、指纹存储、配对请求 |
 | `state/` | 每个页面的 Streamlit 流程 |

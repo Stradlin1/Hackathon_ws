@@ -45,7 +45,7 @@ pending --responder reject--> rejected
 
 ## 第三方视觉模型（可选）
 
-- 【事实】设置 `DEEPSEEK_API_KEY` 后，拾获登记会把**照片副本**（JPEG base64）发送到 DeepSeek API 做一次识别；不设置则全程不联网。
+- 【事实】在 `settings.yaml` 里填 `deepseek.api_key`（或设环境变量 `DEEPSEEK_API_KEY`）后，拾获登记会把**照片副本**（JPEG base64）发送到 DeepSeek API 做一次识别；不填则全程不联网。`settings.yaml` 已 gitignore。
 - 【事实】发送内容只有图片与一段固定提示词，不含用户名、邮箱、坐标或历史记录。
 - 【设计】识别结果（描述、图上文字、属性）随指纹存进本机 `items.db`；API 侧是否留存由服务方政策决定，本地无法控制。
 - 【事实】页面隐私说明会随开关变化：开启时写"照片会发送到 DeepSeek API 一次"，关闭时写"不联网"。

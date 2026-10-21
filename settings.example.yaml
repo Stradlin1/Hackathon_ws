@@ -1,0 +1,14 @@
+# Copy this file to settings.yaml (gitignored) and fill in what you need.
+# Every value can also come from an environment variable; the environment wins.
+
+# Optional DeepSeek vision pass, used once per found-item photo at registration.
+deepseek:
+  enabled: true                    # false 等价于 DEEPSEEK_VISION=off
+  api_key: ""                      # 环境变量 DEEPSEEK_API_KEY；留空则整个功能关闭
+  model: deepseek-flash            # 环境变量 DEEPSEEK_VISION_MODEL
+  url: https://api.deepseek.com/chat/completions
+  timeout: 25                      # 秒，超时回退本地 BLIP
+
+# Local text generator that proposes fingerprint attributes; "off" disables it.
+fingerprint:
+  text_model: google/flan-t5-small  # 环境变量 FINGERPRINT_TEXT_MODEL
