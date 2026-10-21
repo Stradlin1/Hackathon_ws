@@ -8,7 +8,7 @@
 > [!IMPORTANT]
 > 1. **本文件只是索引 + 工作方式 + 红线 + 路由表 + 目录结构**。分主题事实在 `.dsh/agents/`——动手前按路由表读对应文档，改完回来更新它。
 > 2. **每句话都必须能归类**：`【事实】`= 代码/README/实测；`【设计】`= 本仓库已实现的方案；`【待验证】`= 假设，验证前不能作为依据。**没标 `【事实】` 的数字不许写进代码常量。**
-> 3. 本仓库已在 conda `aquacore` 环境跑通（62 tests；`streamlit` HTTP 200），并已灌入 4 张演示照片（bob 拾获 / alice 失物）。当前卡点见 [`backlog.md`](backlog.md)。
+> 3. 本仓库已在本地环境跑通（108 tests；`streamlit` HTTP 200），并已灌入 4 张演示照片（bob 拾获 / alice 失物）。当前卡点见 [`backlog.md`](backlog.md)。
 
 ## 工作方式：git 分支纪律（**先读这条**）
 
@@ -25,7 +25,7 @@
 
 1. **指纹只接受有原文证据的值。** 模型提案若字面没有出现在描述/图注里，必须丢弃；与用户描述冲突时以描述为准。→ [fingerprint](.dsh/agents/fingerprint.md)
 2. **缺失属性中性，矛盾才扣分。** 证据项 = `(一致 − 0.8×矛盾) / 可比项`；任一边缺失就不参与。→ [matching-engine](.dsh/agents/matching-engine.md)
-3. **语义分占 72%、证据占 28%**：证据从全一致(+1)翻到全矛盾(−1)只值 0.28 分，等价于 **0.28 ÷ 0.72 = 0.389 的 CLIP 相似度差**。相似度差超过 0.39 时，完全相反的证据也翻不过来。→ [matching-engine](.dsh/agents/matching-engine.md)
+3. **基础分：语义 72%、证据 28%；时间/地点软先验最多 +0.05，缺失/未知为 0、不扣分。** 证据从全一致(+1)翻到全矛盾(−1)只值 0.28 分，等价于 **0.28 ÷ 0.72 = 0.389 的 CLIP 相似度差**；软先验只加不减，不改变“矛盾扣分”的方向。→ [matching-engine](.dsh/agents/matching-engine.md)
 4. **排序分不是所有权概率。** 页面与文档都必须说「排序指标」（ranking metric），不得改称概率或置信度。→ [matching-engine](.dsh/agents/matching-engine.md)
 5. **联系方式只在对方 `accept` 之后可见**，且请求只能由该报告的所有者发起。→ [privacy](.dsh/agents/privacy.md)
 6. **澄清答案只以「属性」形式落库**：存归一化值 + `confirmed` 字段名，不存回答原文与问答历史；这些属性对匹配对象可见。→ [privacy](.dsh/agents/privacy.md)
@@ -41,6 +41,11 @@
 | 改属性抽取、词表、生成式指纹、提案校验 | [`.dsh/agents/fingerprint.md`](.dsh/agents/fingerprint.md) |
 | 加表/加字段/兼容旧 `items.db` | [`.dsh/agents/data-model.md`](.dsh/agents/data-model.md) |
 | 改配对请求、联系方式可见性、隐私 | [`.dsh/agents/privacy.md`](.dsh/agents/privacy.md) |
+| 改订阅、站内通知、未读数、通知阈值 | [`.dsh/agents/notifications.md`](.dsh/agents/notifications.md) |
+| 改已归还/归档、候选池过滤、我的记录状态 | [`.dsh/agents/lifecycle.md`](.dsh/agents/lifecycle.md) |
+| 改登记入口、近期动态、公开可见性、发布时间 | [`.dsh/agents/report-and-feed.md`](.dsh/agents/report-and-feed.md) |
+| 改配对请求状态机、上限、冷却、自动关闭 | [`.dsh/agents/request-lifecycle.md`](.dsh/agents/request-lifecycle.md) |
+| 改发布时间、内容指纹、图片/文本查重、水印 | [`.dsh/agents/anti-copy.md`](.dsh/agents/anti-copy.md) |
 | 改界面、样式、顶栏、卡片 | [`.dsh/agents/ui.md`](.dsh/agents/ui.md) |
 | 加页面、改跳转、Streamlit 状态 | [`.dsh/agents/architecture.md`](.dsh/agents/architecture.md) |
 | 装环境、跑不起来、模型权重、离线 | [`.dsh/agents/operations.md`](.dsh/agents/operations.md) |
@@ -56,6 +61,7 @@
 | `AGENTS.md` | 本文件：索引 + 工作方式 + 红线 + 路由表（**给智能体**，每轮自动加载） |
 | `README.md` | 人类入口：能力、匹配流程、页面操作、安装、配置、测试、模块地图、已知限制 |
 | `backlog.md` | 已知未完成的事，按「卡住什么」分组 |
+| `MODIFICATIONS.md` | 本次会话的改动说明、验证结果与后续建议（面向人） |
 | `.gitignore` | 什么不进版本控制，以及为什么 |
 | `.streamlit/config.toml` | 主题令牌与工具栏默认值（启动时读取） |
 | `.dsh/agents/` | 分主题的项目事实、设计决定、不变量、排查流程 |
@@ -66,6 +72,7 @@
 | `reset_db.py` | **破坏性**：删除 `items.db` 并写入合成样例 |
 | `create_demo_users.py` | 生成 `config_auth.yaml`：三个演示账号 + 随机 cookie key |
 | `seed_demo.py` | 从 `demo/photos/`（回退 `input/`）照片灌入演示数据（bob 拾获 / alice 失物），已有物品时拒绝运行 |
+| `evaluate.py` | 离线评估：Recall@1/5、MRR；对比时间/地点软先验开关，支持自定义 labels JSON |
 | `download_models.py` | 一次性拉取所有模型权重（默认 hf-mirror，已缓存则跳过） |
 | `run.sh` | 以 `HF_HUB_OFFLINE=1` 启动 Streamlit |
 | `rooms.json` | 地点下拉选项 |
@@ -94,4 +101,4 @@
 
 ## 相关文档
 
-[`.dsh/agents/`](.dsh/agents/) 下的 [architecture](.dsh/agents/architecture.md)、[matching-engine](.dsh/agents/matching-engine.md)、[fingerprint](.dsh/agents/fingerprint.md)、[data-model](.dsh/agents/data-model.md)、[privacy](.dsh/agents/privacy.md)、[operations](.dsh/agents/operations.md)、[invariants](.dsh/agents/invariants.md)；未完成事项见 [`backlog.md`](backlog.md)，过程见 [`.dsh/logs/`](.dsh/logs/README.md)。
+[`.dsh/agents/`](.dsh/agents/) 下的 [architecture](.dsh/agents/architecture.md)、[matching-engine](.dsh/agents/matching-engine.md)、[fingerprint](.dsh/agents/fingerprint.md)、[data-model](.dsh/agents/data-model.md)、[privacy](.dsh/agents/privacy.md)、[notifications](.dsh/agents/notifications.md)、[lifecycle](.dsh/agents/lifecycle.md)、[report-and-feed](.dsh/agents/report-and-feed.md)、[request-lifecycle](.dsh/agents/request-lifecycle.md)、[anti-copy](.dsh/agents/anti-copy.md)、[operations](.dsh/agents/operations.md)、[invariants](.dsh/agents/invariants.md)；未完成事项见 [`backlog.md`](backlog.md)，过程见 [`.dsh/logs/`](.dsh/logs/README.md)。

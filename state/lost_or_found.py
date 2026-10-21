@@ -38,7 +38,8 @@ def lost_or_found(authenticator):
                 unsafe_allow_html=True,
             )
             if st.button('开始登记失物', key='cta-lost', type='primary', use_container_width=True):
-                st.session_state.state = 'lost'
+                st.session_state.report_mode_pending = 'lost'
+                st.session_state.state = 'report'
                 st.rerun()
     with right:
         with card('found'):
@@ -47,8 +48,15 @@ def lost_or_found(authenticator):
                 unsafe_allow_html=True,
             )
             if st.button('开始登记拾获', key='cta-found', type='primary', use_container_width=True):
-                st.session_state.state = 'found'
+                st.session_state.report_mode_pending = 'found'
+                st.session_state.state = 'report'
                 st.rerun()
+
+    st.write('')
+    st.caption('不急着登记？先看看大家最近的丢失与拾获。')
+    if st.button('浏览近期动态', key='cta-browse', use_container_width=True):
+        st.session_state.state = 'browse'
+        st.rerun()
 
     username = st.session_state.get('username', '')
     lost, found, pending = _counts(username)

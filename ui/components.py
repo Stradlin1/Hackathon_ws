@@ -22,8 +22,9 @@ LOGO = ASSETS / 'logo_rounded.png'
 
 NAV = (
     ('lost_or_found', '首页'),
-    ('lost', '登记失物'),
-    ('found', '登记拾获'),
+    ('report', '登记物品'),
+    ('browse', '近期动态'),
+    ('notifications', '通知'),
     ('profile', '我的记录'),
 )
 
@@ -43,15 +44,18 @@ def _go(state: str) -> None:
 def topbar(current: str, authenticator) -> None:
     """Brand, primary navigation and the only logout entry point."""
     with st.container(key='topbar'):
-        cols = st.columns([2.7, 1, 1, 1, 1, 1.15], gap='small', vertical_alignment='center')
+        cols = st.columns([2.6, 1, 1, 1, 1, 1, 1.15], gap='small', vertical_alignment='center')
         with cols[0]:
             mark, word = st.columns([0.55, 2.6], gap='small', vertical_alignment='center')
             with mark:
                 st.image(str(LOGO), width=30)
             with word:
                 st.markdown('<div class="brand-word">404NotFound</div>', unsafe_allow_html=True)
-        for col, (state, label) in zip(cols[1:5], NAV):
+        unread = int(st.session_state.get('unread_notifications', 0) or 0)
+        for col, (state, label) in zip(cols[1:6], NAV):
             with col:
+                if state == 'notifications' and unread:
+                    label = f'通知 · {unread}'
                 st.button(
                     label,
                     key=f'nav-{state}',
@@ -60,7 +64,7 @@ def topbar(current: str, authenticator) -> None:
                     on_click=_go,
                     args=(state,),
                 )
-        with cols[5]:
+        with cols[6]:
             authenticator.logout(button_name='退出登录', location='main')
 
 

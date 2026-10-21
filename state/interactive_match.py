@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 import streamlit as st
 
 from db_manager import Database
+from matching.content_hash import publication_text, watermark
 from matching.engine import DISPLAY, MAX_QUESTIONS, QUESTIONS, add_answer, choose_question, rank_candidates
 from matching.fingerprint import display_value
-from matching.requests import MatchRequests
+from matching.lifecycle import status_label
+from matching.report_meta import ReportMeta
+from matching.requests import MatchRequests, cooldown_text
 from matching.storage import FingerprintStore
 from ui.components import card, page_header, pill, pills, topbar
 
@@ -23,6 +28,15 @@ def _chips(values, tone):
     return ''.join(pill(value, tone) for value in values)
 
 
+def _date_text(value) -> str:
+    if not value:
+        return "未填写"
+    try:
+        return datetime.fromtimestamp(value).strftime("%Y-%m-%d")
+    except (OSError, OverflowError, ValueError):
+        return "未填写"
+
+
 def interactive_match(authenticator):
     topbar('interactive_match', authenticator)
     session = st.session_state.get('match_session')
@@ -34,8 +48,26 @@ def interactive_match(authenticator):
             st.rerun()
         return
 
+    db = Database()
+    try:
+        item_status = db.get_item_status(session['item_id'])
+    finally:
+        db.close()
+    if item_status:
+        closed = status_label(item_status, session.get('direction') == 'lost')
+        page_header('search', 'AI 辅助物品匹配', f'这件物品已标记为{closed}')
+        st.warning(f'这件物品已标记为{closed}，不再参与匹配；记录仍保留在「我的记录」里。')
+        if st.button('前往我的记录', use_container_width=True):
+            st.session_state.state = 'profile'
+            st.rerun()
+        return
+
     page_header('search', 'AI 辅助物品匹配', '生成式指纹 + 信息增益追问 + 动态排序',
                 step='第 2 步 / 共 2 步')
+
+    notice = st.session_state.pop('duplicate_notice', None)
+    if notice:
+        st.warning(notice)
 
     fp = session['fingerprint']
     attrs = fp.get('attributes', {})
@@ -49,7 +81,9 @@ def interactive_match(authenticator):
         method = METHOD_DISPLAY.get(fp.get('method'), '未知')
         st.caption(f'抽取方式：{method}。只保留有原文证据的特征。')
 
-    ranked = rank_candidates(fp, session['candidates'], session['answers'])
+    ranked = rank_candidates(fp, session['candidates'], session['answers'],
+                             query_time=session.get('query_time'),
+                             query_location=session.get('query_location'))
     if not ranked:
         st.info('对面暂时没有可检索的报告。')
         if st.button('查看我的记录'):
@@ -59,9 +93,10 @@ def interactive_match(authenticator):
 
     st.markdown('### 候选排序')
     st.caption('分数是排序指标，不是所有权概率。')
-    st.caption('打分 = 0.72 × CLIP 相似度 + 0.28 × 证据；CLIP 文本↔照片的原始相似度常见区间只有 '
-               '0.2–0.35，所以总分看起来不高是正常的。')
+    st.caption('打分 = 0.72 × CLIP 相似度 + 0.28 × 证据 + 时间/地点软先验（最多 +0.05，缺失不扣分）；'
+               'CLIP 文本↔照片的原始相似度常见区间只有 0.2–0.35，所以总分看起来不高是正常的。')
     db = Database()
+    report_meta = ReportMeta()
     try:
         for index, result in enumerate(ranked[:5], 1):
             with st.container(border=True, key=f'cand-{index}'):
@@ -73,12 +108,19 @@ def interactive_match(authenticator):
                     unsafe_allow_html=True,
                 )
                 item = db.get_item(result['item_id'])
+                meta = report_meta.get(item.id)
+                published_at = meta.get('published_at') if meta else None
                 body = st.columns([1, 2.4], gap='medium')
                 with body[0]:
                     if item.image is not None:
-                        st.image(item.image, width=220)
+                        st.image(watermark(item.image, item.id, published_at), width=220)
                 with body[1]:
                     st.write(item.description)
+                    st.caption(f"地点：{getattr(item, 'location', None) or '未知'} · "
+                               f"日期：{_date_text(getattr(item, 'time', None))}")
+                    st.caption(publication_text(item.id, item.description or "", published_at))
+                    if result.get('prior_bonus'):
+                        st.caption(f"时间/地点软先验 +{result['prior_bonus']:.3f}")
                     attributes = (result.get('fingerprint') or {}).get('attributes') or {}
                     attr_chips = ''.join(
                         pill(f'{DISPLAY.get(key, key)}：{display_value(key, value)}', 'brand')
@@ -135,10 +177,28 @@ def interactive_match(authenticator):
         selections = {f'#{i}：{r["description"][:55] or "物品"}（分数 {r["score"]:.3f}）': r['item_id']
                       for i, r in enumerate(ranked[:5], 1)}
         label = st.selectbox('选择要联系的候选', list(selections))
-        if st.button('发送匹配请求', type='primary', use_container_width=True):
+        selected_id = selections[label]
+        request_state = MatchRequests().state(session['direction'], session['item_id'],
+                                              selected_id)
+        if request_state['status'] == 'pending':
+            st.info('已发送请求，等待对方确认。')
+        elif request_state['status'] == 'accepted':
+            st.success('已经配对；联系方式在「我的记录 → 已确认的匹配」里。')
+        elif request_state['status'] == 'rejected':
+            if request_state['can_request']:
+                st.warning('对方之前拒绝了这条请求，现在可以重新发起。')
+            else:
+                st.warning(f"对方已拒绝；{cooldown_text(request_state['cooldown'])}后可重新发起。")
+
+        can_send = request_state['can_request']
+        button_label = ('重新发送匹配请求'
+                        if request_state['status'] == 'rejected' and can_send
+                        else '发送匹配请求')
+        if st.button(button_label, type='primary', use_container_width=True,
+                     disabled=not can_send):
             try:
                 status = MatchRequests().create(session['direction'], session['item_id'],
-                                                selections[label], session['user'])
+                                                selected_id, session['user'])
             except (OSError, ValueError, PermissionError) as error:
                 st.error(f'无法创建匹配请求：{error}')
             else:

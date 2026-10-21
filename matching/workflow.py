@@ -29,12 +29,22 @@ def counterpart_fingerprints(direction: str, db, store: FingerprintStore) -> lis
     return pool
 
 
-def build_session(*, direction: str, item_id: int, query_embedding, fingerprint: dict, username: str, db, store: FingerprintStore) -> dict:
-    """Create a Streamlit-serializable session without persisting personal answers."""
+def build_session(*, direction: str, item_id: int, query_embedding, fingerprint: dict,
+                  username: str, db, store: FingerprintStore,
+                  query_time=None, query_location=None,
+                  include_matched: bool = False) -> dict:
+    """Create a Streamlit-serializable session without persisting personal answers.
+
+    `include_matched=True` is for offline evaluation: it ranks all reports on the
+    other side, not just the unmatched pool.
+    """
     if direction not in ("lost", "found"):
         raise ValueError("未知的报告类型")
 
-    records = db.get_unmatched_found_items() if direction == "lost" else db.get_unmatched_lost_items()
+    if direction == "lost":
+        records = db.get_found_items() if include_matched else db.get_unmatched_found_items()
+    else:
+        records = db.get_lost_items() if include_matched else db.get_unmatched_lost_items()
     query = np.asarray(query_embedding, dtype=np.float32).reshape(-1)
     if not query.size or not np.isfinite(query).all():
         raise ValueError("无效的查询向量")
@@ -60,7 +70,13 @@ def build_session(*, direction: str, item_id: int, query_embedding, fingerprint:
         if known_fp is None:
             known_fp = fingerprint_from_text(item.description, generate=False)
             store.put(item.id, known_fp)
-        candidates.append({"item_id": item.id, "fingerprint": known_fp, "description": item.description or ""})
+        candidates.append({
+            "item_id": item.id,
+            "fingerprint": known_fp,
+            "description": item.description or "",
+            "time": getattr(item, "time", None),
+            "location": getattr(item, "location", None),
+        })
 
     selected = []
     if vectors:
@@ -80,4 +96,6 @@ def build_session(*, direction: str, item_id: int, query_embedding, fingerprint:
         "candidates": selected,
         "answers": {},
         "asked": [],
+        "query_time": query_time,
+        "query_location": query_location,
     }

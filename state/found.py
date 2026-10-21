@@ -20,9 +20,12 @@ from PIL import Image, UnidentifiedImageError
 Image.MAX_IMAGE_PIXELS = 20_000_000
 
 from db_manager import Database, Item
+from matching.content_hash import ImageHashes, find_similar_text
 from matching.engine import DISPLAY, UNSURE, propose_intake_questions
 from matching.fingerprint import display_value, fingerprint_from_text
 from matching.models import caption_image_pair, clean_image, encode_image
+from matching.notifications import notify_for_found_item
+from matching.report_meta import ReportMeta
 from matching.vlm import available as vlm_available
 from matching.vlm import describe_image
 from matching.storage import FingerprintStore
@@ -62,10 +65,11 @@ def _attribute_label(field: str, value: str) -> str:
     return f'{DISPLAY.get(field, field)}：{display_value(field, value)}'
 
 
-def found(authenticator):
-    topbar('found', authenticator)
-    page_header('camera', '登记拾获物品', '上传照片，AI 生成描述后由你确认，再开始检索失主。',
-                step='第 1 步 / 共 2 步')
+def found(authenticator, *, embedded: bool = False):
+    if not embedded:
+        topbar('found', authenticator)
+        page_header('camera', '登记拾获物品', '上传照片，AI 生成描述后由你确认，再开始检索失主。',
+                    step='第 1 步 / 共 2 步')
 
     form_col, side_col = st.columns([1.6, 1], gap='large')
     with side_col:
@@ -97,6 +101,15 @@ def found(authenticator):
 
         with card('preview'):
             st.image(image, caption='物品照片', width=350)
+
+        try:
+            near = ImageHashes().find_near(image)
+        except Exception:
+            near = []
+        if near:
+            ids = '、'.join(f"#{hit['item_id']}" for hit in near[:3])
+            st.warning(f"这张照片和已有帖子 {ids} 的图片高度相似；"
+                       "如果只是同一物品请忽略，照抄会在发布时间/内容指纹上留下记录。")
 
         try:
             with st.spinner('正在识别物品……'):
@@ -150,6 +163,8 @@ def found(authenticator):
                 answers[question['field']] = st.pills(
                     question['question'], options, default=UNSURE,
                     key=f"intake-{digest}-{question['field']}")
+            public = st.checkbox('允许在近期动态中公开展示', value=True,
+                                 help='关闭后只参与匹配，不出现在公开列表；不会展示联系方式。')
             submitted = st.form_submit_button('提交并查找可能匹配', type='primary',
                                               use_container_width=True)
 
@@ -177,16 +192,37 @@ def found(authenticator):
             item = Item(secrets.randbits(62), image, vector, description.strip(), stamp, location)
             db = Database()
             try:
+                try:
+                    similar = find_similar_text(description, db.get_items())
+                except Exception:
+                    similar = None
+                if similar:
+                    st.session_state.duplicate_notice = (
+                        f"描述与已有帖子 #{similar['item_id']} 高度相似（{similar['ratio']:.0%}）。"
+                        "如果只是巧合请忽略；照抄会在发布时间/内容指纹上留下记录。")
                 db.insert_item(item)
+                try:
+                    ImageHashes().put(item.id, image)
+                except Exception:
+                    pass
                 owner = db.get_user(st.session_state.username)
                 if owner is None:
                     raise ValueError('请重新登录后再登记物品。')
                 db.insert_found_item(item, owner)
                 store = FingerprintStore()
                 store.put(item.id, fingerprint)
+                try:
+                    notify_for_found_item(item, fingerprint, db, store, owner.username)
+                except Exception:  # alerts must not break registration
+                    pass
+                try:
+                    ReportMeta().publish(item.id, public=True if public is None else bool(public))
+                except Exception:  # visibility metadata is optional
+                    pass
                 session = build_session(direction='found', item_id=item.id,
                                         query_embedding=vector, fingerprint=fingerprint,
-                                        username=owner.username, db=db, store=store)
+                                        username=owner.username, db=db, store=store,
+                                        query_time=stamp, query_location=location)
             finally:
                 db.close()
         except (OSError, ValueError, RuntimeError, ImportError) as error:

@@ -16,6 +16,8 @@ _PATHS = {
                  '<path d="M9 4.5V3h6v1.5"/><path d="M9 11h6M9 15h4"/>',
     'camera': '<path d="M4 8.5h3l1.5-2h7L17 8.5h3v10H4Z"/><circle cx="12" cy="13" r="3.2"/>',
     'folder': '<path d="M3.5 6.5h6l2 2h9v11h-17Z"/>',
+    'bell': '<path d="M6 9.5a6 6 0 0 1 12 0c0 3.8 1 5.3 2 6.5H4c1-1.2 2-2.7 2-6.5Z"/>'
+            '<path d="M10 19a2 2 0 0 0 4 0"/>',
     'inbox': '<path d="M3.5 13.5 6 5.5h12l2.5 8v5h-17Z"/><path d="M3.5 13.5H9l1 3h4l1-3h5.5"/>',
     'check': '<circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.2 11 14.7l4.5-5"/>',
     'handshake': '<path d="M3.5 12.5 8 8l2.5 2.5L12 9l1.5 1.5L16 8l4.5 4.5"/>'

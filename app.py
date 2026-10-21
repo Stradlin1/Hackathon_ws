@@ -9,13 +9,17 @@ import streamlit_authenticator as stauth
 import yaml
 
 from db_manager import User
+from matching.notifications import unread_count
+from state.browse import browse
 from state.found import found
 from state.interactive_match import interactive_match
 from state.login import login
 from state.lost import lost
 from state.lost_or_found import lost_or_found
+from state.notifications import notifications
 from state.profile import profile
 from state.register import register
+from state.report import report
 from ui.components import LOGO
 from ui.theme import inject as inject_theme
 
@@ -90,6 +94,13 @@ if pending or missing_cookie:
     st.session_state.auth_cookie_synced = True
     authenticator.cookie_controller.set_cookie()
 
+# The top bar shows the unread badge on every page, so refresh it once per run.
+if st.session_state.get('authentication_status') and st.session_state.get('username'):
+    try:
+        st.session_state.unread_notifications = unread_count(st.session_state.username)
+    except Exception:  # notifications must never block the page
+        st.session_state.unread_notifications = 0
+
 # Only authenticated users may access reports, matchmaking or contact details.
 state = st.session_state.get('state', 'login')
 if state == 'login' and st.session_state.get('authentication_status'):
@@ -105,6 +116,12 @@ elif state == 'lost':
     lost(authenticator)
 elif state == 'found':
     found(authenticator)
+elif state == 'report':
+    report(authenticator)
+elif state == 'browse':
+    browse(authenticator)
+elif state == 'notifications':
+    notifications(authenticator)
 elif state == 'interactive_match':
     interactive_match(authenticator)
 elif state == 'profile':

@@ -117,6 +117,25 @@ def encode_text(text: str) -> np.ndarray:
     return arr
 
 
+def combine_text_image(text_embedding, image_embedding,
+                       text_weight: float = 0.5) -> np.ndarray:
+    """Blend the text and image vectors into one unit vector.
+
+    The two encoders are trained to share a space, so a weighted average is a
+    simple way to use both signals without adding another embedding column.
+    """
+    text = np.asarray(text_embedding, dtype=np.float32).reshape(-1)
+    image = np.asarray(image_embedding, dtype=np.float32).reshape(-1)
+    if text.shape != image.shape:
+        raise ValueError("文本与图像向量维度不一致")
+    weight = min(1.0, max(0.0, float(text_weight)))
+    combined = weight * text + (1.0 - weight) * image
+    norm = float(np.linalg.norm(combined))
+    if not norm or not np.isfinite(combined).all():
+        raise ValueError("无效的混合向量")
+    return (combined / norm).astype(np.float32)
+
+
 def caption_image_pair(image: Image.Image) -> tuple[str, str]:
     """Return (english, chinese) captions.
 

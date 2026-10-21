@@ -10,6 +10,11 @@
 | 问题 | 保证 | 实现位置 |
 | --- | --- | --- |
 | 未确认配对的对方能看到邮箱吗？ | 不能；`incoming`/`outgoing` 只查描述与状态 | `MatchRequests.incoming`、`outgoing` |
+| 浏览「最近拾获」能看到拾获者身份吗？ | 不能；只展示描述、已清洗照片、地点/日期与已共享属性 | `state/browse.py` |
+| 站内通知能看到拾获者身份吗？ | 不能；通知只 JOIN `items`，展示描述/照片/地点/日期与排序指标 | `state/notifications.py` |
+| 已归还/归档的备注别人能看到吗？ | 不能；`item_status.updated_by` 与 `note` 只在本人「我的记录」展示 | `state/profile.py` |
+| 近期动态能看到失物描述吗？ | 默认能看到（可勾选不公开）；不展示发布者身份或联系方式 | `state/browse.py`、`state/lost.py`、`state/found.py` |
+| 查重提示会泄露什么？ | 只给已有帖子的 id、相似度或图片距离；不含用户名、邮箱或联系方式 | `matching/content_hash.py` |
 | 谁能发起请求？ | 只能由**自己那件报告**的所有者发起 | `MatchRequests.create` 的 `PermissionError` |
 | 谁能接受/拒绝？ | 只有 `responder` 本人，且状态必须是 `pending` | `respond` 的 `WHERE responder=? AND status='pending'` |
 | 邮箱何时出现？ | 只在 `status='accepted'` 的查询里 JOIN `users` | `MatchRequests.accepted` |
@@ -20,8 +25,10 @@
 
 ```text
 (无记录) --create（请求者=报告所有者）--> pending
-pending --responder accept--> accepted  ──同时 INSERT OR IGNORE matches(found, lost)
-pending --responder reject--> rejected
+pending --responder accept--> accepted  + matches(found, lost)
+                                  └─ 其他涉及该拾获/失物的 pending 自动 rejected
+pending --responder reject--> rejected + request_history
+rejected --24 小时冷却结束 + create--> pending（旧行被替换，history 保留）
 ```
 
 | 操作 | 前置条件 | 失败表现 |
@@ -30,8 +37,30 @@ pending --responder reject--> rejected
 | `respond` | 调用者就是 `responder`；状态 `pending` | 返回 `False`（不抛异常） |
 | 再次 `create` 同一对 | 主键已存在 → `INSERT OR IGNORE` | 返回**已有状态**（可能是 `rejected`） |
 
-- 【事实】`match_requests` 主键是 `(found_item_id, lost_item_id)`，所以**一次拒绝就是终局**：没有把 `rejected` 改回 `pending` 的路径（见 `backlog.md`）。
+- 【事实】拒绝后进入 **24 小时冷却**；冷却到期可以重新发起（旧 `rejected` 行被替换，`request_history` 保留这次尝试）。
+- 【事实】同一拾获最多 **3 个 pending**；接受一个后，涉及该拾获或该失物的其他 pending 自动改为 `rejected`。
+- 【事实】`request_history` 只存物品 id、用户名、状态与时间；不存拒绝理由、联系方式或聊天内容；撤销物品会删除相关历史。
+- 【设计】pending **不**把物品移出候选池，避免一个（可能是冒领的）请求阻塞其他人；用上限 3 控制骚扰，让拾获者比较后决定。
 - 【事实】`accepted()` 返回 `contact_username`/`contact_email`，两人都能看到对方的联系方式。
+- 【事实】`state/browse.py` 只调用 `get_unmatched_found_items()` 与 `FingerprintStore.get()`，不 JOIN `users`；页面没有用户名或邮箱字段。
+- 【设计】浏览页把未配对拾获物品的描述与照片展示给所有已登录用户；这是有意的（失主不必先报失），联系方式仍受 `accepted` 门禁约束。
+- 【事实】订阅只存 `username` 与失物 id（以及保留的搜索条件列），不存邮箱；通知只对订阅者本人可见。
+- 【事实】站内通知不含拾获者用户名/邮箱，只含物品描述、照片、地点/日期、对应失物描述与排序指标。
+- 【事实】登记失物时默认订阅，但只写本地表，不发送任何邮件或短信；用户可在「我的记录」里关闭。
+- 【事实】撤销失物/拾获时，`Notifications.delete_for_item()` 会删除相关订阅与通知。
+- 【事实】`item_status` 只存物品 id、状态、操作者用户名、时间与本人备注；备注不会进入候选、浏览页或通知。
+- 【事实】已归还/归档不改变联系方式门禁：`MatchRequests.accepted()` 仍然是唯一出口。
+- 【事实】与撤销不同，归还/归档保留 `items`、归属、指纹、请求与配对记录；撤销仍是硬删除。
+- 【事实】「近期动态」默认展示所有已登录用户登记的失物与拾获：描述、拾获照片、地点/日期、发布时间、已共享属性；**不展示用户名、邮箱或联系方式**。
+- 【事实】登记失物/拾获时都有「允许在近期动态中公开展示」复选框，默认勾选；取消后 `report_meta.public=0`，只退出 feed，仍参与匹配、订阅与通知。
+- 【事实】发布时间来自 `report_meta.published_at`，只用于标明先后，不是所有权证明；`items.time` 是丢失/拾获日期，两者分开显示。
+- 【设计】公开失物描述会放大“照抄描述冒领”的风险；当前没有认领验证，拾获者仍需自己判断是否接受请求。页面已提示不要写门牌号、证件号等敏感信息。
+- 【事实】失物也可以上传可选照片；照片同样先 `clean_image` 去 EXIF，存 `items.db`，并可能随公开动态展示；不上传照片不影响匹配。
+- 【设计】失物照片和拾获照片可能来自同一张图（例如从动态保存），会制造虚假的高相似度；这属于“照抄描述”的同类风险，仍要靠认领验证兜底。
+- 【事实】内容指纹是规范化描述的 SHA-256 前 10 位，随帖子公开显示；它不包含用户名/邮箱。
+- 【事实】`image_hashes` 只存 64-bit dHash 与时间，不存图片副本；撤销物品时删除。
+- 【事实】查重提示只给帖子 id、文本相似度或图片 Hamming 距离，不 JOIN `users`；水印只写帖子尾号与日期。
+- 【设计】发布时间/指纹/水印都是**公开信号**，不是不可篡改的证据；本地数据库有权限的人可以修改。
 - 【设计】该表不记录拒绝理由，也不记录查看行为；没有审计日志。
 
 ## 本地凭据
@@ -95,3 +124,10 @@ pending --responder reject--> rejected
 | 日期 | 变更 |
 | --- | --- |
 | 2026-10-21 | 首次建立：保证清单、请求状态机、凭据、图像卫生、答案与信任边界。 |
+| 2026-10-21 | 补浏览页保证：只展示描述/照片/地点/属性，不展示拾获者身份或联系方式。 |
+| 2026-10-21 | 补订阅与通知：通知只给订阅者，不含身份/联系方式；只写本地表，不发邮件。 |
+| 2026-10-21 | 补归还/归档：备注与操作者只给本人看；状态不改变联系方式门禁。 |
+| 2026-10-21 | 补近期动态：失物/拾获描述默认公开、可关闭；发布时间只是先后标记；无身份/联系方式。 |
+| 2026-10-21 | 补请求生命周期：拒绝 24 小时冷却、pending 上限 3、接受自动关闭其他请求；history 不含理由/联系方式。 |
+| 2026-10-22 | 补失物照片：可选上传、去 EXIF、可能进入公开动态；同一张照片照抄风险仍在。 |
+| 2026-10-22 | 补内容指纹/图片哈希/水印：只展示帖子 id、相似度与公开时间，不含身份/联系方式。 |

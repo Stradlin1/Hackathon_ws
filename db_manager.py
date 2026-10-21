@@ -43,6 +43,15 @@ class Database:
         self.cur.execute('CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, email TEXT)')
         self.cur.execute('CREATE TABLE IF NOT EXISTS lost_items (item_id INTEGER, user_id TEXT, PRIMARY KEY (item_id, user_id))')
         self.cur.execute('CREATE TABLE IF NOT EXISTS found_items (item_id INTEGER, user_id TEXT, PRIMARY KEY (item_id, user_id))')
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS item_status (
+                item_id INTEGER PRIMARY KEY,
+                status TEXT NOT NULL CHECK (status IN ('returned', 'archived')),
+                updated_by TEXT NOT NULL,
+                updated_at INTEGER NOT NULL,
+                note TEXT NOT NULL DEFAULT ''
+            )
+        """)
     
 
     # check if exists
@@ -172,7 +181,8 @@ class Database:
             FROM lost_items li
             JOIN items it ON li.item_id = it.id
             LEFT JOIN matches m ON li.item_id = m.item2_id
-            WHERE m.item2_id IS NULL
+            LEFT JOIN item_status st ON st.item_id = li.item_id
+            WHERE m.item2_id IS NULL AND st.item_id IS NULL
         ''')
         lost_items = self.cur.fetchall()
         return [Item(item[0], pickle.loads(item[1]) if item[1] else None, 
@@ -185,7 +195,8 @@ class Database:
             FROM found_items fi
             JOIN items it ON fi.item_id = it.id
             LEFT JOIN matches m ON fi.item_id = m.item1_id
-            WHERE m.item1_id IS NULL
+            LEFT JOIN item_status st ON st.item_id = fi.item_id
+            WHERE m.item1_id IS NULL AND st.item_id IS NULL
         ''')
         found_items = self.cur.fetchall()
         return [Item(item[0], pickle.loads(item[1]) if item[1] else None, 
@@ -199,6 +210,11 @@ class Database:
         if user:
             return User(*user)
         return None
+
+    def get_item_status(self, item_id:int) -> str | None:
+        self.cur.execute('SELECT status FROM item_status WHERE item_id = ?', (item_id,))
+        row = self.cur.fetchone()
+        return row[0] if row else None
     
     # get user items
     def get_user_lost_items(self, username:str) -> list[Item]:

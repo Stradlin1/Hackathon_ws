@@ -10,6 +10,11 @@ from .fingerprint import FIELDS, display_value, normalize_answer
 
 WEIGHTS = {"category": 1.3, "color": 1.2, "material": 1.0, "shape": 1.1, "brand": 1.1, "mark": 2.0}
 ABSENT_MARK = "no special mark"
+# Soft, non-negative bonuses. Missing or neutral values contribute nothing.
+TIME_PRIOR_WEIGHT = 0.03
+LOCATION_PRIOR_WEIGHT = 0.02
+TIME_DECAY_DAYS = 14.0
+NEUTRAL_LOCATIONS = {"未知", "其他"}
 
 # Values that describe the same thing at a different granularity. Treated as a
 # conflict, "水杯" (cup) versus "水瓶" (water bottle) cancelled a real match.
@@ -46,6 +51,24 @@ INTAKE_QUESTIONS = {
 }
 
 
+def _time_prior(query_time, candidate_time) -> float:
+    if not query_time or not candidate_time:
+        return 0.0
+    try:
+        days = abs(float(query_time) - float(candidate_time)) / 86400.0
+    except (TypeError, ValueError):
+        return 0.0
+    return TIME_PRIOR_WEIGHT * math.exp(-days / TIME_DECAY_DAYS)
+
+
+def _location_prior(query_location, candidate_location) -> float:
+    if not query_location or not candidate_location:
+        return 0.0
+    if query_location in NEUTRAL_LOCATIONS or candidate_location in NEUTRAL_LOCATIONS:
+        return 0.0
+    return LOCATION_PRIOR_WEIGHT if query_location == candidate_location else 0.0
+
+
 def _attrs(fp: Mapping | None) -> dict[str, str]:
     if not isinstance(fp, Mapping):
         return {}
@@ -55,11 +78,16 @@ def _attrs(fp: Mapping | None) -> dict[str, str]:
     return {key: value for key, value in source.items() if key in FIELDS and isinstance(value, str) and value}
 
 
-def rank_candidates(query_fp: Mapping, candidates: list[dict], answers: Mapping[str, str] | None = None) -> list[dict]:
+def rank_candidates(query_fp: Mapping, candidates: list[dict],
+                    answers: Mapping[str, str] | None = None, *,
+                    query_time=None, query_location=None,
+                    use_priors: bool = True) -> list[dict]:
     """Rank candidates using CLIP similarity and literal matching evidence.
 
     Missing attributes are neutral. Positive and contradictory evidence have
-    different effects; the resulting score is a ranking metric, not a probability.
+    different effects. Time/location add a small non-negative prior (at most
+    +0.05); missing or neutral values contribute nothing. The result is a
+    ranking metric, not a probability.
     """
     query = {**_attrs(query_fp), **{k: v for k, v in (answers or {}).items() if v and k in FIELDS}}
     output: list[dict] = []
@@ -87,8 +115,15 @@ def rank_candidates(query_fp: Mapping, candidates: list[dict], answers: Mapping[
         comparable = agreement + conflict
         evidence = ((agreement - 0.8 * conflict) / comparable) if comparable else 0.0
         semantic = min(1.0, max(0.0, float(original["semantic_score"])))
-        score = max(0.0, min(1.0, 0.72 * semantic + 0.28 * ((evidence + 1) / 2)))
-        output.append({**original, "score": round(score, 5), "matches": matches, "conflicts": contradictions})
+        base = max(0.0, min(1.0, 0.72 * semantic + 0.28 * ((evidence + 1) / 2)))
+        bonus = 0.0
+        if use_priors:
+            bonus = (_time_prior(query_time, original.get("time"))
+                     + _location_prior(query_location, original.get("location")))
+        score = max(0.0, min(1.0, base + bonus))
+        output.append({**original, "score": round(score, 5),
+                       "base_score": round(base, 5), "prior_bonus": round(bonus, 5),
+                       "matches": matches, "conflicts": contradictions})
     return sorted(output, key=lambda candidate: (-candidate["score"], candidate["item_id"]))
 
 

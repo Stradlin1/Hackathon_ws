@@ -50,3 +50,14 @@
   再按文件挑选；`git add -A` 会把「缺文件」变成「删文件」。
 - 合并前先 `git log --stat --diff-filter=D` 检查有没有意外删除。
 - 没有 git 的协作者，交付前先让他 `git init` 并给一个分支，比压缩包便宜得多。
+
+## 结果（同日 01:45 补记）
+
+队友重新给了一份完整目录（`Hackathon_ws-main(1)`，含 `matching/`、`state/`、`ui/`、`tests/`、
+`static/`、`demo/photos/`）。按文件覆盖回来：113 个文件里 29 个新增、27 个修改、
+0 个删除；`run.sh` 重新 `chmod 755`（Windows 拷过来的文件丢了执行位），
+`__pycache__` 与 `.pytest_cache` 清掉。验证 `108 passed`、`streamlit` HTTP 200。
+
+`main` 上那个坏提交 `820b496` 从未推送过，已连同 `wip/win-zip-merge-broken` 一起删除，
+`main` 回到 `3f17878`；完整功能以一次正常提交落在 `dsh`。
+

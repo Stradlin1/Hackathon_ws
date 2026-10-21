@@ -8,8 +8,12 @@ import streamlit as st
 
 from db_manager import Database
 from matching.engine import DISPLAY
+from matching.content_hash import ImageHashes, publication_text, watermark
 from matching.fingerprint import FIELDS, display_value, normalize_answer
-from matching.requests import MatchRequests
+from matching.lifecycle import Lifecycle, status_label
+from matching.notifications import Notifications
+from matching.report_meta import ReportMeta
+from matching.requests import MatchRequests, cooldown_text
 from matching.storage import FingerprintStore
 from ui.components import card, empty, esc, page_header, pill, pills, stat_row, status_badge, topbar
 
@@ -18,6 +22,15 @@ STATUS_DISPLAY = {'pending': '待确认', 'accepted': '已接受', 'rejected': '
 
 def _date_text(item) -> str:
     return datetime.fromtimestamp(item.time).strftime('%Y-%m-%d') if item.time else '未填写'
+
+
+def _timestamp_text(value) -> str:
+    if not value:
+        return '未填写'
+    try:
+        return datetime.fromtimestamp(value).strftime('%Y-%m-%d')
+    except (OSError, OverflowError, ValueError):
+        return '未填写'
 
 
 @st.dialog('补全物品信息')
@@ -72,6 +85,14 @@ def _remove_report(item_id: int, username: str) -> None:
         db.close()
     MatchRequests().cancel_for_item(item_id)
     FingerprintStore().delete(item_id)
+    try:
+        Notifications().delete_for_item(item_id)
+    except Exception:  # cleanup is best-effort; the report is already gone
+        pass
+    try:
+        ImageHashes().delete(item_id)
+    except Exception:
+        pass
     session = st.session_state.get('match_session')
     if isinstance(session, dict) and session.get('item_id') == item_id:
         st.session_state.pop('match_session', None)
@@ -97,15 +118,52 @@ def _withdraw_dialog(item) -> None:
             st.rerun()
 
 
-def _item_card(key, item, show_image=False):
+@st.dialog('标记处理状态')
+def _status_dialog(item, lost: bool) -> None:
+    """Close a report without deleting it; it stays visible under 已处理."""
+    lifecycle = Lifecycle()
+    current = lifecycle.get(item.id)
+    if current:
+        st.info(f'当前状态：{status_label(current["status"], lost)}')
+    options = {'returned': '已归还 / 已找回', 'archived': '归档（不表示归还）'}
+    keys = list(options)
+    index = keys.index(current['status']) if current and current['status'] in keys else 0
+    with st.form(f'status-form-{item.id}'):
+        choice = st.radio('处理结果', keys, index=index,
+                          format_func=lambda key: options[key],
+                          key=f'status-choice-{item.id}')
+        note = st.text_input('备注（可选）', max_chars=80, key=f'status-note-{item.id}')
+        st.caption('标记后物品会退出候选池、浏览页与通知匹配，但记录保留，可以恢复。')
+        submitted = st.form_submit_button('确认', type='primary', use_container_width=True)
+    if submitted:
+        try:
+            lifecycle.set_status(item.id, choice, st.session_state.username, note)
+        except (OSError, ValueError) as error:
+            st.error(f'保存失败：{error}')
+        else:
+            st.rerun()
+    if current:
+        if st.button('恢复为进行中', key=f'status-clear-{item.id}',
+                     use_container_width=True):
+            try:
+                lifecycle.clear(item.id)
+            except (OSError, ValueError) as error:
+                st.error(f'恢复失败：{error}')
+            else:
+                st.rerun()
+
+
+def _item_card(key, item, show_image=False, lost=False):
     with st.container(border=True, key=key):
+        meta = ReportMeta().get(item.id)
+        published_at = meta.get('published_at') if meta else None
         cols = st.columns([1, 3], gap='medium') if show_image and item.image is not None else None
         if cols is None:
             st.write(item.description)
             st.caption(f'地点：{item.location} | 日期：{_date_text(item)} | #{item.id}')
         else:
             with cols[0]:
-                st.image(item.image, width=160)
+                st.image(watermark(item.image, item.id, published_at), width=160)
             with cols[1]:
                 st.write(item.description)
                 st.caption(f'地点：{item.location} | 日期：{_date_text(item)} | #{item.id}')
@@ -114,14 +172,70 @@ def _item_card(key, item, show_image=False):
                         for field, value in attributes.items())
         if chips:
             pills(chips)
-        actions = st.columns([4, 1.2], gap='small', vertical_alignment='center')
+        st.caption(publication_text(item.id, item.description or "", published_at))
+        notified = False
+        if lost:
+            try:
+                notified = Notifications().is_subscribed(st.session_state.username, item.id)
+            except Exception:
+                notified = False
+        actions = (st.columns([2.2, 1, 1, 1], gap='small', vertical_alignment='center')
+                   if lost else st.columns([3, 1, 1], gap='small', vertical_alignment='center'))
         with actions[0]:
             if st.button('补全信息', key=f'enrich-{item.id}', type='secondary',
                          use_container_width=True):
                 _enrich_dialog(item.id)
-        with actions[1]:
-            if st.button('撤销', key=f'withdraw-{item.id}', help='删除这条登记，无法恢复'):
-                _withdraw_dialog(item)
+        if lost:
+            with actions[1]:
+                if st.button('取消提醒' if notified else '提醒我', key=f'notify-{item.id}',
+                             help='有新拾获物品时在站内通知你；已配对的失物不再提醒。',
+                             use_container_width=True):
+                    try:
+                        Notifications().toggle_item(st.session_state.username, item.id)
+                    except Exception as error:
+                        st.error(f'提醒设置失败：{error}')
+                    else:
+                        st.rerun()
+            with actions[2]:
+                if st.button('处理', key=f'status-{item.id}',
+                             help='标记已归还或归档；记录保留，可以恢复',
+                             use_container_width=True):
+                    _status_dialog(item, lost)
+            with actions[3]:
+                if st.button('撤销', key=f'withdraw-{item.id}', help='删除这条登记，无法恢复'):
+                    _withdraw_dialog(item)
+        else:
+            with actions[1]:
+                if st.button('处理', key=f'status-{item.id}',
+                             help='标记已归还或归档；记录保留，可以恢复',
+                             use_container_width=True):
+                    _status_dialog(item, lost)
+            with actions[2]:
+                if st.button('撤销', key=f'withdraw-{item.id}', help='删除这条登记，无法恢复'):
+                    _withdraw_dialog(item)
+
+
+def _done_card(item, record, lost: bool):
+    with st.container(border=True, key=f'done-{item.id}'):
+        meta = ReportMeta().get(item.id)
+        published_at = meta.get('published_at') if meta else None
+        tone = 'ok' if record['status'] == 'returned' else 'neutral'
+        st.markdown(pill(status_label(record['status'], lost), tone), unsafe_allow_html=True)
+        if item.image is not None:
+            st.image(watermark(item.image, item.id, published_at), width=140)
+        st.write(item.description)
+        st.caption(f'地点：{item.location} | 日期：{_date_text(item)} | #{item.id}')
+        st.caption(publication_text(item.id, item.description or "", published_at))
+        if record.get('note'):
+            st.caption(f"备注：{record['note']}")
+        st.caption(f"处理时间：{_timestamp_text(record.get('updated_at'))}")
+        if st.button('恢复为进行中', key=f'restore-{item.id}', use_container_width=True):
+            try:
+                Lifecycle().clear(item.id)
+            except (OSError, ValueError) as error:
+                st.error(f'恢复失败：{error}')
+            else:
+                st.rerun()
 
 
 def profile(authenticator):
@@ -136,30 +250,56 @@ def profile(authenticator):
     finally:
         db.close()
 
+    lifecycle = Lifecycle() if (lost_items or found_items) else None
+
+    def split(items):
+        active, done = [], []
+        for item in items:
+            record = lifecycle.get(item.id) if lifecycle else None
+            if record:
+                done.append((item, record))
+            else:
+                active.append(item)
+        return active, done
+
+    lost_active, lost_done = split(lost_items)
+    found_active, found_done = split(found_items)
+
     requests = MatchRequests()
     incoming = requests.incoming(username)
 
     stat_row([
-        (len(lost_items), '我的失物', '已登记'),
-        (len(found_items), '我的拾获', '已登记'),
+        (len(lost_active), '我的失物', '进行中'),
+        (len(found_active), '我的拾获', '进行中'),
         (len(incoming), '待我确认', '对方在等你'),
+        (len(lost_done) + len(found_done), '已处理', '已归还/归档'),
     ])
 
     st.markdown('### 我的失物')
-    if not lost_items:
-        empty('clipboard', '还没有登记失物', '从首页点「登记失物」开始。')
-    for item in lost_items:
-        _item_card(f'profile-lost-{item.id}', item)
+    if not lost_active:
+        empty('clipboard', '没有进行中的失物', '已处理的物品在下面的「已处理的物品」里。')
+    for item in lost_active:
+        _item_card(f'profile-lost-{item.id}', item, show_image=True, lost=True)
 
     st.markdown('### 我的拾获')
-    if not found_items:
-        empty('camera', '还没有登记拾获物品', '从首页点「登记拾获」上传一张照片。')
-    for item in found_items:
+    if not found_active:
+        empty('camera', '没有进行中的拾获物品', '已处理的物品在下面的「已处理的物品」里。')
+    for item in found_active:
         _item_card(f'profile-found-{item.id}', item, show_image=True)
+
+    st.markdown('### 已处理的物品')
+    if not lost_done and not found_done:
+        empty('check', '还没有已处理的物品', '在物品卡片上点「处理」可以标记已归还或归档。')
+    for item, record in lost_done:
+        _done_card(item, record, lost=True)
+    for item, record in found_done:
+        _done_card(item, record, lost=False)
 
     st.markdown('### 等待你确认的请求')
     if not incoming:
         empty('inbox', '暂无待确认请求', '对方发起请求后会出现在这里。')
+    else:
+        st.caption(f'共 {len(incoming)} 个待确认请求；接受其中一个后，其余会自动关闭。')
     for req in incoming:
         found, lost = req['found_item_id'], req['lost_item_id']
         with st.container(border=True, key=f'req-{found}-{lost}'):
@@ -172,21 +312,55 @@ def profile(authenticator):
                              use_container_width=True):
                     if requests.respond(username, found, lost, True):
                         st.rerun()
+                    else:
+                        st.warning('这条请求已经不可接受（可能已配对或被取消）。')
             with right:
                 if st.button('拒绝匹配', key=f'reject-{found}-{lost}', use_container_width=True):
                     if requests.respond(username, found, lost, False):
                         st.rerun()
+                    else:
+                        st.warning('这条请求已经处理过了。')
 
     st.markdown('### 我发出的请求')
     outgoing = requests.outgoing(username)
     if not outgoing:
         empty('inbox', '还没有发出请求', '在匹配结果里选中候选后发送。')
+    lost_ids = {item.id for item in lost_items}
+    found_ids = {item.id for item in found_items}
     for req in outgoing:
+        found, lost = req['found_item_id'], req['lost_item_id']
         st.markdown(
-            f'拾获 #{req["found_item_id"]} / 失物 #{req["lost_item_id"]}　'
-            + status_badge(req['status']),
+            f'拾获 #{found} / 失物 #{lost}　' + status_badge(req['status']),
             unsafe_allow_html=True,
         )
+        if req['status'] != 'rejected':
+            continue
+        db = Database()
+        try:
+            matched = bool(db.get_found_item_matches(found) or db.get_lost_item_matches(lost))
+        finally:
+            db.close()
+        state = requests.state_pair(found, lost)
+        if matched:
+            st.caption('这条配对已经完成，不能重新发起。')
+        elif state['can_request']:
+            if lost in lost_ids:
+                direction, query, candidate = 'lost', lost, found
+            elif found in found_ids:
+                direction, query, candidate = 'found', found, lost
+            else:
+                direction = None
+            if direction is None:
+                st.caption('对应物品已经撤销，不能重新发起。')
+            elif st.button('重新发送匹配请求', key=f'retry-{found}-{lost}'):
+                try:
+                    requests.create(direction, query, candidate, username)
+                except (OSError, ValueError, PermissionError) as error:
+                    st.error(f'无法重新发起：{error}')
+                else:
+                    st.rerun()
+        else:
+            st.caption(f"冷却中：{cooldown_text(state['cooldown'])}后可重新发起。")
 
     st.markdown('### 已确认的匹配')
     accepted = requests.accepted(username)
@@ -203,5 +377,5 @@ def profile(authenticator):
 
     st.write('')
     if st.button('继续登记物品', type='primary', use_container_width=True):
-        st.session_state.state = 'lost_or_found'
+        st.session_state.state = 'report'
         st.rerun()

@@ -6,6 +6,7 @@ import yaml
 from PIL import Image
 
 from db_manager import Database, Item, User
+from matching.report_meta import ReportMeta
 
 
 with open('config_auth.yaml', encoding='utf-8') as file:
@@ -31,10 +32,12 @@ samples = [
     ('小笔记本', '主入口', '#b8a0cc'),
 ]
 items = []
+meta = ReportMeta()
 for i, (description, location, color) in enumerate(samples):
     image = Image.new('RGB', (128, 128), color=color)
     item = Item(i + 10, image, None, description, 0, location)
     db.insert_item(item)
+    meta.publish(item.id)
     items.append(item)
 
 if users:

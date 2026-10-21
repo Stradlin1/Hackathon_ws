@@ -56,11 +56,13 @@ streamlit run app.py
 python -m pip install -r requirements-dev.txt
 python -m pytest -q
 python -m compileall -q app.py matching state
+python evaluate.py --verbose   # 需要已 seed 的 items.db；对比软先验开关
 ```
 
 - 【事实】测试 mock 掉 embedding 与模型权重，可以离线跑；`test_pages_smoke.py` 用假 `streamlit` 模块。
 - 【事实】测试不覆盖真实模型精度、真实图片质量、SQLite 并发。
 - 【事实】2026-10-21 在 aquacore 环境跑通：24 passed；注意 ROS 的 pytest 插件会因缺 `lark` 直接崩，必须带 `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`。
+- 【事实】2026-10-22 当前工作副本复跑（Python 3.12，复用 `yolo` 环境的 CUDA torch）：**108 passed**；新增了统一登记、双向动态、订阅/通知、归还/归档、请求冷却/上限、时间/地点软先验、失物照片混合向量、内容指纹/图片 dHash/文本近似与评估脚本的测试。
 
 ## DeepSeek 视觉（可选）
 

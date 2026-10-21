@@ -8,6 +8,7 @@ import pytest
 from matching.engine import (ABSENT_MARK, add_answer, choose_question, propose_intake_questions,
                              rank_candidates)
 from matching.fingerprint import display_value, extract_known, fingerprint_from_text, normalize_answer
+from matching.models import combine_text_image
 from matching.requests import MatchRequests
 from matching.storage import FingerprintStore
 from matching.workflow import build_session
@@ -17,8 +18,9 @@ def fp(**kw):
     return {"attributes": kw, "method": "rules"}
 
 
-def candidate(cid, score, **kw):
-    return {"item_id": cid, "semantic_score": score, "fingerprint": fp(**kw), "description": f"item-{cid}"}
+def candidate(cid, score, time=None, location=None, **kw):
+    return {"item_id": cid, "semantic_score": score, "fingerprint": fp(**kw),
+            "description": f"item-{cid}", "time": time, "location": location}
 
 
 def test_fingerprint_store_delete_removes_the_row(tmp_path):
@@ -296,6 +298,65 @@ def test_workflow_retrieval_with_fake_embeddings(tmp_path, monkeypatch):
     assert session["candidates"][0]["semantic_score"] == pytest.approx(1.0)
     assert session["answers"] == {}
     assert session["asked"] == []
+
+
+def test_combine_text_image_normalizes_and_weights():
+    combined = combine_text_image([1.0, 0.0], [0.0, 1.0])
+    assert np.linalg.norm(combined) == pytest.approx(1.0)
+    assert combined[0] == pytest.approx(combined[1])
+
+    text_only = combine_text_image([1.0, 0.0], [0.0, 1.0], text_weight=1.0)
+    assert text_only == pytest.approx(np.array([1.0, 0.0]))
+    image_only = combine_text_image([1.0, 0.0], [0.0, 1.0], text_weight=0.0)
+    assert image_only == pytest.approx(np.array([0.0, 1.0]))
+
+
+def test_combine_text_image_rejects_shape_mismatch():
+    with pytest.raises(ValueError):
+        combine_text_image([1.0, 0.0], [1.0, 0.0, 0.0])
+
+
+def test_time_and_location_priors_are_soft_bonuses():
+    query = fp(category="umbrella", color="black")
+    base = rank_candidates(query, [candidate(1, .5, category="umbrella", color="black")])[0]
+    near = rank_candidates(
+        query,
+        [candidate(1, .5, time=10_000, location="图书馆",
+                   category="umbrella", color="black")],
+        query_time=10_000, query_location="图书馆")[0]
+
+    assert near["score"] > base["score"]
+    assert near["score"] - base["score"] <= 0.05 + 1e-9
+    assert near["base_score"] == base["score"]
+    assert near["prior_bonus"] > 0
+
+
+def test_time_and_location_priors_are_neutral_when_missing_or_unknown():
+    query = fp(category="umbrella", color="black")
+    row = candidate(1, .5, category="umbrella", color="black")
+    base = rank_candidates(query, [row])[0]["score"]
+
+    assert rank_candidates(query, [row], query_time=1000)[0]["score"] == base
+    assert rank_candidates(query, [row], query_location="图书馆")[0]["score"] == base
+
+    unknown = rank_candidates(
+        query,
+        [candidate(2, .5, time=1000, location="未知",
+                   category="umbrella", color="black")],
+        query_time=None, query_location="未知")[0]
+    assert unknown["prior_bonus"] == 0
+
+
+def test_priors_can_be_disabled_for_evaluation():
+    query = fp(category="umbrella", color="black")
+    row = candidate(1, .5, time=1000, location="图书馆",
+                    category="umbrella", color="black")
+
+    with_prior = rank_candidates(query, [row], query_time=1000,
+                                 query_location="图书馆")[0]["score"]
+    without = rank_candidates(query, [row], query_time=1000,
+                              query_location="图书馆", use_priors=False)[0]["score"]
+    assert without < with_prior
 
 
 def test_workflow_empty_candidates(tmp_path):

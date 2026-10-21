@@ -10,7 +10,8 @@
 - 【事实】`rank_candidates(query_fp, candidates, answers=None)` 接受两种形态的指纹：`{"attributes": {...}}` 或直接是属性字典（`_attrs` 用 `fp.get("attributes", fp)`）。
 - 【事实】只认 `FIELDS` 里的键、只认非空 `str`；其它一律丢弃。
 - 【事实】`query = {**指纹属性, **answers}`：**用户回答覆盖原始指纹**，但 `choose_question` 用的是原始指纹（回答过的字段已进 `asked`，不会重复问）。
-- 【事实】每个候选必须有 `semantic_score`（0..1）与 `item_id`。
+- 【事实】每个候选必须有 `semantic_score`（0..1）与 `item_id`；`time`/`location` 可选，缺失时软先验为 0。
+- 【事实】`build_session` 会把候选的 `time`/`location` 和查询物品的 `query_time`/`query_location` 写进会话；`include_matched=True` 只用于离线评估（评估全部对侧报告，而不只是未配对池）。
 
 ## 权重
 
@@ -38,10 +39,21 @@
 ```text
 comparable = agreement + conflict            # 只在双方都有该字段时累加
 evidence   = (agreement - 0.8 * conflict) / comparable   # 可比项为 0 时取 0
-score      = clamp(0.72 * semantic + 0.28 * ((evidence + 1) / 2), 0, 1)
+base       = clamp(0.72 * semantic + 0.28 * ((evidence + 1) / 2), 0, 1)
+time_bonus = 0.03 * exp(-|lost_date - found_date| / 14 天)   # 两边都有日期才计算
+loc_bonus  = 0.02 if 两边地点相同且都不是“未知/其他” else 0
+score      = clamp(base + time_bonus + loc_bonus, 0, 1)
 ```
 
-等价写法：`score = 0.72·semantic + 0.14·evidence + 0.14`。
+等价的基础分写法：`base = 0.72·semantic + 0.14·evidence + 0.14`。
+
+| 软先验 | 最大 | 缺失/未知 | 说明 |
+| --- | --- | --- | --- |
+| 时间接近 | +0.03 | 0 | `items.time` 是丢失/拾获日期；按绝对天数、14 天半衰 |
+| 同地点 | +0.02 | 0 | 精确匹配 `items.location`；“未知/其他”视为中性 |
+
+- 【设计】软先验**只加不减**：缺失、未知、不同地点都不扣分，避免把“没填地点”误判成矛盾。
+- 【事实】时间/地点不参与硬过滤；它们只影响排序分。`rank_candidates(..., use_priors=False)` 可关闭，评估脚本用它做前后对比。
 
 | 情形 | evidence | 证据项贡献 |
 | --- | --- | --- |
@@ -59,7 +71,7 @@ score      = clamp(0.72 * semantic + 0.28 * ((evidence + 1) / 2), 0, 1)
 ## 排序与输出
 
 - 【事实】按 `(-score, item_id)` 排序，平分时 **item_id 小的在前**（确定性）。
-- 【事实】每个候选附加 `score`（四舍五入到 5 位）、`matches`（一致字段的中文名）、`conflicts`（矛盾字段的中文名）。
+- 【事实】每个候选附加 `score`（四舍五入到 5 位）、`base_score`、`prior_bonus`、`matches`（一致字段的中文名）、`conflicts`（矛盾字段的中文名）。
 - 【事实】UI 只展示前 5 个；"发送请求"下拉也只列前 5 个（`state/interactive_match.py`）。
 
 ## 追问选择（`choose_question`）
@@ -104,6 +116,7 @@ gain = coverage × H(取值分布) × (1 + 0.05 × WEIGHTS[field])
 | 你改什么 | 会连带影响什么 |
 | --- | --- |
 | 语义/证据权重 | 0.389 阈值随之变；要同步改 `AGENTS.md` 红线 3 |
+| 时间/地点软先验权重 | 最多 +0.05；会轻微抬高所有同地点/同日期候选，通知阈值 0.40 也会受影响；用 `evaluate.py` 对比前后 |
 | `MAX_QUESTIONS` | 页面标题 `{n}/{MAX_QUESTIONS}` 自动跟随；测试里没有硬编码上限 |
 | 覆盖率门槛 0.45 | 冷门字段（mark 常缺失）会更少被问到；可能问不到决定性字段 |
 | 温度 7 | 越小越"民主"，越大越只围绕 top-1，追问收益越集中 |
@@ -116,3 +129,4 @@ gain = coverage × H(取值分布) × (1 + 0.05 × WEIGHTS[field])
 | 日期 | 变更 |
 | --- | --- |
 | 2026-10-21 | 首次建立：公式、权重、0.389 阈值推导、追问门槛、回答语义。 |
+| 2026-10-22 | 增加时间/地点软先验（+≤0.05，缺失中立）与 `use_priors` 开关；补离线评估入口。 |

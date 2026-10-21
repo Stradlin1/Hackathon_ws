@@ -28,4 +28,11 @@
 | 2026-10-21 | [family-and-intake](2026-10-21-family-and-intake.md) | 删掉失物登记追问；杯子/水瓶、圆形/圆柱形等同族取值改按一致计分，分数从 0.25 回到 0.39。 |
 | 2026-10-21 | [release-checklist](2026-10-21-release-checklist.md) | 发布前检查：6 个提交的范围、从零交接清单、不入库文件、验证结果与已知限制。 |
 | 2026-10-21 | [share-demo-data](2026-10-21-share-demo-data.md) | 演示账号生成脚本 + 提交 4 张演示照片，协作者克隆后能复现同一份数据。 |
-| 2026-10-22 | [restore-after-zip-merge](2026-10-22-restore-after-zip-merge.md) | 压缩包合并把整个源码树删了；回退到 3f17878，清理 Windows 残留，记录不可恢复的新模块。 |
+| 2026-10-21 | [browse-and-e2e](2026-10-21-browse-and-e2e.md) | 新增「最近拾获」只读浏览与筛选；同天用 DeepSeek + CLIP 跑通真实端到端并记录结果。 |
+| 2026-10-21 | [subscriptions-notifications](2026-10-21-subscriptions-notifications.md) | 订阅单件失物，新拾获入库时按证据分生成站内通知；顶栏未读数、通知页可重建候选。 |
+| 2026-10-21 | [returned-lifecycle](2026-10-21-returned-lifecycle.md) | 新增已归还/归档：非破坏性结束报告，退出候选池，我的记录分流并可恢复；修复处理时间渲染 bug。 |
+| 2026-10-21 | [unified-intake-feed](2026-10-21-unified-intake-feed.md) | 合并登记入口为「登记物品」，把「最近拾获」扩成双向「近期动态」；新增发布时间与公开开关。 |
+| 2026-10-21 | [request-lifecycle](2026-10-21-request-lifecycle.md) | 请求 pending 上限 3、拒绝 24 小时冷却、接受自动关闭其他请求；新增 request_history 与页面状态。 |
+| 2026-10-22 | [time-location-prior-and-eval](2026-10-22-time-location-prior-and-eval.md) | 排序加入时间/地点软先验（最多 +0.05，缺失中立）；新增 evaluate.py 对比 Recall/MRR。 |
+| 2026-10-22 | [lost-photo-hybrid](2026-10-22-lost-photo-hybrid.md) | 失物可选照片；文本+图像混合向量存 items.emb；动态/记录/候选显示失物照片。 |
+| 2026-10-22 | [publish-time-dedup-watermark](2026-10-22-publish-time-dedup-watermark.md) | 每帖显示发布时间+内容指纹；dHash 图片查重、文本近似提示、公开图水印；不能阻止截图但可追溯。 |

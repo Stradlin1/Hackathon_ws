@@ -21,8 +21,10 @@ import yaml
 from PIL import Image
 
 from db_manager import Database, Item, User
+from matching.content_hash import ImageHashes
 from matching.fingerprint import fingerprint_from_text
 from matching.models import clean_image, encode_image, encode_text
+from matching.report_meta import ReportMeta
 from matching.storage import FingerprintStore
 
 SOURCE_DIRS = (Path('demo/photos'), Path('input'))
@@ -74,6 +76,8 @@ def main() -> None:
         alice = owner('alice')
         bob = owner('bob')
         store = FingerprintStore()
+        meta = ReportMeta()
+        hashes = ImageHashes()
         used: set[int] = set()
         stamp = int(time.time())
 
@@ -100,11 +104,14 @@ def main() -> None:
             db.insert_item(found)
             db.insert_found_item(found, bob)
             store.put(found.id, found_fingerprint)
+            meta.publish(found.id)
+            hashes.put(found.id, picture)
 
             lost = Item(new_id(), None, encode_text(sample['lost']), sample['lost'], stamp, sample['location'])
             db.insert_item(lost)
             db.insert_lost_item(lost, alice)
             store.put(lost.id, lost_fingerprint)
+            meta.publish(lost.id)
 
             print(f"found #{found.id} @bob  {sample['found']}")
             print(f"lost  #{lost.id} @alice {sample['lost']}")
