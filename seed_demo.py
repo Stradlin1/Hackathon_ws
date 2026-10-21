@@ -1,6 +1,6 @@
 """Seed demo lost/found items from the photos in demo/photos (fallback: input/).
 
-Four photos become found items owned by bob; matching lost descriptions
+Twelve photos become found items owned by bob; matching lost descriptions
 become lost items owned by alice. Run from the repository root:
 
     HF_HUB_OFFLINE=1 python seed_demo.py
@@ -52,6 +52,54 @@ SAMPLES = [
         'found': '浅绿色椭圆形无线鼠标，塑料外壳，中间有电量显示屏',
         'lost': '浅绿色椭圆形无线鼠标，塑料外壳，滚轮下方有电量显示',
         'location': '图书馆',
+    },
+    {
+        'file': '耳机.jpg',
+        'found': '黑色头戴式耳机，塑料耳罩，耳罩外侧印有白色 AKG 标志，带一根黑色线缆',
+        'lost': '黑色头戴式耳机，耳罩侧面有白色 AKG 字母，耳机线是黑色的',
+        'location': '图书馆',
+    },
+    {
+        'file': '钱包.jpg',
+        'found': '米色老花图案长款拉链钱包，棕色皮革包边，顶部挂着一串金属钥匙扣',
+        'lost': '米色花纹长钱包，拉链款，棕色皮边，上面挂着一串钥匙',
+        'location': '食堂',
+    },
+    {
+        'file': '棒球帽.jpg',
+        'found': '青绿色棒球帽，正面绣有 CHARLOTTE HORNETS 字样和紫色黄蜂图案，帽顶有紫色扣子',
+        'lost': '墨绿色棒球帽，正面绣着 CHARLOTTE HORNETS 和一只黄蜂，帽顶有个紫色小扣',
+        'location': '体育中心',
+    },
+    {
+        'file': '背包.jpg',
+        'found': '黑色拉杆双肩包，布料外壳，底部有两个滚轮，前面有拉链袋和提手',
+        'lost': '黑色带轮子的双肩背包，可以拉着走，底部两个轮子，黑色布面',
+        'location': '教室',
+    },
+    {
+        'file': '围巾.jpg',
+        'found': '橙红色针织围巾，表面有细密纹理，两端是长流苏，挂在模特架上',
+        'lost': '橙红色毛线围巾，两头有流苏，颜色偏砖红',
+        'location': '自习区',
+    },
+    {
+        'file': '手提包.jpg',
+        'found': '米色翻盖单肩包，翻盖上印着绿色植物图案，包身和肩带是黑色',
+        'lost': '米色帆布单肩包，盖子上有绿色小花印花，配黑色背带',
+        'location': '礼堂',
+    },
+    {
+        'file': '行李箱.jpg',
+        'found': '黑色布面行李箱，带拉链、顶部提手和底部滚轮，放在室内地板上',
+        'lost': '黑色行李箱，布面的，有拉链和拉杆，轮子有点响',
+        'location': '停车场',
+    },
+    {
+        'file': '雨伞.jpg',
+        'found': '彩色条纹雨伞，伞面由红黄蓝绿相间的放射状条纹组成',
+        'lost': '彩虹条纹雨伞，打开后是红黄蓝绿的放射状色块',
+        'location': '主入口',
     },
 ]
 

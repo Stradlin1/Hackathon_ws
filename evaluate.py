@@ -1,6 +1,6 @@
 """Offline retrieval evaluation.
 
-By default the script uses the four demo pairs from `seed_demo.SAMPLES` and
+By default the script uses the demo pairs from `seed_demo.SAMPLES` and
 matches them by exact description in `items.db`. Custom labels use:
 
     [{"lost_id": 123, "found_id": 456, "note": "optional"}, ...]
@@ -118,7 +118,7 @@ def summarize(results: list[dict]) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--labels", help="自定义 labels JSON；默认使用 seed_demo 的 4 对")
+    parser.add_argument("--labels", help="自定义 labels JSON；默认使用 seed_demo 的演示对")
     parser.add_argument("--verbose", action="store_true", help="逐对输出 rank 与 top-1")
     parser.add_argument("--json", action="store_true", help="输出 JSON，便于脚本消费")
     args = parser.parse_args()

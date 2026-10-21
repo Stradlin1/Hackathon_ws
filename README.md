@@ -148,7 +148,7 @@ python reset_db.py
 HF_HUB_OFFLINE=1 python seed_demo.py
 ```
 
-它默认读 `demo/photos/` 里已提交的 4 张照片（充电宝 / 水杯 / 键盘 / 鼠标），把它们写成 bob 的拾获物品，并写入 alice 的对应失物描述，同时预计算 CLIP 向量与指纹。想换成自己的照片，放进 `input/`（同名文件优先用 `demo/photos/`，缺哪张去哪张）。
+它默认读 `demo/photos/` 里已提交的 12 张照片（充电宝 / 水杯 / 键盘 / 鼠标 / 耳机 / 钱包 / 棒球帽 / 背包 / 围巾 / 手提包 / 行李箱 / 雨伞），把它们写成 bob 的拾获物品，并写入 alice 的对应失物描述，同时预计算 CLIP 向量与指纹。新增的 8 张来自 Open Images，来源与 CC BY 2.0 署名见 [`demo/photos/SOURCES.md`](demo/photos/SOURCES.md)。想换成自己的照片，放进 `input/`（同名文件优先用 `demo/photos/`，缺哪张去哪张）。
 
 ### 5. 下载模型（新机器/协作者只需一次）
 
@@ -257,13 +257,13 @@ fingerprint:
 python -m pip install -r requirements-dev.txt
 python -m pytest -q
 python -m compileall -q app.py matching state
-python evaluate.py                 # 4 对演示数据；对比时间/地点软先验开关
+python evaluate.py                 # 12 对演示数据；对比时间/地点软先验开关
 python evaluate.py --verbose       # 逐对输出 rank 与 top-1
 python evaluate.py --labels my_labels.json   # [{"lost_id":..., "found_id":...}, ...]
 ```
 
 - 测试覆盖中英属性抽取、生成式提案的拒绝与接受、信息增益追问、回答后重排、时间/地点软先验、文本+图像混合向量、内容指纹/图片 dHash/文本近似、指纹表 upsert、双方确认与拒绝、请求上限/冷却/自动关闭、订阅/通知去重与未读、归还/归档状态与候选池过滤、双向动态筛选、发布时间与公开开关、统一登记方向切换、页面烟测。
-- `evaluate.py` 默认用 `seed_demo.py` 的 4 对演示数据；它会把所有拾获报告都纳入候选（包括已配对），并同时输出软先验开启/关闭的 Recall@1、Recall@5、MRR。
+- `evaluate.py` 默认用 `seed_demo.py` 的 12 对演示数据；它会把所有拾获报告都纳入候选（包括已配对），并同时输出软先验开启/关闭的 Recall@1、Recall@5、MRR。
 - 演示数据里的失物默认没有照片，所以评估脚本覆盖的是文本路径；混合向量有单元测试，真实效果需要带失物照片的标注对。
 - 测试**全部 mock 掉模型权重**，可以离线运行；通过单元测试不等于真实模型下端到端可用。
 - 文档校验：`python .dsh/tools/check_links.py`，检查 `.dsh/` 与根目录 Markdown 的相对链接和锚点。
@@ -289,7 +289,7 @@ python evaluate.py --labels my_labels.json   # [{"lost_id":..., "found_id":...},
 | `tests/` | 算法测试与页面烟测（mock 模型） |
 | `reset_db.py` | 删除并重建本地样例库 |
 | `create_demo_users.py` | 生成 `config_auth.yaml`：三个演示账号 + 随机 cookie key |
-| `seed_demo.py` | 从 `demo/photos/`（回退 `input/`）的 4 张照片灌入演示数据（bob 拾获 / alice 失物） |
+| `seed_demo.py` | 从 `demo/photos/`（回退 `input/`）的 12 张照片灌入演示数据（bob 拾获 / alice 失物） |
 | `evaluate.py` | 离线评估 Recall@1/5、MRR；对比时间/地点软先验开关，支持自定义 labels JSON |
 | `demo/photos/` | 演示照片（已提交），供 `seed_demo.py` 复现同一份数据；私人照片放 `input/`，不入库 |
 | `download_models.py` | 一次性拉取所有模型权重（默认 hf-mirror，已缓存则跳过） |
@@ -322,8 +322,8 @@ python evaluate.py --labels my_labels.json   # [{"lost_id":..., "found_id":...},
 - **订阅按单件失物**：没有「关键词/类型/地点」的保存搜索；订阅在拾获登记时同步计算，订阅很多时会拖慢登记。
 - **归还是单方标记**：没有双方交接确认；也没有自动归档/保留期。首页统计仍按「已登记」总数计算，只有「我的记录」区分进行中/已处理。
 - 单进程 SQLite，没有迁移脚本；多会话并发写入的锁行为尚未实测。
-- 仓库只有单元测试与 mock 烟测；真实端到端与 4 对演示数据的离线评估已记录在 `.dsh/logs/`，但没有真实用户规模的数据。
-- `evaluate.py` 默认只有 4 对演示样本，且只评估“失物 → 拾获”方向；真实效果需要更多标注对。
+- 仓库只有单元测试与 mock 烟测；真实端到端与演示数据的离线评估已记录在 `.dsh/logs/`，但没有真实用户规模的数据。
+- `evaluate.py` 默认只有 12 对合成演示样本（12 条失物描述都来自照片而非真实用户口吻），且只评估“失物 → 拾获”方向；真实效果需要更多标注对。
 - 排名分不是所有权概率；生成属性也需要人工复核。
 - **Streamlit 自带控件的文案改不了**：文件上传的 `Upload`、日期选择器的月份与星期仍是英文，只能靠自定义组件解决。
 - **主题只在启动时生效**：改 `.streamlit/config.toml` 后必须重启 `streamlit run`，浏览器刷新不够。
