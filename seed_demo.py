@@ -1,11 +1,13 @@
-"""Seed demo lost/found items from photos in input/.
+"""Seed demo lost/found items from the photos in demo/photos (fallback: input/).
 
 Four photos become found items owned by bob; matching lost descriptions
 become lost items owned by alice. Run from the repository root:
 
     HF_HUB_OFFLINE=1 python seed_demo.py
 
-The script refuses to run when items.db already contains items.
+The photos under demo/photos are committed so a fresh clone reproduces the same
+demo; input/ stays a private fallback that is never committed. The script refuses
+to run when items.db already contains items.
 """
 
 from __future__ import annotations
@@ -23,7 +25,7 @@ from matching.fingerprint import fingerprint_from_text
 from matching.models import clean_image, encode_image, encode_text
 from matching.storage import FingerprintStore
 
-INPUT = Path('input')
+SOURCE_DIRS = (Path('demo/photos'), Path('input'))
 SAMPLES = [
     {
         'file': '充电宝.jpg',
@@ -76,9 +78,10 @@ def main() -> None:
         stamp = int(time.time())
 
         for sample in SAMPLES:
-            path = INPUT / sample['file']
-            if not path.exists():
-                raise SystemExit(f'缺少图片：{path}')
+            path = next((base / sample['file'] for base in SOURCE_DIRS
+                         if (base / sample['file']).exists()), None)
+            if path is None:
+                raise SystemExit(f"缺少图片：{sample['file']}（找过 demo/photos 与 input）")
 
             with Image.open(path) as raw:
                 picture = clean_image(raw)

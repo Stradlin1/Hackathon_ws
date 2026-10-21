@@ -85,6 +85,24 @@ python -m pip install -r requirements.txt
 
 ### 3. 配置账号
 
+**最快：直接用演示账号**
+
+```bash
+python create_demo_users.py
+```
+
+会写出 `config_auth.yaml`，三个账号的密码是公开的（仅限本机演示）：
+
+| 用户名 | 密码 | 用途 |
+| --- | --- | --- |
+| `alice` | `demo-pass-alice` | 失主 |
+| `bob` | `demo-pass-bob` | 拾获者 |
+| `demo` | `Demo`1234` | 随便试 |
+
+每次运行都会**重新生成随机的 `cookie.key`**，所以这个文件是本机的、不要共享。已经存在时脚本会拒绝覆盖，确实要换账号加 `--force`。
+
+**或者自己配一个**
+
 复制模板并填写本地测试账号：
 
 ```bash
@@ -116,14 +134,14 @@ python reset_db.py
 
 它**先删除 `items.db`**，再写入 4 件合成物品和 1 条配对，方便直接演示。脚本会读取 `config_auth.yaml` 创建用户，所以必须先完成第 3 步。**需要保留旧报告时不要运行。**
 
-如果已经有真实照片，改用种子脚本（不会删库，已有物品时会拒绝运行）：
+想复现和仓库一致的演示数据，用种子脚本（不会删库，已有物品时会拒绝运行）：
 
 ```bash
-# 照片放在 input/：充电宝.jpg 水杯.jpg 键盘.jpg 鼠标.jpg
+# 默认读已提交的 demo/photos/；自己的照片放 input/
 HF_HUB_OFFLINE=1 python seed_demo.py
 ```
 
-它会把 4 张照片写成 bob 的拾获物品，并写入 alice 的对应失物描述，同时预计算 CLIP 向量与指纹。
+它默认读 `demo/photos/` 里已提交的 4 张照片（充电宝 / 水杯 / 键盘 / 鼠标），把它们写成 bob 的拾获物品，并写入 alice 的对应失物描述，同时预计算 CLIP 向量与指纹。想换成自己的照片，放进 `input/`（同名文件优先用 `demo/photos/`，缺哪张去哪张）。
 
 ### 5. 下载模型（新机器/协作者只需一次）
 
@@ -219,7 +237,7 @@ fingerprint:
 - **图片清洗**：入库前统一做 EXIF 方向纠正、缩放到最长边 1600、转 RGB，**不保留 EXIF**（包括定位信息）；上传上限 8 MB，像素上限 2000 万。
 - **追问上下文不落库**：只保存归一化后的属性值，不保存回答原话与问答历史。
 - **本地信任边界**：`items.db` 用 Python pickle 存图片数组与向量，只应作为可信本地数据使用，不要当交换格式。
-- **不入库的内容**：`items.db`、`config_auth.yaml`、`settings.yaml`、`input/` 上传目录与模型权重；原因写在 [`.gitignore`](.gitignore) 里。
+- **不入库的内容**：`items.db`、`config_auth.yaml`、`settings.yaml`、`input/` 私人照片与模型权重；原因写在 [`.gitignore`](.gitignore) 里。演示照片在 [`demo/photos/`](demo/photos/)，是提交进仓库的。
 
 ## 测试与校验
 
@@ -249,7 +267,9 @@ python -m compileall -q app.py matching state
 | `ui/` | 展示层：设计令牌与全局样式（`theme.py`）、顶栏 / 页头 / 卡片 / 统计等组件（`components.py`）、内联 SVG 图标（`icons.py`） |
 | `tests/` | 算法测试与页面烟测（mock 模型） |
 | `reset_db.py` | 删除并重建本地样例库 |
-| `seed_demo.py` | 从 `input/` 的 4 张照片灌入演示数据（bob 拾获 / alice 失物） |
+| `create_demo_users.py` | 生成 `config_auth.yaml`：三个演示账号 + 随机 cookie key |
+| `seed_demo.py` | 从 `demo/photos/`（回退 `input/`）的 4 张照片灌入演示数据（bob 拾获 / alice 失物） |
+| `demo/photos/` | 演示照片（已提交），供 `seed_demo.py` 复现同一份数据；私人照片放 `input/`，不入库 |
 | `download_models.py` | 一次性拉取所有模型权重（默认 hf-mirror，已缓存则跳过） |
 | `run.sh` | 以 `HF_HUB_OFFLINE=1` 启动 Streamlit |
 | `rooms.json` | 地点选项 |

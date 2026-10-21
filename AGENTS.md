@@ -8,7 +8,7 @@
 > [!IMPORTANT]
 > 1. **本文件只是索引 + 工作方式 + 红线 + 路由表 + 目录结构**。分主题事实在 `.dsh/agents/`——动手前按路由表读对应文档，改完回来更新它。
 > 2. **每句话都必须能归类**：`【事实】`= 代码/README/实测；`【设计】`= 本仓库已实现的方案；`【待验证】`= 假设，验证前不能作为依据。**没标 `【事实】` 的数字不许写进代码常量。**
-> 3. 本仓库已在 conda `aquacore` 环境跑通（59 tests；`streamlit` HTTP 200），并已灌入 4 张演示照片（bob 拾获 / alice 失物）。当前卡点见 [`backlog.md`](backlog.md)。
+> 3. 本仓库已在 conda `aquacore` 环境跑通（62 tests；`streamlit` HTTP 200），并已灌入 4 张演示照片（bob 拾获 / alice 失物）。当前卡点见 [`backlog.md`](backlog.md)。
 
 ## 工作方式：git 分支纪律（**先读这条**）
 
@@ -64,7 +64,8 @@
 | `app.py` | Streamlit 入口与页面分发 |
 | `db_manager.py` | `items.db` 既有表访问层（物品、用户、归属、匹配） |
 | `reset_db.py` | **破坏性**：删除 `items.db` 并写入合成样例 |
-| `seed_demo.py` | 从 `input/` 照片灌入演示数据（bob 拾获 / alice 失物），已有物品时拒绝运行 |
+| `create_demo_users.py` | 生成 `config_auth.yaml`：三个演示账号 + 随机 cookie key |
+| `seed_demo.py` | 从 `demo/photos/`（回退 `input/`）照片灌入演示数据（bob 拾获 / alice 失物），已有物品时拒绝运行 |
 | `download_models.py` | 一次性拉取所有模型权重（默认 hf-mirror，已缓存则跳过） |
 | `run.sh` | 以 `HF_HUB_OFFLINE=1` 启动 Streamlit |
 | `rooms.json` | 地点下拉选项 |
@@ -76,6 +77,7 @@
 | `ui/` | 展示层：设计令牌 / 全局 CSS / 顶栏与卡片组件 / SVG 图标 |
 | `tests/` | 算法与页面烟测（模型权重被 mock） |
 | `static/` | 品牌图 `logo_rounded.png`（页面图标与顶栏），另有未引用的两张图 |
+| `demo/photos/` | 已提交的 4 张演示照片，供 `seed_demo.py` 复现同一份数据 |
 
 **为什么只记目录**：列到文件就成了文件系统的第二份副本，下一次提交就过期；目录职责很少变，写下来才守得住。想知道有哪些模块，代码才是权威。同理不要写「某目录下有几个文件」。
 

@@ -24,7 +24,8 @@ python -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 
-cp config_auth.example.yaml config_auth.yaml
+python create_demo_users.py   # 演示账号 alice/bob/demo，cookie key 每次随机
+# 或者：cp config_auth.example.yaml config_auth.yaml
 # 编辑 config_auth.yaml：真实 bcrypt 哈希 + 新 cookie.key + 本地测试账号
 python -c "import bcrypt; print(bcrypt.hashpw(b'choose-a-test-password', bcrypt.gensalt()).decode())"
 python -c "import secrets; print(secrets.token_urlsafe(32))"
