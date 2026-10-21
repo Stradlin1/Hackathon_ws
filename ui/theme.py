@@ -163,6 +163,26 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {
   box-shadow: none !important;
 }
 
+/* Destructive action: small red button, never the primary affordance. */
+[class*="st-key-withdraw-"] button,
+[class*="st-key-confirm-withdraw-"] button {
+  background: var(--danger) !important;
+  border-color: var(--danger) !important;
+  color: #FFFFFF !important;
+  padding: .28rem .7rem;
+  font-size: .82rem;
+  font-weight: 600;
+  min-height: 0;
+}
+[class*="st-key-withdraw-"] button:hover,
+[class*="st-key-confirm-withdraw-"] button:hover {
+  background: #991B1B !important;
+  border-color: #991B1B !important;
+  color: #FFFFFF !important;
+}
+[class*="st-key-withdraw-"] button p,
+[class*="st-key-confirm-withdraw-"] button p { font-size: .82rem; }
+
 /* ---------- inputs ---------- */
 [data-testid="stTextInput"] input, [data-testid="stTextArea"] textarea,
 [data-testid="stDateInput"] input, [data-testid="stNumberInput"] input {

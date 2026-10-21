@@ -88,7 +88,7 @@ def _withdraw_dialog(item) -> None:
     if statuses:
         st.caption(f'撤销后会同时删除 {len(statuses)} 条相关配对请求。')
     st.caption('物品、指纹与相关请求会从本地数据库删除，无法恢复。')
-    if st.button('确认撤销', type='primary', use_container_width=True):
+    if st.button('确认撤销', key=f'confirm-withdraw-{item.id}', use_container_width=True):
         try:
             _remove_report(item.id, st.session_state.username)
         except (OSError, ValueError, PermissionError) as error:
@@ -114,13 +114,13 @@ def _item_card(key, item, show_image=False):
                         for field, value in attributes.items())
         if chips:
             pills(chips)
-        actions = st.columns(2, gap='small')
+        actions = st.columns([4, 1.2], gap='small', vertical_alignment='center')
         with actions[0]:
             if st.button('补全信息', key=f'enrich-{item.id}', type='secondary',
                          use_container_width=True):
                 _enrich_dialog(item.id)
         with actions[1]:
-            if st.button('撤销登记', key=f'withdraw-{item.id}', use_container_width=True):
+            if st.button('撤销', key=f'withdraw-{item.id}', help='删除这条登记，无法恢复'):
                 _withdraw_dialog(item)
 
 
