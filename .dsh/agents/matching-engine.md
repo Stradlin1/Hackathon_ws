@@ -25,6 +25,12 @@
 
 【事实】权重表在 `matching/engine.py` 顶部 `WEIGHTS`。**没有任何注释解释为什么是这些数**；这是当前实现的取值，改它前先读本文件末尾的「改动后果」。
 
+## 同族取值（`FAMILIES`）
+
+- 【事实】`category` 的 `cup`/`water bottle` 归为 `drinkware`，`bag`/`backpack` 归为 `carry`；`shape` 的 `round`/`cylindrical`/`oval` 归为 `roundish`。
+- 【设计】同族取值按**一致**计分，不按矛盾。反例：失主写"水杯"（`cup`）、拾获侧抽到"保温杯"（`water bottle`），旧逻辑判 −1.3 权重，把真配对的分数压到 0.2 左右。
+- 【事实】同族只解决"叫法不同"，不解决"看到的不一样"：颜色、材质、标记仍然严格比较。
+
 ## 打分公式
 
 对每个候选，逐字段比较（`casefold()` 完全相等才算一致）：

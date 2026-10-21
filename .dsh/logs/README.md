@@ -25,3 +25,4 @@
 | 2026-10-21 | [settings-file](2026-10-21-settings-file.md) | 手工配置收进 settings.yaml：环境变量优先、.env 方案放弃、run.sh 兜底 python -m。 |
 | 2026-10-21 | [profile-enrichment](2026-10-21-profile-enrichment.md) | 失物也问登记前问题；追问答案以属性形式落库；候选卡与「补全信息」让双方看到同一份属性。 |
 | 2026-10-21 | [withdraw-report](2026-10-21-withdraw-report.md) | 我的记录支持撤销失物/拾获：硬删除并级联清理请求、配对与指纹，已确认的配对拒绝撤销。 |
+| 2026-10-21 | [family-and-intake](2026-10-21-family-and-intake.md) | 删掉失物登记追问；杯子/水瓶、圆形/圆柱形等同族取值改按一致计分，分数从 0.25 回到 0.39。 |

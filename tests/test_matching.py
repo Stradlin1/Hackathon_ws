@@ -54,6 +54,19 @@ def test_fingerprint_store_merge_records_confirmed_fields(tmp_path):
     assert store.get(7)['attributes']['mark'] == 'red sticker'
 
 
+def test_related_values_count_as_agreement_instead_of_conflict():
+    query = fp(category="cup", shape="round")
+    candidate_fp = fp(category="water bottle", shape="cylindrical")
+    result = rank_candidates(query, [candidate(1, 0.5, **candidate_fp["attributes"])])[0]
+    assert set(result["matches"]) == {"类型", "形状"}
+    assert result["conflicts"] == []
+    matched = result["score"]
+
+    conflicting = rank_candidates(query, [candidate(2, 0.5, category="keyboard")])[0]
+    assert conflicting["conflicts"] == ["类型"]
+    assert conflicting["score"] < matched
+
+
 def test_two_confirmed_absences_are_neutral_but_absence_vs_finding_conflicts():
     query = fp(mark=ABSENT_MARK)
     by_id = {item["item_id"]: item for item in rank_candidates(query, [

@@ -162,59 +162,6 @@ def test_lost_report_page_generates_session(monkeypatch):
     assert ui.session_state.match_session['user'] == 'owner'
 
 
-def test_lost_report_merges_intake_answers_into_the_fingerprint(monkeypatch):
-    ui = install_fake_modules(monkeypatch)
-    ui.submit = True
-    ui.pill_value = '白色'
-    module = importlib.import_module('state.lost')
-    monkeypatch.setattr(module, 'st', ui)
-    monkeypatch.setattr(module, 'encode_text', lambda text: np.array([1., 0.]))
-    monkeypatch.setattr(module, 'fingerprint_from_text',
-                        lambda text, **kwargs: {'attributes': {'category': 'cup'}, 'method': 'rules'})
-    monkeypatch.setattr(module, 'propose_intake_questions',
-                        lambda fp, pool, limit=2: [
-                            {'field': 'color', 'question': '什么颜色？',
-                             'options': [('white', '白色'), ('black', '黑色')]}])
-    stored = {}
-
-    class FakeStore:
-        def put(self, item_id, fingerprint):
-            stored['fingerprint'] = fingerprint
-
-    monkeypatch.setattr(module, 'FingerprintStore', FakeStore)
-    monkeypatch.setattr(module, 'build_session', lambda **kwargs: {'user': 'owner', 'asked': [], 'answers': {}})
-    with pytest.raises(Rerun):
-        module.lost(SimpleNamespace(logout=lambda **kwargs: None))
-    assert stored['fingerprint']['attributes'] == {'category': 'cup', 'color': 'white'}
-    assert stored['fingerprint']['confirmed'] == ['color']
-
-
-def test_lost_report_keeps_what_the_user_typed_over_the_intake_answer(monkeypatch):
-    ui = install_fake_modules(monkeypatch)
-    ui.submit = True
-    ui.pill_value = '白色'
-    module = importlib.import_module('state.lost')
-    monkeypatch.setattr(module, 'st', ui)
-    monkeypatch.setattr(module, 'encode_text', lambda text: np.array([1., 0.]))
-    monkeypatch.setattr(module, 'fingerprint_from_text',
-                        lambda text, **kwargs: {'attributes': {'color': 'black'}, 'method': 'rules'})
-    monkeypatch.setattr(module, 'propose_intake_questions',
-                        lambda fp, pool, limit=2: [
-                            {'field': 'color', 'question': '什么颜色？',
-                             'options': [('white', '白色')]}])
-    stored = {}
-
-    class FakeStore:
-        def put(self, item_id, fingerprint):
-            stored['fingerprint'] = fingerprint
-
-    monkeypatch.setattr(module, 'FingerprintStore', FakeStore)
-    monkeypatch.setattr(module, 'build_session', lambda **kwargs: {'user': 'owner', 'asked': [], 'answers': {}})
-    with pytest.raises(Rerun):
-        module.lost(SimpleNamespace(logout=lambda **kwargs: None))
-    assert stored['fingerprint']['attributes']['color'] == 'black'
-
-
 def test_found_report_page_generates_session(monkeypatch):
     ui = install_fake_modules(monkeypatch)
     ui.submit = True

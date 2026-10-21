@@ -10,6 +10,19 @@ from .fingerprint import FIELDS, display_value, normalize_answer
 
 WEIGHTS = {"category": 1.3, "color": 1.2, "material": 1.0, "shape": 1.1, "brand": 1.1, "mark": 2.0}
 ABSENT_MARK = "no special mark"
+
+# Values that describe the same thing at a different granularity. Treated as a
+# conflict, "水杯" (cup) versus "水瓶" (water bottle) cancelled a real match.
+FAMILIES = {
+    "category": {"cup": "drinkware", "water bottle": "drinkware",
+                 "bag": "carry", "backpack": "carry"},
+    "shape": {"round": "roundish", "cylindrical": "roundish", "oval": "roundish"},
+}
+
+
+def _related(field: str, left: str, right: str) -> bool:
+    family = FAMILIES.get(field, {})
+    return family.get(left) is not None and family.get(left) == family.get(right)
 QUESTIONS = {
     "category": "你还记得丢失物品的具体类型吗？",
     "color": "你记得物品主要是什么颜色吗？",
@@ -63,6 +76,9 @@ def rank_candidates(query_fp: Mapping, candidates: list[dict], answers: Mapping[
                 # absences say nothing about ownership. It stays neutral.
                 if left.casefold() == ABSENT_MARK:
                     continue
+                agreement += weight
+                matches.append(DISPLAY[key])
+            elif _related(key, left.casefold(), right.casefold()):
                 agreement += weight
                 matches.append(DISPLAY[key])
             else:

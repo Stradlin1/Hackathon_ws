@@ -59,13 +59,16 @@ def interactive_match(authenticator):
 
     st.markdown('### 候选排序')
     st.caption('分数是排序指标，不是所有权概率。')
+    st.caption('打分 = 0.72 × CLIP 相似度 + 0.28 × 证据；CLIP 文本↔照片的原始相似度常见区间只有 '
+               '0.2–0.35，所以总分看起来不高是正常的。')
     db = Database()
     try:
         for index, result in enumerate(ranked[:5], 1):
             with st.container(border=True, key=f'cand-{index}'):
                 st.markdown(
                     f'<div class="cand-head"><span class="cand-rank">#{index}</span>'
-                    f'<span class="cand-score">{result["score"]:.3f}</span>'
+                    f'<span class="cand-score" title="0.72 × 语义 + 0.28 × 证据">'
+                    f'{result["score"]:.3f}</span>'
                     f'<span class="cand-score-cap">排序指标 · CLIP {result["semantic_score"]:.3f}</span></div>',
                     unsafe_allow_html=True,
                 )
