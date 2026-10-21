@@ -28,3 +28,4 @@
 | 2026-10-21 | [family-and-intake](2026-10-21-family-and-intake.md) | 删掉失物登记追问；杯子/水瓶、圆形/圆柱形等同族取值改按一致计分，分数从 0.25 回到 0.39。 |
 | 2026-10-21 | [release-checklist](2026-10-21-release-checklist.md) | 发布前检查：6 个提交的范围、从零交接清单、不入库文件、验证结果与已知限制。 |
 | 2026-10-21 | [share-demo-data](2026-10-21-share-demo-data.md) | 演示账号生成脚本 + 提交 4 张演示照片，协作者克隆后能复现同一份数据。 |
+| 2026-10-22 | [restore-after-zip-merge](2026-10-22-restore-after-zip-merge.md) | 压缩包合并把整个源码树删了；回退到 3f17878，清理 Windows 残留，记录不可恢复的新模块。 |

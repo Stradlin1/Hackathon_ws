@@ -1,0 +1,8 @@
+# 仓库内统一 LF：Windows 侧检出由 core.autocrlf 负责，不要把 CRLF 提交进来。
+* text=auto eol=lf
+
+# 二进制资源不做换行转换。
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.db binary

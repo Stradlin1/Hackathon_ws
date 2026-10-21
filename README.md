@@ -97,7 +97,7 @@ python create_demo_users.py
 | --- | --- | --- |
 | `alice` | `demo-pass-alice` | 失主 |
 | `bob` | `demo-pass-bob` | 拾获者 |
-| `demo` | `Demo`1234` | 随便试 |
+| `demo` | `Demo1234` | 随便试 |
 
 每次运行都会**重新生成随机的 `cookie.key`**，所以这个文件是本机的、不要共享。已经存在时脚本会拒绝覆盖，确实要换账号加 `--force`。
 
