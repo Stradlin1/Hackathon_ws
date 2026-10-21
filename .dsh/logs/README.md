@@ -36,3 +36,4 @@
 | 2026-10-22 | [time-location-prior-and-eval](2026-10-22-time-location-prior-and-eval.md) | 排序加入时间/地点软先验（最多 +0.05，缺失中立）；新增 evaluate.py 对比 Recall/MRR。 |
 | 2026-10-22 | [lost-photo-hybrid](2026-10-22-lost-photo-hybrid.md) | 失物可选照片；文本+图像混合向量存 items.emb；动态/记录/候选显示失物照片。 |
 | 2026-10-22 | [publish-time-dedup-watermark](2026-10-22-publish-time-dedup-watermark.md) | 每帖显示发布时间+内容指纹；dHash 图片查重、文本近似提示、公开图水印；不能阻止截图但可追溯。 |
+| 2026-10-22 | [restore-after-zip-merge](2026-10-22-restore-after-zip-merge.md) | 压缩包合并把整个源码树记成删除；回退到 3f17878，清理 Windows 残留，再用完整目录重新导入。 |
