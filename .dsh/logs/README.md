@@ -18,3 +18,4 @@
 | 2026-10-21 | [chinese-caption](2026-10-21-chinese-caption.md) | BLIP 英文图注后接 opus-mt-en-zh 中译；模型本地缓存，失败回退英文。 |
 | 2026-10-21 | [model-bootstrap](2026-10-21-model-bootstrap.md) | 模型不入库；新增 download_models.py 与 run.sh，协作者一条命令拉齐并离线启动。 |
 | 2026-10-21 | [auth-cookie-refresh](2026-10-21-auth-cookie-refresh.md) | 刷新掉登录：写 cookie 的组件被 st.rerun() 丢弃；改为下一轮补写，并用请求头 cookie 静默恢复。 |
+| 2026-10-21 | [ui-redesign](2026-10-21-ui-redesign.md) | 界面重做：设计令牌 + 全局 CSS + 顶栏/卡片组件 + SVG 图标，登录改自建表单。 |

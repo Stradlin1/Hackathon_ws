@@ -13,21 +13,40 @@ from matching.fingerprint import fingerprint_from_text
 from matching.models import encode_text
 from matching.storage import FingerprintStore
 from matching.workflow import build_session
+from ui.components import card, page_header, topbar
 
 
 def lost(authenticator):
-    st.sidebar.button('返回主菜单', on_click=lambda: st.session_state.update(state='lost_or_found'))
-    authenticator.logout(button_name='退出登录', location='sidebar')
-    st.title('登记失物')
+    topbar('lost', authenticator)
+    page_header('clipboard', '登记失物', '写清能区分它的细节，AI 会先检索候选，再逐条追问。',
+                step='第 1 步 / 共 2 步')
 
-    with st.form('lost_report'):
-        description = st.text_area('描述物品，包括任何独特标记', max_chars=1000)
-        with open('rooms.json', encoding='utf-8') as file:
-            locations = json.load(file)
-        location = st.selectbox('最后出现的地点', locations)
-        date = st.date_input('丢失日期', value='today', max_value=datetime.now().date(),
-                             min_value=datetime.now().date() - timedelta(days=30))
-        submitted = st.form_submit_button('查找可能匹配')
+    form_col, side_col = st.columns([1.6, 1], gap='large')
+    with form_col:
+        with st.form('lost_report'):
+            description = st.text_area(
+                '描述物品，包括任何独特标记',
+                max_chars=1000,
+                placeholder='例：黑色胶囊耳机，充电盒盖内侧有一张红色贴纸',
+            )
+            with open('rooms.json', encoding='utf-8') as file:
+                locations = json.load(file)
+            location = st.selectbox('最后出现的地点', locations)
+            date = st.date_input('丢失日期', value='today', max_value=datetime.now().date(),
+                                 min_value=datetime.now().date() - timedelta(days=30))
+            submitted = st.form_submit_button('查找可能匹配', type='primary', use_container_width=True)
+
+    with side_col:
+        with card('tips'):
+            st.markdown('### 怎么写更容易找到')
+            st.markdown(
+                '- 颜色、材质、品牌\n'
+                '- 独特标记：贴纸、划痕、刻字\n'
+                '- 大致尺寸，或者平时装什么'
+            )
+        with card('privacy'):
+            st.markdown('### 隐私')
+            st.caption('描述与照片只保存在本机 items.db；联系方式要等对方确认。')
 
     if not submitted:
         return

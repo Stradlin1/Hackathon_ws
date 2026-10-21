@@ -52,7 +52,7 @@
 | 页面 | 能做什么 |
 | --- | --- |
 | 登录 / 注册 | 账号来自 `config_auth.yaml`；注册使用自建表单，支持中文姓名、无需验证码，成功后回到登录页 |
-| 主菜单 | 「我丢了东西」报失物，「我捡到东西」报拾获，「我的物品与请求」查看记录 |
+| 首页 | 顶部导航栏切换页面；两张卡片分别进入报失 / 报拾获；下方三个计数：我的失物、我的拾获、待我确认 |
 | 报失 | 描述（1000 字以内）、地点下拉、近 30 天内的日期；提交后直接进入匹配页 |
 | 报拾获 | 上传 png/jpg/jpeg（≤8 MB）；图注可改；提交后进入匹配页 |
 | AI 匹配 | 查看指纹、前 5 个候选及一致/矛盾字段；回答追问；选择候选发送请求 |
@@ -60,6 +60,7 @@
 
 - 注册页规则：姓名不限语言；用户名 3–20 位字母/数字/下划线/连字符；密码至少 8 位且同时包含字母和数字；邮箱需唯一。
 - 导航由 `st.session_state.state` 驱动，没有 URL 路由。
+- 已登录页面共用一条顶部导航栏（品牌 + 首页 / 登记失物 / 登记拾获 / 我的记录 + 退出登录），没有侧边栏；样式见 `.dsh/agents/ui.md`。
 - **刷新匹配页会丢失当前会话**（包括已回答的追问），需要重新提交报告；这是有意的：追问答案不落库。
 
 ## 快速开始
@@ -212,6 +213,7 @@ python -m compileall -q app.py matching state
 | `matching/storage.py` | `item_fingerprints` 表读写 |
 | `matching/requests.py` | 配对请求状态机；接受时写 `matches` |
 | `state/` | 各页面的 Streamlit 流程（登录、报失、报拾获、匹配、我的记录） |
+| `ui/` | 展示层：设计令牌与全局样式（`theme.py`）、顶栏 / 页头 / 卡片 / 统计等组件（`components.py`）、内联 SVG 图标（`icons.py`） |
 | `tests/` | 算法测试与页面烟测（mock 模型） |
 | `reset_db.py` | 删除并重建本地样例库 |
 | `seed_demo.py` | 从 `input/` 的 4 张照片灌入演示数据（bob 拾获 / alice 失物） |
@@ -219,7 +221,8 @@ python -m compileall -q app.py matching state
 | `run.sh` | 以 `HF_HUB_OFFLINE=1` 启动 Streamlit |
 | `rooms.json` | 地点选项 |
 | `config_auth.example.yaml` | 账号配置模板 |
-| `static/` | 三张未被代码引用的图片，去留待定 |
+| `static/` | 品牌图 `logo_rounded.png`（页面图标与顶栏）；另有未被引用的 Lost / Found 两张图 |
+| `.streamlit/config.toml` | Streamlit 主题与工具栏默认值；只在进程启动时读取，改完要重启 |
 | `.dsh/` | 项目知识库：分主题事实、开发日志、校验脚本 |
 | `AGENTS.md` | 智能体索引：分支纪律、红线、路由表 |
 
@@ -235,6 +238,8 @@ python -m compileall -q app.py matching state
 - 单进程 SQLite，没有迁移脚本；多会话并发写入的锁行为尚未实测。
 - 仓库只有单元测试与 mock 烟测，**没有真实模型下的端到端验证记录**。
 - 排名分不是所有权概率；生成属性也需要人工复核。
+- **Streamlit 自带控件的文案改不了**：文件上传的 `Upload`、日期选择器的月份与星期仍是英文，只能靠自定义组件解决。
+- **主题只在启动时生效**：改 `.streamlit/config.toml` 后必须重启 `streamlit run`，浏览器刷新不够。
 
 当前卡点与下一步要找谁，见 [`backlog.md`](backlog.md)。
 
@@ -250,6 +255,7 @@ python -m compileall -q app.py matching state
 | 图片描述一直转圈 / 很慢 | 首次在下载 BLIP（约 1 GB）；若缓存已完整仍慢，是加载时在向 `huggingface.co` 发 HEAD。设 `HF_ENDPOINT` 下载，之后用 `HF_HUB_OFFLINE=1` 启动 |
 | 候选列表为空 | 对面还没有未配对的报告：换账号先报一件，或运行 `reset_db.py` |
 | 数据「消失」 | 从别的目录启动了应用，或运行过 `reset_db.py`（会删库） |
+| 配色 / 圆角没生效 | `.streamlit/config.toml` 只在进程启动时读取：重启 `streamlit run` |
 | 刷新页面后要求重新登录 | cookie 过期（`cookie.expiry_days`）、换过 `cookie.key`，或浏览器禁用了 cookie；重新登录即可，登录状态默认保持 7 天 |
 
 更多排查见 [`.dsh/agents/operations.md`](.dsh/agents/operations.md)。

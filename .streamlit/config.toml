@@ -1,0 +1,17 @@
+# Presentation defaults for the demo. Restart "streamlit run" after editing:
+# the config is read once at process start.
+[theme]
+base = "light"
+primaryColor = "#16324F"
+backgroundColor = "#F5F6FA"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#111827"
+borderColor = "#E6E8EF"
+baseRadius = "16px"
+buttonRadius = "10px"
+font = "sans-serif"
+showWidgetBorder = true
+
+[client]
+# Hide deploy, rerun and cache options; the app has its own navigation.
+toolbarMode = "minimal"

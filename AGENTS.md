@@ -8,7 +8,7 @@
 > [!IMPORTANT]
 > 1. **本文件只是索引 + 工作方式 + 红线 + 路由表 + 目录结构**。分主题事实在 `.dsh/agents/`——动手前按路由表读对应文档，改完回来更新它。
 > 2. **每句话都必须能归类**：`【事实】`= 代码/README/实测；`【设计】`= 本仓库已实现的方案；`【待验证】`= 假设，验证前不能作为依据。**没标 `【事实】` 的数字不许写进代码常量。**
-> 3. 本仓库已在 conda `aquacore` 环境跑通（25 tests；`streamlit` HTTP 200），并已灌入 4 张演示照片（bob 拾获 / alice 失物）。当前卡点见 [`backlog.md`](backlog.md)。
+> 3. 本仓库已在 conda `aquacore` 环境跑通（28 tests；`streamlit` HTTP 200），并已灌入 4 张演示照片（bob 拾获 / alice 失物）。当前卡点见 [`backlog.md`](backlog.md)。
 
 ## 工作方式：git 分支纪律（**先读这条**）
 
@@ -41,6 +41,7 @@
 | 改属性抽取、词表、生成式指纹、提案校验 | [`.dsh/agents/fingerprint.md`](.dsh/agents/fingerprint.md) |
 | 加表/加字段/兼容旧 `items.db` | [`.dsh/agents/data-model.md`](.dsh/agents/data-model.md) |
 | 改配对请求、联系方式可见性、隐私 | [`.dsh/agents/privacy.md`](.dsh/agents/privacy.md) |
+| 改界面、样式、顶栏、卡片 | [`.dsh/agents/ui.md`](.dsh/agents/ui.md) |
 | 加页面、改跳转、Streamlit 状态 | [`.dsh/agents/architecture.md`](.dsh/agents/architecture.md) |
 | 装环境、跑不起来、模型权重、离线 | [`.dsh/agents/operations.md`](.dsh/agents/operations.md) |
 | 提交前逐条核对红线 | [`.dsh/agents/invariants.md`](.dsh/agents/invariants.md) |
@@ -55,6 +56,7 @@
 | `README.md` | 人类入口：能力、匹配流程、页面操作、安装、配置、测试、模块地图、已知限制 |
 | `backlog.md` | 已知未完成的事，按「卡住什么」分组 |
 | `.gitignore` | 什么不进版本控制，以及为什么 |
+| `.streamlit/config.toml` | 主题令牌与工具栏默认值（启动时读取） |
 | `.dsh/agents/` | 分主题的项目事实、设计决定、不变量、排查流程 |
 | `.dsh/logs/` | 过程记录，只追加不改写正文 |
 | `.dsh/tools/` | 可执行的校验脚本（链接检查） |
@@ -69,8 +71,9 @@
 | `requirements.txt` / `requirements-dev.txt` | 运行 / 测试依赖 |
 | `matching/` | 指纹、模型、检索、重排、指纹存储、配对请求 |
 | `state/` | 每个页面的 Streamlit 流程 |
+| `ui/` | 展示层：设计令牌 / 全局 CSS / 顶栏与卡片组件 / SVG 图标 |
 | `tests/` | 算法与页面烟测（模型权重被 mock） |
-| `static/` | 未被代码引用的图片资源（见 backlog） |
+| `static/` | 品牌图 `logo_rounded.png`（页面图标与顶栏），另有未引用的两张图 |
 
 **为什么只记目录**：列到文件就成了文件系统的第二份副本，下一次提交就过期；目录职责很少变，写下来才守得住。想知道有哪些模块，代码才是权威。同理不要写「某目录下有几个文件」。
 

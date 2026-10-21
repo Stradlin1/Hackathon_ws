@@ -36,9 +36,19 @@ class UI(types.ModuleType):
         self.submit = False
         self.clicked = set()
         self.warning_messages = []
+        self.errors = []
         self.cache_data = lambda **kwargs: (lambda f: f)
 
     def form(self, *args, **kwargs):
+        return nullcontext()
+
+    def container(self, *args, **kwargs):
+        return nullcontext()
+
+    def tabs(self, *args, **kwargs):
+        return [nullcontext() for _ in range(len(args[0]) if args else 1)]
+
+    def popover(self, *args, **kwargs):
         return nullcontext()
 
     def spinner(self, *args, **kwargs):
@@ -47,14 +57,15 @@ class UI(types.ModuleType):
     def expander(self, *args, **kwargs):
         return nullcontext()
 
-    def columns(self, n):
-        return [nullcontext() for _ in range(n)]
+    def columns(self, spec, **kwargs):
+        count = spec if isinstance(spec, int) else len(spec)
+        return [nullcontext() for _ in range(count)]
 
     def button(self, label, **kwargs):
         return (kwargs.get('key') or label) in self.clicked
 
     def form_submit_button(self, label, **kwargs):
-        return self.submit and label in {'查找可能匹配', '提交并查找可能匹配', '更新匹配结果'}
+        return self.submit and label in {'查找可能匹配', '提交并查找可能匹配', '更新匹配结果', '登录'}
 
     def text_area(self, label, value='', **kwargs):
         return value or ('lost black umbrella' if label.startswith('描述物品') else 'found black umbrella')
@@ -76,6 +87,9 @@ class UI(types.ModuleType):
 
     def warning(self, message):
         self.warning_messages.append(str(message))
+
+    def error(self, message):
+        self.errors.append(str(message))
 
     def __getattr__(self, name):
         return lambda *args, **kwargs: None
@@ -103,6 +117,9 @@ class FakeDatabase:
     def get_item(self, id):
         return SimpleNamespace(id=id, image=None, description=f'item-{id}')
 
+    def insert_user(self, user):
+        return None
+
     def close(self):
         self.closed = True
 
@@ -110,9 +127,13 @@ class FakeDatabase:
 def install_fake_modules(monkeypatch):
     ui = UI()
     monkeypatch.setitem(sys.modules, 'streamlit', ui)
+    components = importlib.import_module('ui.components')
+    monkeypatch.setattr(components, 'st', ui)
     fake_db = types.ModuleType('db_manager')
     fake_db.Database = FakeDatabase
     fake_db.Item = lambda *args: SimpleNamespace(id=args[0], image=args[1], emb=args[2], description=args[3], time=args[4], location=args[5])
+    fake_db.User = lambda username, password='', email='': SimpleNamespace(
+        username=username, password=password, email=email)
     monkeypatch.setitem(sys.modules, 'db_manager', fake_db)
     return ui
 
@@ -215,3 +236,47 @@ def test_profile_pending_approval_action(monkeypatch):
     with pytest.raises(Rerun):
         module.profile(SimpleNamespace(logout=lambda **kwargs: None))
     assert responses == [('owner', 100, 200, True)]
+
+
+def test_login_authenticates_and_defers_cookie_write(monkeypatch):
+    ui = install_fake_modules(monkeypatch)
+    ui.submit = True
+    ui.text_input = lambda label, **kwargs: 'alice' if '用户名' in label else 'demo-pass-alice'
+    module = importlib.import_module('state.login')
+    monkeypatch.setattr(module, 'st', ui)
+    authenticator = SimpleNamespace(
+        authentication_controller=SimpleNamespace(login=lambda username, password: True)
+    )
+    config = {'credentials': {'usernames': {'alice': {'email': 'alice@example.com', 'name': 'Alice'}}}}
+    with pytest.raises(Rerun):
+        module.login(authenticator, config)
+    assert ui.session_state.state == 'lost_or_found'
+    assert ui.session_state.auth_cookie_pending is True
+    assert ui.session_state.user.email == 'alice@example.com'
+
+
+def test_login_rejects_bad_credentials(monkeypatch):
+    ui = install_fake_modules(monkeypatch)
+    ui.submit = True
+    ui.text_input = lambda label, **kwargs: 'alice' if '用户名' in label else 'wrong-password'
+    module = importlib.import_module('state.login')
+    monkeypatch.setattr(module, 'st', ui)
+    authenticator = SimpleNamespace(
+        authentication_controller=SimpleNamespace(login=lambda username, password: False)
+    )
+    config = {'credentials': {'usernames': {'alice': {'email': 'alice@example.com'}}}}
+    module.login(authenticator, config)
+    assert '用户名或密码错误' in ui.errors
+    assert ui.session_state.state == 'login'
+
+
+def test_home_page_renders_without_data(monkeypatch):
+    ui = install_fake_modules(monkeypatch)
+    module = importlib.import_module('state.lost_or_found')
+    monkeypatch.setattr(module, 'st', ui)
+    monkeypatch.setattr(module, 'Database', FakeDatabase)
+    monkeypatch.setattr(FakeDatabase, 'get_user_lost_items', lambda self, u: [], raising=False)
+    monkeypatch.setattr(FakeDatabase, 'get_user_found_items', lambda self, u: [], raising=False)
+    monkeypatch.setattr(module, 'MatchRequests', lambda: SimpleNamespace(incoming=lambda user: []))
+    module.lost_or_found(SimpleNamespace(logout=lambda **kwargs: None))
+    assert ui.errors == []

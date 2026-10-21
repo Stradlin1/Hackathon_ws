@@ -10,7 +10,10 @@
 | 模块 | 职责 | 关键符号 |
 | --- | --- | --- |
 | `app.py` | 读 `config_auth.yaml`、构造认证器、按 `st.session_state.state` 分发页面 | `st.set_page_config`、`authenticator`、末尾的 if/elif 链 |
-| `state/login.py` | 登录；把登录用户写入 `users` 表 | `login`、`change_state` |
+| `state/login.py` | 登录表单与账号记忆 | `login` |
+| `ui/theme.py` | 设计令牌、全局 CSS 与注入 | `inject`、`CSS` |
+| `ui/components.py` | 顶栏、页头、卡片、统计、空状态、徽标 | `topbar`、`page_header`、`card`、`stat_row` |
+| `ui/icons.py` | 内联 SVG 图标（不用 emoji） | `icon` |
 | `state/register.py` | 自建注册表单；校验后 bcrypt 哈希写入 `config_auth.yaml`，并尽力插入 `users` | `register`、`validate_registration` |
 | `state/lost_or_found.py` | 主菜单：报失 / 报拾获 / 我的记录 | `lost_or_found` |
 | `state/lost.py` | 失物表单 → 文本向量 → 指纹 → 入库 → 建会话 | `lost` |
@@ -66,6 +69,7 @@ state=login ──认证成功──> lost_or_found ──> lost / found ──b
 - 【事实】登录成功的那一轮以 `st.rerun()` 结束，而 Streamlit 会丢弃「被 rerun 中断的那一轮」渲染出的元素，认证库自己写的 cookie 组件因此到不了浏览器（`tests/` 测不到，只有真浏览器能复现）。所以 `state/login.py` 只置 `auth_cookie_pending`，由 `app.py` 在下一轮补写。
 - 【事实】退出登录会删 cookie 并把 `logout` 置 `True`；`_restore_from_cookie` 见到 `logout` 直接返回，避免用同一 session 里残留的旧 cookie 又登回去。
 - 【事实】刷新只恢复「已登录」，不恢复页面位置：`state` 回到 `login`，已认证时直接改判为 `lost_or_found`。
+- 【事实】已登录页面统一由 `ui.components.topbar` 渲染顶部导航（品牌 / 四个页面按钮 / 退出登录），`st.sidebar` 已全站移除；退出登录仍走 `authenticator.logout(location="main")`，删 cookie 的组件照常送达。
 - 【待验证】cookie 只对当前 host 生效；换 `localhost`/`127.0.0.1` 或换端口都会被当成新站点，需要重新登录。
 
 ## 一次报失的数据流
