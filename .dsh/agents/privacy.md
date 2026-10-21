@@ -41,7 +41,7 @@ pending --responder reject--> rejected
 - 【事实】`config_auth.yaml`、`.env*`、`*.pem/*.p12/*.pfx` 均被 `.gitignore` 排除；提交示例文件里的占位符不算泄露。
 - 【事实】`users.password` 列在登录/注册时写入空字符串，真实口令只在配置文件里（bcrypt 哈希）。**不要**因为看到空串就往里写明文。
 - 【事实】注册页是自建表单（`state/register.py`）：支持中文姓名、不要验证码；用户名 3–20 位、密码至少 8 位且含字母和数字，重复用户名/邮箱会被拒绝。
-- 【待验证】`streamlit-authenticator` 的 cookie 是否随注册回写正确轮换——注册会重写整个 `config_auth.yaml`。
+- 【事实】注册只改 `credentials.usernames` 再把整份配置写回，`cookie` 段原样保留：别人注册不会让已登录的会话失效，轮换 `cookie.key` 才会（见 [architecture](architecture.md)）。
 
 ## 图像卫生
 

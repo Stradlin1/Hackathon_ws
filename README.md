@@ -95,6 +95,8 @@ cp config_auth.example.yaml config_auth.yaml
 2. `cookie.key` 换成一个新的随机串；
 3. 按需修改 `cookie.expiry_days`（默认 7 天）。
 
+登录状态就是这个 cookie（HS256 JWT，`username` + 过期时间），所以刷新页面不会退出登录；改掉 `cookie.key` 会让已发的 cookie 立刻失效，所有人都要重新登录。
+
 生成哈希与随机串：
 
 ```bash
@@ -248,6 +250,7 @@ python -m compileall -q app.py matching state
 | 图片描述一直转圈 / 很慢 | 首次在下载 BLIP（约 1 GB）；若缓存已完整仍慢，是加载时在向 `huggingface.co` 发 HEAD。设 `HF_ENDPOINT` 下载，之后用 `HF_HUB_OFFLINE=1` 启动 |
 | 候选列表为空 | 对面还没有未配对的报告：换账号先报一件，或运行 `reset_db.py` |
 | 数据「消失」 | 从别的目录启动了应用，或运行过 `reset_db.py`（会删库） |
+| 刷新页面后要求重新登录 | cookie 过期（`cookie.expiry_days`）、换过 `cookie.key`，或浏览器禁用了 cookie；重新登录即可，登录状态默认保持 7 天 |
 
 更多排查见 [`.dsh/agents/operations.md`](.dsh/agents/operations.md)。
 

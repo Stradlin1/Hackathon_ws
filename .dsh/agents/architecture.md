@@ -51,12 +51,22 @@ state=login ──认证成功──> lost_or_found ──> lost / found ──b
 | 键 | 类型 | 谁写 | 生命期 |
 | --- | --- | --- | --- |
 | `state` | `str` | 各页面按钮 | 浏览器会话 |
-| `authentication_status` / `username` / `name` | 认证器写入 | `authenticator.login()` | 浏览器会话 |
-| `user` | `User` | `state/login.py` | 浏览器会话 |
+| `authentication_status` / `username` / `name` | 认证器写入 | `app.py::_restore_from_cookie`、`authenticator.login()` | 浏览器会话 |
+| `user` | `User` | `state/login.py`、`app.py::_restore_from_cookie` | 浏览器会话 |
+| `auth_cookie_pending` | `bool` | `state/login.py` | 只活一轮，`app.py` 消费后即删 |
 | `match_session` | `dict` | `state/lost.py`、`state/found.py` | **仅当前 session**；刷新即丢 |
 
 - 【事实】`match_session` 的键：`direction`、`item_id`、`user`、`fingerprint`、`candidates`、`answers`、`asked`（`matching/workflow.py`）。
 - 【设计】`answers` 刻意不落库（见 [privacy](privacy.md)）；代价是**刷新页面后追问结果全部丢失**，用户需要重新提交报告。
+
+## 登录状态怎么跨刷新
+
+- 【事实】登录状态 = 浏览器里的一个 cookie：`config_auth.yaml` 的 `cookie.name`/`key`/`expiry_days`（默认 7 天）决定名字、签名密钥与有效期；内容是 HS256 JWT `{"username", "exp_date"}`，由 `streamlit-authenticator` 生成。
+- 【事实】刷新会新建 Streamlit session（`st.session_state` 清空），但请求头里仍带 cookie；`app.py::_restore_from_cookie` 在 `st.context.cookies` 里读它、校验签名与过期时间，再调 `authenticator.authentication_controller.login(token=...)` 还原会话。所以刷新后第一帧就是业务页，不会先闪一下登录框。
+- 【事实】登录成功的那一轮以 `st.rerun()` 结束，而 Streamlit 会丢弃「被 rerun 中断的那一轮」渲染出的元素，认证库自己写的 cookie 组件因此到不了浏览器（`tests/` 测不到，只有真浏览器能复现）。所以 `state/login.py` 只置 `auth_cookie_pending`，由 `app.py` 在下一轮补写。
+- 【事实】退出登录会删 cookie 并把 `logout` 置 `True`；`_restore_from_cookie` 见到 `logout` 直接返回，避免用同一 session 里残留的旧 cookie 又登回去。
+- 【事实】刷新只恢复「已登录」，不恢复页面位置：`state` 回到 `login`，已认证时直接改判为 `lost_or_found`。
+- 【待验证】cookie 只对当前 host 生效；换 `localhost`/`127.0.0.1` 或换端口都会被当成新站点，需要重新登录。
 
 ## 一次报失的数据流
 
@@ -90,3 +100,4 @@ state=login ──认证成功──> lost_or_found ──> lost / found ──b
 | 日期 | 变更 |
 | --- | --- |
 | 2026-10-21 | 首次建立：模块职责、状态机、session 键、报失数据流、页面实现约定。 |
+| 2026-10-21 | 补「登录状态怎么跨刷新」：cookie 内容、恢复路径、延迟写 cookie 的原因与 logout 防护。 |

@@ -3,6 +3,7 @@ streamlit>=1.35,<2
 streamlit-authenticator>=0.3.3,<0.4
 PyYAML>=6,<7
 bcrypt>=4,<5
+PyJWT>=2.3,<3
 
 # Image processing and multimodal generation / retrieval
 numpy>=1.26,<3

@@ -42,6 +42,9 @@ def login(authenticator, config):
         db.close()
 
         st.write(f'欢迎，*{st.session_state.get("name", username)}*')
+        # The library already rendered the cookie in this run, but this run ends in
+        # st.rerun() and its elements are dropped; app.py rewrites it on the next run.
+        st.session_state.auth_cookie_pending = True
         change_state('lost_or_found')
         st.rerun()
     elif st.session_state.get('authentication_status') is False:
