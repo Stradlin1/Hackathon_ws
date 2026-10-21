@@ -13,6 +13,8 @@
 
 ## 2. 缺失属性是中性，不是矛盾
 
+> 补充：双方都确认"无特殊标记"（`no special mark`）同样按中性处理——"没有标记"对多数物品成立，不能当归属证据；只有"一边无标记、一边有具体标记"才算矛盾。
+
 - **为什么**：拾获照片的图注通常缺品牌/材质；把它们当矛盾会让真实失物排到后面。
 - **怎么守**：`rank_candidates` 里 `if not query.get(key) or not other.get(key): continue`，比较前必须两边都有值。
 - **怎么查**：`grep -n "if not query.get(key) or not other.get(key)" matching/engine.py` —— 应恰好 1 处。

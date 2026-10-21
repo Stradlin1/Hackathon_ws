@@ -17,7 +17,7 @@
 | `state/register.py` | 自建注册表单；校验后 bcrypt 哈希写入 `config_auth.yaml`，并尽力插入 `users` | `register`、`validate_registration` |
 | `state/lost_or_found.py` | 主菜单：报失 / 报拾获 / 我的记录 | `lost_or_found` |
 | `state/lost.py` | 失物表单 → 文本向量 → 指纹 → 入库 → 建会话 | `lost` |
-| `state/found.py` | 上传 → 清洗 → BLIP 图注 → 表单 → 图像向量 → 指纹 → 入库 → 建会话 | `found`、`_cached_caption` |
+| `state/found.py` | 上传 → 清洗 → BLIP 双语图注 → 确认读到的属性 → 登记前追问 → 表单 → 图像向量 → 指纹 → 入库 → 建会话 | `found`、`_cached_caption`、`_lost_pool` |
 | `state/interactive_match.py` | 展示指纹与 top 5、追问、重排、发请求 | `interactive_match` |
 | `state/profile.py` | 我的失物/拾物、收到/发出/已确认的请求 | `profile` |
 | `matching/models.py` | 懒加载 CLIP/BLIP；图像清洗与编码 | `_image_encoder`、`_text_encoder`、`_image_captioner`、`clean_image` |

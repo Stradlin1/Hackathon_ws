@@ -5,7 +5,8 @@ import types
 import numpy as np
 import pytest
 
-from matching.engine import add_answer, choose_question, rank_candidates
+from matching.engine import (ABSENT_MARK, add_answer, choose_question, propose_intake_questions,
+                             rank_candidates)
 from matching.fingerprint import display_value, extract_known, fingerprint_from_text, normalize_answer
 from matching.requests import MatchRequests
 from matching.storage import FingerprintStore
@@ -18,6 +19,53 @@ def fp(**kw):
 
 def candidate(cid, score, **kw):
     return {"item_id": cid, "semantic_score": score, "fingerprint": fp(**kw), "description": f"item-{cid}"}
+
+
+def test_two_confirmed_absences_are_neutral_but_absence_vs_finding_conflicts():
+    query = fp(mark=ABSENT_MARK)
+    by_id = {item["item_id"]: item for item in rank_candidates(query, [
+        candidate(1, 0.8, mark=ABSENT_MARK),
+        candidate(2, 0.8),
+    ])}
+    assert by_id[1]["score"] == by_id[2]["score"]
+    assert by_id[1]["matches"] == []
+
+    conflicting = rank_candidates(query, [candidate(3, 0.8, mark="sticker")])[0]
+    assert conflicting["conflicts"] == ["特殊标记"]
+    assert conflicting["score"] < by_id[1]["score"]
+
+
+def test_intake_questions_prefer_fields_the_pool_disagrees_on():
+    pool = [
+        fp(category="umbrella", color="black", mark="red sticker"),
+        fp(category="umbrella", color="blue", mark="sticker"),
+        fp(category="umbrella", color="black", mark="scratch"),
+    ]
+    questions = propose_intake_questions(fp(category="umbrella"), pool, limit=2)
+    fields = [question["field"] for question in questions]
+    assert "category" not in fields
+    assert fields[0] == "mark"
+    assert len(questions) == 2
+    mark = questions[0]
+    assert ("no special mark", "无特殊标记") in mark["options"]
+    assert all(label for value, label in mark["options"])
+
+
+def test_intake_asks_about_marks_whenever_the_pool_mentions_one():
+    pool = [fp(color="black", mark="red sticker"), fp(color="blue"), fp(color="black")]
+    questions = propose_intake_questions(fp(color="black"), pool, limit=2)
+    fields = [question["field"] for question in questions]
+    assert "mark" in fields
+    mark = next(question for question in questions if question["field"] == "mark")
+    assert ("red sticker", "红色贴纸") in mark["options"]
+    assert ("no special mark", "无特殊标记") in mark["options"]
+
+
+def test_intake_questions_are_skipped_without_a_disagreeing_pool():
+    assert propose_intake_questions(fp(), [], limit=2) == []
+    assert propose_intake_questions(fp(), [fp(color="black")], limit=2) == []
+    same = [fp(color="black"), fp(color="black")]
+    assert [q["field"] for q in propose_intake_questions(fp(), same, limit=2)] == []
 
 
 def test_chinese_english_attribute_extraction():

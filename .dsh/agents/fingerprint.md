@@ -22,15 +22,16 @@
 | 中文别名 | 纯子串包含（`"耳机" in text`） |
 | 同字段多个别名命中 | 取**最长别名**；长度相同则保留词表遍历中先出现的那个 |
 | mark 否定句 | `没有特殊标记 / 无特殊标记 / no special marks` → 值置为 `no special mark` |
+| sticker 别名 | `sticker / label / tag / 贴纸 / 贴画 / 标签` —— "红色标签"也算标记 |
 | mark 前 3 字符内有颜色 | 拼成 `<color> <mark>`，例如 `充电盒有红色贴纸` → `red sticker` |
 | mark 颜色邻接的搜索窗口 | 标记位置前 15 字符，颜色别名必须**紧邻**（间隔 0–3 字符） |
 
 - 【事实】mark 的颜色只取**紧邻**颜色，取整句主色会把"黑色包上有红色贴纸"错误压成 `black sticker`。
-- 【事实】`no special mark` 是一个**真实值**，会参与比较：与"有标记"的候选比较产生矛盾（按 [matching-engine](matching-engine.md) 的权重表扣分），而不是中性。想中性只能不作答。
+- 【事实】`no special mark` 是一个**真实值**：与"有标记"的候选比较产生矛盾（按 [matching-engine](matching-engine.md) 的权重表扣分）；但两边都是 `no special mark` 时**保持中性**，因为"没有标记"对大多数物品成立，不能当归属证据。见 [matching-engine](matching-engine.md#登记前追问propose_intake_questions)。
 
 ## 生成式提案的校验（`fingerprint_from_text`）
 
-1. 【事实】描述取前 1000 字符、图注取前 500 字符；`observed = {**visual, **main}`，即**用户描述按字段覆盖图注**（不是整条覆盖）。
+1. 【事实】描述取前 1000 字符、图注各取前 500 字符；`observed = {**visual, **main}`，即**用户描述按字段覆盖图注**（不是整条覆盖）。`visual` 由原始英文图注 `caption_raw` 与中文译文 `caption` 合并而成（中文优先）：`models.caption_image_pair` 同时返回两者，因为 `opus-mt` 会把 `close up` 译成"关闭"、`table` 译成"表格"，而规则词表中英都认。
 2. 【事实】生成器可以是注入的（测试）、`_load_generator()`（`generate=True`）或 `None`（`generate=False`，索引旧数据时用）。
 3. 【事实】prompt 要求只抽取显式属性并输出 JSON；`_extract_json_object` 取第一个 `{` 到最后一个 `}` 之间的内容解析。
 4. 【事实】逐字段校验提案，满足任一才接受：

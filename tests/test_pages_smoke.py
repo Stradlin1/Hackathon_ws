@@ -37,6 +37,7 @@ class UI(types.ModuleType):
         self.clicked = set()
         self.warning_messages = []
         self.errors = []
+        self.pill_value = None
         self.cache_data = lambda **kwargs: (lambda f: f)
 
     def form(self, *args, **kwargs):
@@ -50,6 +51,9 @@ class UI(types.ModuleType):
 
     def popover(self, *args, **kwargs):
         return nullcontext()
+
+    def pills(self, label, options, **kwargs):
+        return kwargs.get('default') if self.pill_value is None else self.pill_value
 
     def spinner(self, *args, **kwargs):
         return nullcontext()
@@ -162,9 +166,10 @@ def test_found_report_page_generates_session(monkeypatch):
     ui.uploaded = SimpleNamespace(getvalue=lambda: memory.getvalue())
     module = importlib.import_module('state.found')
     monkeypatch.setattr(module, 'st', ui)
-    monkeypatch.setattr(module, '_cached_caption', lambda data: 'a black umbrella')
+    monkeypatch.setattr(module, '_cached_caption', lambda data: ('a black umbrella', '一把黑伞'))
     monkeypatch.setattr(module, 'encode_image', lambda img: np.array([1., 0.]))
-    monkeypatch.setattr(module, 'fingerprint_from_text', lambda text, caption: {'attributes': {'color': 'black'}, 'method': 'rules'})
+    monkeypatch.setattr(module, 'fingerprint_from_text',
+                        lambda text, caption, caption_raw='', **kwargs: {'attributes': {'color': 'black'}, 'method': 'rules'})
     monkeypatch.setattr(module, 'FingerprintStore', lambda: SimpleNamespace(put=lambda *args: None))
     monkeypatch.setattr(module, 'build_session', lambda **kwargs: {'user': 'owner', 'asked': [], 'answers': {}})
     with pytest.raises(Rerun):

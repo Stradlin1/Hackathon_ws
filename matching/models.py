@@ -117,7 +117,13 @@ def encode_text(text: str) -> np.ndarray:
     return arr
 
 
-def caption_image(image: Image.Image) -> str:
+def caption_image_pair(image: Image.Image) -> tuple[str, str]:
+    """Return (english, chinese) captions.
+
+    The English caption is the literal BLIP output; the fingerprint extractor reads
+    both because the Chinese translation drops or mangles details ("close up" was
+    once translated as "关闭"), and the rule vocabulary understands both languages.
+    """
     import torch
     processor, model = _image_captioner()
     device = next(model.parameters()).device
@@ -125,4 +131,9 @@ def caption_image(image: Image.Image) -> str:
     with torch.inference_mode():
         output = model.generate(**inputs, max_new_tokens=70)
     english = processor.decode(output[0], skip_special_tokens=True).strip()
-    return translate_caption(english)
+    return english, translate_caption(english)
+
+
+def caption_image(image: Image.Image) -> str:
+    """Chinese caption, for callers that only need the display text."""
+    return caption_image_pair(image)[1]

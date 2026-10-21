@@ -86,7 +86,7 @@ VOCAB = {
     },
     "mark": {
         "scratch": ("scratched", "scratch", "划痕", "刮痕", "划伤"),
-        "sticker": ("sticker", "贴纸", "贴画"),
+        "sticker": ("sticker", "label", "tag", "贴纸", "贴画", "标签"),
         "crack": ("cracked", "crack", "裂纹", "裂痕"),
         "dent": ("dented", "dent", "凹痕"),
         "strap": ("lanyard", "strap", "挂绳", "挂带"),
@@ -275,21 +275,24 @@ def fingerprint_from_text(
     description: str,
     caption: str = "",
     *,
+    caption_raw: str = "",
     generator: Callable | None = None,
     generate: bool = True,
 ) -> dict:
     """Create a fingerprint and validate generative proposals against source text.
 
-    `generator` is dependency-injected for tests. `generate=False` avoids loading
-    weights while indexing legacy data or running offline tests.
+    `caption_raw` is the untranslated caption; the Chinese `caption` stays the
+    display text. `generator` is dependency-injected for tests. `generate=False`
+    avoids loading weights while indexing legacy data or running offline tests.
     """
     description = (description or "").strip()[:1000]
     caption = (caption or "").strip()[:500]
+    caption_raw = (caption_raw or "").strip()[:500]
     main = extract_known(description)
-    visual = extract_known(caption)
+    visual = {**extract_known(caption_raw), **extract_known(caption)}
     # Explicit user information has priority over auto-generated captions.
     observed = {**visual, **main}
-    source = description + (". " + caption if caption else "")
+    source = description + (". " + caption if caption else "") + (" " + caption_raw if caption_raw else "")
     proposer = generator if generator is not None else (_load_generator() if generate else None)
     proposals = _model_attributes(source, proposer) if generate else {}
     generated_verified = False
@@ -309,4 +312,4 @@ def fingerprint_from_text(
             observed[field] = proposal.strip().lower()
             generated_verified = True
     method = "generative_verified" if generated_verified else ("vision_caption_rules" if caption else "rules")
-    return {"attributes": observed, "method": method, "caption": caption}
+    return {"attributes": observed, "method": method, "caption": caption, "caption_raw": caption_raw}
