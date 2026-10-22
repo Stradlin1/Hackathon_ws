@@ -248,6 +248,101 @@
     ],
     "cosine": 0.323
   },
+  "principles": {
+    "models": {
+      "image": "sentence-transformers/clip-ViT-B-32",
+      "text": "sentence-transformers/clip-ViT-B-32-multilingual-v1"
+    },
+    "dim": 512,
+    "matrix": {
+      "labels": [
+        "充电宝",
+        "键盘",
+        "鼠标",
+        "杯子",
+        "入耳式耳机",
+        "双肩包"
+      ],
+      "values": [
+        [
+          1.0,
+          0.713,
+          0.711,
+          0.661,
+          0.611,
+          0.563
+        ],
+        [
+          0.713,
+          1.0,
+          0.71,
+          0.641,
+          0.646,
+          0.578
+        ],
+        [
+          0.711,
+          0.71,
+          1.0,
+          0.709,
+          0.688,
+          0.605
+        ],
+        [
+          0.661,
+          0.641,
+          0.709,
+          1.0,
+          0.581,
+          0.601
+        ],
+        [
+          0.611,
+          0.646,
+          0.688,
+          0.581,
+          1.0,
+          0.67
+        ],
+        [
+          0.563,
+          0.578,
+          0.605,
+          0.601,
+          0.67,
+          1.0
+        ]
+      ],
+      "band": {
+        "min": 0.563,
+        "max": 0.713,
+        "mean": 0.646
+      }
+    },
+    "bridge": {
+      "zh": "白色充电宝丢了，塑料的，顶部贴着红色标签，一个 Type-C 一个 USB 接口",
+      "en": "a white power bank with a red label on top, plastic, one Type-C port and one USB port",
+      "zh_en": 0.84,
+      "zh_scores": [
+        0.323,
+        0.249,
+        0.279,
+        0.236,
+        0.221,
+        0.219
+      ],
+      "en_scores": [
+        0.296,
+        0.211,
+        0.234,
+        0.179,
+        0.172,
+        0.156
+      ],
+      "same_order": true,
+      "dim": 512
+    }
+  },
   "formula": {
     "weights": {
       "category": 1.3,

@@ -16,7 +16,8 @@ def payload() -> dict:
 
 def test_demo_data_shape():
     data = payload()
-    assert set(data) == {"meta", "pair", "weights", "candidates", "semantic", "formula", "clarify", "privacy"}
+    assert set(data) == {"meta", "pair", "weights", "candidates", "semantic",
+                         "principles", "formula", "clarify", "privacy"}
     assert data["meta"]["pairs"] >= 10
     assert len(data["candidates"]) == 6
     assert sum(1 for row in data["candidates"] if row["expected"]) == 1
@@ -53,7 +54,7 @@ def test_clarify_is_a_real_rerank():
 
 def test_html_assets_exist():
     html = (SHOW / "index.html").read_text(encoding="utf-8")
-    assert html.count('class="slide') >= 11
+    assert html.count('class="slide') >= 13
     for rel in re.findall(r'(?:src|href)="(assets/[^"]+)"', html):
         assert (SHOW / rel).is_file(), rel
 
@@ -72,6 +73,43 @@ def test_semantic_block_is_real():
     assert len(semantic["text"]) == len(semantic["image"]) == semantic["head"]
     assert all(-1.0 <= value <= 1.0 for value in semantic["text"] + semantic["image"])
     assert abs(semantic["cosine"] - data["candidates"][0]["semantic"]) < 0.002
+
+
+def test_similarity_matrix_is_a_real_symmetric_gram():
+    principles = payload()["principles"]
+    matrix = principles["matrix"]
+    values = matrix["values"]
+    labels = matrix["labels"]
+    assert len(labels) == len(values) == 6
+    assert all(labels), "every row needs a label"
+    for i, row in enumerate(values):
+        assert len(row) == 6
+        assert row[i] == 1.0, "a vector is identical to itself"
+        for j, value in enumerate(row):
+            assert -1.0 <= value <= 1.0
+            assert abs(value - values[j][i]) < 1e-9, "cosine is symmetric"
+    off = [values[i][j] for i in range(6) for j in range(6) if i != j]
+    assert abs(min(off) - matrix["band"]["min"]) < 1e-9
+    assert abs(max(off) - matrix["band"]["max"]) < 1e-9
+    assert abs(sum(off) / len(off) - matrix["band"]["mean"]) < 0.001
+
+
+def test_text_bridge_matches_the_semantic_block():
+    data = payload()
+    bridge = data["principles"]["bridge"]
+    if bridge is None:  # no cached text encoder: the page hides these numbers
+        return
+    assert bridge["zh"] == data["pair"]["lost"]["desc"], "the aligned sentence is the one on screen"
+    assert bridge["dim"] == data["principles"]["dim"] == 512
+    count = len(data["candidates"])
+    assert len(bridge["zh_scores"]) == len(bridge["en_scores"]) == count
+    assert -1.0 <= bridge["zh_en"] <= 1.0
+    zh_order = sorted(range(count), key=lambda i: -bridge["zh_scores"][i])
+    en_order = sorted(range(count), key=lambda i: -bridge["en_scores"][i])
+    assert (zh_order == en_order) is bridge["same_order"]
+    # the Chinese sentence is the one that produced the semantic score on slide 04
+    target = next(i for i, row in enumerate(data["candidates"]) if row["expected"])
+    assert abs(bridge["zh_scores"][target] - data["semantic"]["cosine"]) < 0.001
 
 
 def test_formula_examples_add_up():

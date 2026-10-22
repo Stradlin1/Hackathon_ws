@@ -40,3 +40,4 @@
 | 2026-10-22 | [demo-dataset-12](2026-10-22-demo-dataset-12.md) | 演示集扩到 12 对：8 张 Open Images（CC BY 2.0）照片 + 对应描述；临时库试灌 Recall@1 = 12/12。 |
 | 2026-10-22 | [multi-user-demo](2026-10-22-multi-user-demo.md) | 本地库换成 6 个账号（密码=用户名）：每人 2 拾获 + 3 失物，文案改用户口吻；evaluate Recall@1 = 11/12。 |
 | 2026-10-22 | [showcase-page](2026-10-22-showcase-page.md) | 独立静态展示页：11 屏 + 交互，新增语义/证据原理；数据由 build_demo.py 从真实引擎生成；离线可跑。 |
+| 2026-10-22 | [showcase-principles](2026-10-22-showcase-principles.md) | 展示页补两屏原理：双塔对比学习 + 真实余弦热力图；多语文本塔把中文接上图像，中英两行同序；数据进 `principles`。 |

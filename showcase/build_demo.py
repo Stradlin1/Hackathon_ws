@@ -40,6 +40,12 @@ OUT = Path(__file__).resolve().parent
 IMG = OUT / "assets" / "img"
 FIELD_OF = {label: field for field, label in DISPLAY.items()}
 
+# Hand-written English gloss of the lost description. Only used to check that the
+# Chinese sentence lands where its English twin lands; the app itself never
+# translates zh->en, and this line is never stored with an item.
+EN_GLOSS = ("a white power bank with a red label on top, plastic, "
+            "one Type-C port and one USB port")
+
 
 def lan_address() -> str:
     """Best-effort LAN address so a phone can scan the QR on the same Wi-Fi."""
@@ -143,6 +149,67 @@ def option_label(field: str, value: str, description: str) -> str:
     return f"有，是「{hint}」{display}" if hint else f"有，是「{display}」"
 
 
+def unit(vector) -> np.ndarray:
+    arr = np.asarray(vector, dtype=float).reshape(-1)
+    norm = float(np.linalg.norm(arr))
+    return arr / norm if norm else arr
+
+
+def similarity_matrix(db, candidates: list[dict]) -> dict:
+    """Cosine between the candidate embeddings shown on the page.
+
+    This is the image tower's own geometry: it explains why an absolute cosine
+    cannot be read as a probability. Labels are the display categories.
+    """
+    labels, vectors = [], []
+    for row in candidates:
+        item = db.get_item(row["id"])
+        labels.append(row["attrs"].get("类型") or row["desc"][:4])
+        vectors.append(unit(item.emb))
+    stacked = np.stack(vectors, axis=0)
+    matrix = stacked @ stacked.T
+    off_diagonal = matrix[~np.eye(len(vectors), dtype=bool)]
+    return {
+        "labels": labels,
+        "values": [[round(float(value), 3) for value in line] for line in matrix],
+        "band": {
+            "min": round(float(off_diagonal.min()), 3),
+            "max": round(float(off_diagonal.max()), 3),
+            "mean": round(float(off_diagonal.mean()), 3),
+        },
+    }
+
+
+def text_bridge(db, description: str, candidates: list[dict]) -> dict | None:
+    """Compare the Chinese sentence with its English gloss in the shared space.
+
+    Both rows score the same six images; if the orders agree, the multilingual
+    text tower really is standing where the image tower expects. Optional: with
+    no cached text encoder this returns None and the page hides the numbers
+    instead of inventing them.
+    """
+    try:
+        from matching.models import encode_text
+        zh = unit(encode_text(description))
+        en = unit(encode_text(EN_GLOSS))
+    except (ImportError, OSError, RuntimeError, ValueError):
+        return None
+    vectors = [unit(db.get_item(row["id"]).emb) for row in candidates]
+    zh_scores = [round(float(np.dot(zh, vec)), 3) for vec in vectors]
+    en_scores = [round(float(np.dot(en, vec)), 3) for vec in vectors]
+    zh_order = sorted(range(len(zh_scores)), key=lambda i: -zh_scores[i])
+    en_order = sorted(range(len(en_scores)), key=lambda i: -en_scores[i])
+    return {
+        "zh": description,
+        "en": EN_GLOSS,
+        "zh_en": round(float(np.dot(zh, en)), 3),
+        "zh_scores": zh_scores,
+        "en_scores": en_scores,
+        "same_order": zh_order == en_order,
+        "dim": int(zh.size),
+    }
+
+
 def main() -> int:
     IMG.mkdir(parents=True, exist_ok=True)
     data_dir = OUT / "data"
@@ -204,6 +271,16 @@ def main() -> int:
             "cosine": round(cosine, 3),
         }
 
+        principles = {
+            "models": {
+                "image": "sentence-transformers/clip-ViT-B-32",
+                "text": "sentence-transformers/clip-ViT-B-32-multilingual-v1",
+            },
+            "dim": int(lost_vec.size),
+            "matrix": similarity_matrix(db, candidates),
+            "bridge": text_bridge(db, primary.lost.description, candidates),
+        }
+
         def weights_of(row: dict) -> tuple[float, float]:
             agree = sum(WEIGHTS[FIELD_OF[name]] for name in row["matches"])
             conflict = sum(WEIGHTS[FIELD_OF[name]] for name in row["conflicts"])
@@ -253,6 +330,7 @@ def main() -> int:
             "weights": {"semantic": 0.72, "evidence": 0.28},
             "candidates": candidates,
             "semantic": semantic,
+            "principles": principles,
             "formula": {"weights": WEIGHTS, "examples": examples},
             "clarify": clarify,
             "privacy": {"from": "alice", "to": "bob",
@@ -265,6 +343,9 @@ def main() -> int:
         print(f"top1 on/off = {summary_on['top1']}/{summary_off['top1']} of {summary_on['pairs']}")
         print(f"clarify field={clarify['field']} answer={clarify['answer']!r} "
               f"rank {clarify['before_rank']} -> {clarify['after_rank']}")
+        bridge = principles["bridge"]
+        print("bridge:", "missing" if bridge is None
+              else f"zh-en={bridge['zh_en']} same_order={bridge['same_order']}")
         print(f"wrote {data_dir / 'demo.json'}")
     finally:
         db.close()

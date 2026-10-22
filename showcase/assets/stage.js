@@ -460,6 +460,123 @@
     }
   }
 
+  /* ---------------- slides 05 / 06: principles ---------------- */
+  function initPrinciples() {
+    var block = data().principles;
+    if (!block) return;
+
+    function shade(value, low, high) {
+      var t = high > low ? (value - low) / (high - low) : 0.5;
+      t = Math.max(0, Math.min(1, t));
+      return (0.06 + t * 0.56).toFixed(2);
+    }
+
+    var labels = block.matrix.labels;
+    var values = block.matrix.values;
+    var band = block.matrix.band;
+    var heat = document.getElementById("heatMatrix");
+    var read = document.getElementById("heatRead");
+    var range = document.getElementById("bandRange");
+    if (range) range.textContent = band.min.toFixed(2) + " – " + band.max.toFixed(2);
+
+    if (heat) {
+      heat.style.gridTemplateColumns = "56px repeat(" + labels.length + ", 1fr)";
+      heat.appendChild(node("span", "heat-corner"));
+      labels.forEach(function (label) {
+        var head = node("span", "heat-col", label);
+        head.title = label;
+        heat.appendChild(head);
+      });
+
+      var rows = [];
+      labels.forEach(function (label, i) {
+        var head = node("span", "heat-label", label);
+        head.title = label;
+        heat.appendChild(head);
+        var cells = [];
+        values[i].forEach(function (value, j) {
+          var cell;
+          if (i === j) {
+            cell = node("span", "heat-cell diag", "·");
+            cell.dataset.diag = "1";
+          } else {
+            cell = node("span", "heat-cell", value.toFixed(2));
+            cell.style.setProperty("--a", shade(value, band.min, band.max));
+            if (value >= 0.66) cell.className = "heat-cell light";
+          }
+          cell.dataset.i = String(i);
+          heat.appendChild(cell);
+          cells.push(cell);
+        });
+        rows.push({ head: head, cells: cells });
+      });
+
+      function pick(i) {
+        rows.forEach(function (row, k) {
+          row.head.classList.toggle("on", k === i);
+          row.cells.forEach(function (cell) {
+            cell.classList.toggle("on", k === i && cell.dataset.diag !== "1");
+          });
+        });
+        var best = -1, worst = 2, bestJ = 0, worstJ = 0;
+        values[i].forEach(function (value, j) {
+          if (j === i) return;
+          if (value > best) { best = value; bestJ = j; }
+          if (value < worst) { worst = value; worstJ = j; }
+        });
+        read.innerHTML = "";
+        read.appendChild(node("b", null, labels[i]));
+        read.appendChild(document.createTextNode(
+          "：和「" + labels[bestJ] + "」最像（" + best.toFixed(3) + "），和「" +
+          labels[worstJ] + "」最不像（" + worst.toFixed(3) + "）。"));
+      }
+
+      heat.addEventListener("click", function (event) {
+        var cell = event.target.closest(".heat-cell");
+        if (cell) pick(Number(cell.dataset.i));
+      });
+      pick(0);
+    }
+
+    var bridge = block.bridge;
+    var table = document.getElementById("bridgeTable");
+    var note = document.getElementById("orderNote");
+    if (!bridge) {
+      if (note) note.textContent = "本机没缓存多语文本编码器，这一组对齐数字没有生成；补下载后重跑 build_demo.py 就能看到。";
+      return;
+    }
+    document.getElementById("zhSent").textContent = bridge.zh;
+    document.getElementById("enSent").textContent = bridge.en;
+    document.getElementById("zhEnCos").textContent = bridge.zh_en.toFixed(3);
+
+    if (table) {
+      table.style.gridTemplateColumns = "52px repeat(" + labels.length + ", 1fr)";
+      table.appendChild(node("span", "bt-corner"));
+      labels.forEach(function (label) {
+        var head = node("span", "bt-head", label);
+        head.title = label;
+        table.appendChild(head);
+      });
+      [["中文句", bridge.zh_scores], ["英文译句", bridge.en_scores]].forEach(function (entry) {
+        table.appendChild(node("span", "bt-label", entry[0]));
+        entry[1].forEach(function (value) {
+          var cell = node("span", "bt-cell", value.toFixed(3));
+          cell.style.setProperty("--a", shade(value, 0.14, 0.34));
+          if (value >= 0.27) cell.className = "bt-cell light";
+          table.appendChild(cell);
+        });
+      });
+    }
+
+    if (note) {
+      var top = bridge.zh_scores.indexOf(Math.max.apply(null, bridge.zh_scores));
+      note.textContent = bridge.same_order
+        ? "两行的绝对分不同（" + bridge.zh_scores[top].toFixed(3) + " / " + bridge.en_scores[top].toFixed(3) +
+          "），但 6 张照片的顺序完全一致：中文句落在英文译句旁边，这就是「挂上」。"
+        : "两句话给出的顺序并不完全一致——多语文本塔和英文文本塔不是同一个模型。";
+    }
+  }
+
   /* ---------------- slide 03c: evidence ---------------- */
   function initEvidence() {
     var examples = data().formula.examples;
@@ -524,6 +641,7 @@
       initBridge();
       initMatch();
       initSemantic();
+      initPrinciples();
       initEvidence();
       initExplain();
       initClarify();
