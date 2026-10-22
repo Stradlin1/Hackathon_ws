@@ -41,3 +41,7 @@
 | 2026-10-22 | [multi-user-demo](2026-10-22-multi-user-demo.md) | 本地库换成 6 个账号（密码=用户名）：每人 2 拾获 + 3 失物，文案改用户口吻；evaluate Recall@1 = 11/12。 |
 | 2026-10-22 | [showcase-page](2026-10-22-showcase-page.md) | 独立静态展示页：11 屏 + 交互，新增语义/证据原理；数据由 build_demo.py 从真实引擎生成；离线可跑。 |
 | 2026-10-22 | [showcase-principles](2026-10-22-showcase-principles.md) | 展示页补两屏原理：双塔对比学习 + 真实余弦热力图；多语文本塔把中文接上图像，中英两行同序；数据进 `principles`。 |
+| 2026-10-22 | [archive-restyle](2026-10-22-archive-restyle.md) | 界面与展示页换成旧纸/铜版画；自托管衬线子集 + 8 张生成插图；记录静态服务、模块缓存与 pytest 环境的坑。 |
+| 2026-10-22 | [showcase-figures](2026-10-22-showcase-figures.md) | 展示页补两张原理图：7 向量经典 MDS 投影（hover 读 cos）与「配对/负样本/对角线」训练示意；平面网格用生图工具生成。 |
+| 2026-10-22 | [rename-picture-is-all-you-need](2026-10-22-rename-picture-is-all-you-need.md) | 项目改名 Picture is All You Need：应用/展示页/水印/文档同步；长名字的顶栏与水印宽度做了实测；历史日志保留旧名。 |
+| 2026-10-22 | [demo-items-cup-backpack](2026-10-22-demo-items-cup-backpack.md) | 演示集补多组不同特征的水杯/马克杯与双肩包（梅森杯、2 种矿泉水、2 种马克杯、5 个双肩包）；CC BY 2.0 来自 Open Images，8+2 对均由真实引擎排到第 1。 |

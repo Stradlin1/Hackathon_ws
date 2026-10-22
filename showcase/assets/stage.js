@@ -413,6 +413,201 @@
   }
 
   /* ---------------- slide 03b: semantic ---------------- */
+  /* ---------------- slide 04: projected vector plane ---------------- */
+  function initVectorMap() {
+    var host = document.getElementById("vecMap");
+    var readout = document.getElementById("vmCos");
+    if (!host) return;
+    var block = data().principles;
+    if (!block || !block.matrix || !block.bridge || !block.bridge.zh_scores) {
+      host.innerHTML = '<p class="vm-empty">这一页的投影需要中文文本向量；本机没有生成。</p>';
+      return;
+    }
+
+    var labels = block.matrix.labels;
+    var values = block.matrix.values;
+    var zh = block.bridge.zh_scores;
+    var n = labels.length;
+    var N = n + 1;
+    var textIndex = n;
+    var i, j;
+
+    // 7x7 cosine matrix: six photos from the heatmap, one Chinese sentence from the bridge.
+    var G = [];
+    for (i = 0; i < N; i++) {
+      G.push([]);
+      for (j = 0; j < N; j++) G[i].push(0);
+    }
+    for (i = 0; i < n; i++) {
+      for (j = 0; j < n; j++) G[i][j] = values[i][j];
+      G[textIndex][i] = zh[i];
+      G[i][textIndex] = zh[i];
+    }
+    G[textIndex][textIndex] = 1;
+
+    // Classical MDS: B = -1/2 * J * (1 - G) * J, then the top two eigenvectors.
+    var D = [], rowMean = [], total = 0;
+    for (i = 0; i < N; i++) {
+      D.push([]);
+      var sum = 0;
+      for (j = 0; j < N; j++) { D[i].push(1 - G[i][j]); sum += D[i][j]; }
+      rowMean.push(sum / N);
+      total += sum / N;
+    }
+    total /= N;
+    var B = [];
+    for (i = 0; i < N; i++) {
+      B.push([]);
+      for (j = 0; j < N; j++) B[i].push(-0.5 * (D[i][j] - rowMean[i] - rowMean[j] + total));
+    }
+
+    function topEigen(M, count) {
+      var A = M.map(function (row) { return row.slice(); });
+      var vecs = [], vals = [];
+      for (var k = 0; k < count; k++) {
+        var v = A.map(function (_, index) { return index === k ? 1 : (index + 1) / (N + 2); });
+        var lambda = 0;
+        for (var it = 0; it < 260; it++) {
+          var w = A.map(function (row) {
+            return row.reduce(function (acc, value, index) { return acc + value * v[index]; }, 0);
+          });
+          var norm = Math.sqrt(w.reduce(function (acc, value) { return acc + value * value; }, 0));
+          if (norm < 1e-9) break;
+          v = w.map(function (value) { return value / norm; });
+          lambda = norm;
+        }
+        vecs.push(v);
+        vals.push(lambda);
+        for (var r = 0; r < N; r++) {
+          for (var c = 0; c < N; c++) A[r][c] -= lambda * v[r] * v[c];
+        }
+      }
+      return { vals: vals, vecs: vecs };
+    }
+
+    var eigen = topEigen(B, 2);
+    var coords = labels.concat("失主的话").map(function (_, index) {
+      var x = eigen.vecs[0][index] * Math.sqrt(Math.max(0, eigen.vals[0]));
+      var y = eigen.vecs[1] ? eigen.vecs[1][index] * Math.sqrt(Math.max(0, eigen.vals[1])) : 0;
+      return { x: x, y: y };
+    });
+    if (coords[textIndex].x < 0) coords.forEach(function (point) { point.x = -point.x; });
+    if (coords[textIndex].y < 0) coords.forEach(function (point) { point.y = -point.y; });
+
+    var best = 0;
+    zh.forEach(function (value, index) { if (value > zh[best]) best = index; });
+
+    function draw() {
+      var width = Math.max(260, host.clientWidth || 360);
+      var height = Math.max(140, host.clientHeight || 190);
+      var pad = 34;
+      var xs = coords.map(function (point) { return point.x; });
+      var ys = coords.map(function (point) { return point.y; });
+      var spanX = Math.max(1e-6, Math.max.apply(null, xs) - Math.min.apply(null, xs));
+      var spanY = Math.max(1e-6, Math.max.apply(null, ys) - Math.min.apply(null, ys));
+      var scale = Math.min((width - pad * 2) / spanX, (height - pad * 2) / spanY);
+      var offsetX = (width - spanX * scale) / 2 - Math.min.apply(null, xs) * scale;
+      var offsetY = (height - spanY * scale) / 2 - Math.min.apply(null, ys) * scale;
+      var points = coords.map(function (point) {
+        return { x: point.x * scale + offsetX, y: point.y * scale + offsetY };
+      });
+
+      var NS = "http://www.w3.org/2000/svg";
+      function el(tag, attrs) {
+        var node = document.createElementNS(NS, tag);
+        for (var key in attrs) if (attrs.hasOwnProperty(key)) node.setAttribute(key, attrs[key]);
+        return node;
+      }
+
+      host.textContent = "";
+      var canvas = el("svg", { viewBox: "0 0 " + width + " " + height, "aria-hidden": "true" });
+
+      // A halo around the photo cluster: they really do sit close together.
+      var clipX = points.slice(0, n).map(function (p) { return p.x; });
+      var clipY = points.slice(0, n).map(function (p) { return p.y; });
+      var cx = (Math.min.apply(null, clipX) + Math.max.apply(null, clipX)) / 2;
+      var cy = (Math.min.apply(null, clipY) + Math.max.apply(null, clipY)) / 2;
+      var rx = Math.max(26, (Math.max.apply(null, clipX) - Math.min.apply(null, clipX)) / 2 + 14);
+      var ry = Math.max(26, (Math.max.apply(null, clipY) - Math.min.apply(null, clipY)) / 2 + 16);
+      canvas.appendChild(el("ellipse", { class: "vm-halo", cx: cx, cy: cy, rx: rx, ry: ry }));
+
+      var textPoint = points[textIndex];
+      var bestPoint = points[best];
+      canvas.appendChild(el("line", {
+        class: "vm-link",
+        x1: textPoint.x, y1: textPoint.y,
+        x2: bestPoint.x, y2: bestPoint.y
+      }));
+
+      var midX = (textPoint.x + bestPoint.x) / 2;
+      var midY = (textPoint.y + bestPoint.y) / 2;
+      var score = el("text", { class: "vm-score", x: midX + 6, y: midY - 6 });
+      score.textContent = zh[best].toFixed(3);
+      canvas.appendChild(score);
+
+      points.forEach(function (point, index) {
+        var isText = index === textIndex;
+        var dot = el("circle", {
+          cx: point.x, cy: point.y,
+          r: isText ? 5.5 : (index === best ? 5 : 4),
+          class: "vm-point " + (isText ? "vm-pt-text" : "vm-pt-photo") + (index === best ? " vm-pt-best" : "")
+        });
+        dot.style.setProperty("--i", String(index));
+        dot.dataset.label = isText ? "失主的话" : labels[index];
+        dot.dataset.cos = isText ? "" : zh[index].toFixed(3);
+        dot.setAttribute("tabindex", "0");
+        dot.setAttribute("role", "button");
+        dot.setAttribute("aria-label", isText ? "失主的话" : labels[index] + "，与失主的话 cos " + zh[index].toFixed(3));
+        canvas.appendChild(dot);
+        if (index === best) {
+          var ring = el("circle", { class: "vm-ring", cx: point.x, cy: point.y, r: 8 });
+          canvas.appendChild(ring);
+        }
+      });
+
+      function labelFor(index, text, options) {
+        var point = points[index];
+        var attrs = { class: "vm-label", x: point.x + options.dx, y: point.y + options.dy };
+        if (options.anchor) attrs["text-anchor"] = options.anchor;
+        var label = el("text", attrs);
+        label.textContent = text;
+        return label;
+      }
+      canvas.appendChild(labelFor(textIndex, "失主的话", { dx: 9, dy: 4 }));
+      canvas.appendChild(labelFor(best, labels[best], { dx: -9, dy: 4, anchor: "end" }));
+      var cluster = el("text", { class: "vm-label vm-label-quiet", x: cx, y: cy - ry - 2, "text-anchor": "middle" });
+      cluster.textContent = n + " 张拾获照片";
+      canvas.appendChild(cluster);
+
+      host.appendChild(canvas);
+
+      function resetReadout() {
+        if (readout) readout.textContent = "最近：" + labels[best] + " · " + zh[best].toFixed(3);
+      }
+      Array.prototype.forEach.call(canvas.querySelectorAll(".vm-point"), function (dot) {
+        function show() {
+          if (!readout) return;
+          readout.textContent = dot.dataset.cos
+            ? dot.dataset.label + " · cos " + dot.dataset.cos
+            : "失主的话 · 与 " + n + " 张照片比较";
+        }
+        dot.addEventListener("mouseenter", show);
+        dot.addEventListener("click", show);
+        dot.addEventListener("focus", show);
+        dot.addEventListener("mouseleave", resetReadout);
+        dot.addEventListener("blur", resetReadout);
+      });
+    }
+
+    var resizeTimer = null;
+    window.addEventListener("resize", function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(draw, 180);
+    });
+    window.__drawVectorMap = draw;
+    draw();
+  }
+
   function initSemantic() {
     var block = data().semantic;
     var textBox = document.getElementById("textBars");
@@ -447,16 +642,26 @@
       requestAnimationFrame(step);
     }
 
-    document.getElementById("runSemantic").addEventListener("click", reveal);
+    initVectorMap();
+
+    function revealMap() {
+      if (window.__drawVectorMap) window.__drawVectorMap();
+    }
+
+    document.getElementById("runSemantic").addEventListener("click", function () {
+      reveal();
+      revealMap();
+    });
     if ("IntersectionObserver" in window) {
       var observer = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
-          if (entry.isIntersecting) { reveal(); observer.disconnect(); }
+          if (entry.isIntersecting) { reveal(); revealMap(); observer.disconnect(); }
         });
       }, { threshold: 0.6 });
       observer.observe(document.getElementById("s3b"));
     } else {
       reveal();
+      revealMap();
     }
   }
 
@@ -647,11 +852,9 @@
       initClarify();
       initPrivacy();
       initPaths();
-      var appUrl = document.getElementById("appUrl");
       var openApp = document.getElementById("openApp");
-      if (payload.meta && payload.meta.app_lan) {
-        if (appUrl) appUrl.textContent = payload.meta.app_lan.replace("http://", "");
-        if (openApp) openApp.href = payload.meta.app_lan.replace(/\/$/, "") + "/";
+      if (openApp && payload.meta && payload.meta.app_lan) {
+        openApp.href = payload.meta.app_lan.replace(/\/$/, "") + "/";
       }
     })
     .catch(function (error) {

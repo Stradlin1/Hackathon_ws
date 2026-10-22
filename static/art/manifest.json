@@ -1,0 +1,92 @@
+[
+  {
+    "slug": "card-found",
+    "file": "/static/art/src/card-found.png",
+    "model": "gpt-image-2.5-sunburst",
+    "prompt": "A small vignette for a found-property desk: a single albumen photograph held by four paper photo corners on a slim dark card mount, with a small brass paper clip lying to one side. One isolated group, centred, about 55% of the frame, very wide empty margin on all sides. 19th-century copperplate engraving with fine etched ink line and delicate hatching, sparse hand-tinted watercolour wash. Palette limited to sepia ink, faded ochre, moss green, muted brick red and indigo. Plain flat untextured warm paper background #E9E1D1, the paper left completely empty around the subject. No text, no letters, no numbers, no labels, no signature, no watermark. No frame, no border, no rectangle, no background scenery, no horizon, no sky. No gradients, no glow, no photorealism, no drop shadow.",
+    "license": "CC BY 4.0",
+    "createdAt": "2026-10-22T19:08:44+0800",
+    "generationId": "4802e281-a44c-43da-97a5-afb96725bcf2",
+    "bytes": 2039858
+  },
+  {
+    "slug": "card-lost",
+    "file": "/static/art/src/card-lost.png",
+    "model": "gpt-image-2.5-sunburst",
+    "prompt": "A small vignette for a lost-property desk: a folded paper claim tag tied with a short piece of string, with a steel pen nib and a tiny glass ink bottle resting beside it. One isolated group, centred, about 55% of the frame, very wide empty margin on all sides. 19th-century copperplate engraving with fine etched ink line and delicate hatching, sparse hand-tinted watercolour wash. Palette limited to sepia ink, faded ochre, moss green, muted brick red and indigo. Plain flat untextured warm paper background #E9E1D1, the paper left completely empty around the subject. No text, no letters, no numbers, no labels, no signature, no watermark. No frame, no border, no rectangle, no background scenery, no horizon, no sky. No gradients, no glow, no photorealism, no drop shadow.",
+    "license": "CC BY 4.0",
+    "createdAt": "2026-10-22T19:08:41+0800",
+    "generationId": "a2687488-4fc4-4886-bab6-ade14ac71ed3",
+    "bytes": 1812722
+  },
+  {
+    "slug": "empty-bell",
+    "file": "/static/art/src/empty-bell.png",
+    "model": "gpt-image-2.5-sunburst",
+    "prompt": "A small vignette for a quiet bell: a little brass hand bell standing on a paper label tied with string, its handle turned slightly to one side. One isolated group, centred, about 55% of the frame, very wide empty margin on all sides. 19th-century copperplate engraving with fine etched ink line and delicate hatching, sparse hand-tinted watercolour wash. Palette limited to sepia ink, faded ochre, moss green, muted brick red and indigo. Plain flat untextured warm paper background #E9E1D1, the paper left completely empty around the subject. No text, no letters, no numbers, no labels, no signature, no watermark. No frame, no border, no rectangle, no background scenery, no horizon, no sky. No gradients, no glow, no photorealism, no drop shadow.",
+    "license": "CC BY 4.0",
+    "createdAt": "2026-10-22T19:09:28+0800",
+    "generationId": "21d99afa-d2ee-4f4b-848f-5d58a0395c8c",
+    "bytes": 1527574
+  },
+  {
+    "slug": "empty-box",
+    "file": "/static/art/src/empty-box.png",
+    "model": "gpt-image-2.5-sunburst",
+    "prompt": "A small vignette for an empty archive: an open wooden archive box with a folded paper note and a coil of thin string inside, its lid leaning against the box at a slight angle. One isolated group, centred, about 55% of the frame, very wide empty margin on all sides. 19th-century copperplate engraving with fine etched ink line and delicate hatching, sparse hand-tinted watercolour wash. Palette limited to sepia ink, faded ochre, moss green, muted brick red and indigo. Plain flat untextured warm paper background #E9E1D1, the paper left completely empty around the subject. No text, no letters, no numbers, no labels, no signature, no watermark. No frame, no border, no rectangle, no background scenery, no horizon, no sky. No gradients, no glow, no photorealism, no drop shadow.",
+    "license": "CC BY 4.0",
+    "createdAt": "2026-10-22T19:09:04+0800",
+    "generationId": "5a1d9c69-d299-4090-8bbe-29c0748dff79",
+    "bytes": 1961813
+  },
+  {
+    "slug": "empty-search",
+    "file": "/static/art/src/empty-search.png",
+    "model": "gpt-image-2.5-sunburst",
+    "prompt": "A small vignette for an empty search result: a brass magnifying glass resting on a blank ruled index card, with three loose paper slips fanned out beneath it. One isolated group, centred, about 55% of the frame, very wide empty margin on all sides. 19th-century copperplate engraving with fine etched ink line and delicate hatching, sparse hand-tinted watercolour wash. Palette limited to sepia ink, faded ochre, moss green, muted brick red and indigo. Plain flat untextured warm paper background #E9E1D1, the paper left completely empty around the subject. No text, no letters, no numbers, no labels, no signature, no watermark. No frame, no border, no rectangle, no background scenery, no horizon, no sky. No gradients, no glow, no photorealism, no drop shadow.",
+    "license": "CC BY 4.0",
+    "createdAt": "2026-10-22T19:09:01+0800",
+    "generationId": "cda77e17-7732-40ae-b970-c083425c685f",
+    "bytes": 1784167
+  },
+  {
+    "slug": "fleuron",
+    "file": "/static/art/src/fleuron.png",
+    "model": "gpt-image-2.5-sunburst",
+    "prompt": "A printer's fleuron ornament for a book: one small symmetrical acanthus-leaf ornament with a central lozenge and two curling stems, drawn to be used as a short horizontal divider. Monochrome sepia ink only. Centred, about 50% of the width, very wide empty paper margin. 19th-century copperplate engraving with fine etched ink line and delicate hatching, sparse hand-tinted watercolour wash. Palette limited to sepia ink, faded ochre, moss green, muted brick red and indigo. Plain flat untextured warm paper background #E9E1D1, the paper left completely empty around the subject. No text, no letters, no numbers, no labels, no signature, no watermark. No frame, no border, no rectangle, no background scenery, no horizon, no sky. No gradients, no glow, no photorealism, no drop shadow.",
+    "license": "CC BY 4.0",
+    "createdAt": "2026-10-22T19:09:36+0800",
+    "generationId": "5ab0264f-81a9-49ff-834a-a8ed8c61e9d8",
+    "bytes": 1379426
+  },
+  {
+    "slug": "frontispiece",
+    "file": "/static/art/src/frontispiece.png",
+    "model": "gpt-image-2.5-sunburst",
+    "prompt": "A wide frontispiece plate for a lost-and-found archive. An open ruled ledger lies flat, its left page holding a single albumen photograph mounted with four paper photo corners; a brass magnifying glass rests across the ledger's lower edge; on the right page lies a paper claim tag tied with a short piece of string, beside a small steel pen nib and a tiny glass ink bottle. The whole group is centred horizontally and sits in the LOWER two thirds of the sheet, spanning about 75% of the width; the TOP third of the canvas is completely empty paper. The shadow under the ledger dissolves softly into the paper, with no hard cut edge. 19th-century copperplate engraving with fine etched ink line and delicate hatching, sparse hand-tinted watercolour wash. Palette limited to sepia ink, faded ochre, moss green, muted brick red and indigo. Plain flat untextured warm paper background #E9E1D1, the paper left completely empty around the subject. No text, no letters, no numbers, no labels, no signature, no watermark. No frame, no border, no rectangle, no background scenery, no horizon, no sky. No gradients, no glow, no photorealism, no drop shadow.",
+    "license": "CC BY 4.0",
+    "createdAt": "2026-10-22T19:08:18+0800",
+    "generationId": "c59d7b50-8ca0-4f4e-947e-8935f31b142a",
+    "bytes": 2654501
+  },
+  {
+    "slug": "mark",
+    "file": "/static/art/src/mark.png",
+    "model": "gpt-image-2.5-sunburst",
+    "prompt": "A compact circular emblem for a lost-and-found archive: a brass magnifying glass laid diagonally across a paper claim tag, the pair enclosed by a thin engraved double ring with a small gap at the top. Bold, simple silhouette that still reads clearly at 32 pixels; monochrome sepia ink with only a whisper of gold on the metal. Centred, about 60% of the frame, very wide empty paper margin on all sides. 19th-century copperplate engraving with fine etched ink line and delicate hatching, sparse hand-tinted watercolour wash. Palette limited to sepia ink, faded ochre, moss green, muted brick red and indigo. Plain flat untextured warm paper background #E9E1D1, the paper left completely empty around the subject. No text, no letters, no numbers, no labels, no signature, no watermark. No frame, no border, no rectangle, no background scenery, no horizon, no sky. No gradients, no glow, no photorealism, no drop shadow.",
+    "license": "CC BY 4.0",
+    "createdAt": "2026-10-22T19:08:12+0800",
+    "generationId": "9b251909-14d1-44d2-823d-ac2f75dd90fc",
+    "bytes": 1891927
+  },
+  {
+    "slug": "vector-plane",
+    "file": "/static/art/src/vector-plane.png",
+    "model": "gpt-image-2.5-sunburst",
+    "prompt": "A very faint engraved graticule for an old scientific plate: a sparse square grid of thin sepia hairlines, evenly spaced across the whole sheet, extremely light ink so it can sit behind a diagram. Uniform, flat, no perspective. 19th-century copperplate engraving with fine etched line. Plain flat untextured warm paper background #E9E1D1. No axes, no numbers, no letters, no labels, no frame, no border, no ornament, no compass rose, no vignette, no background scenery. No gradients, no glow, no photorealism, no drop shadow.",
+    "license": "CC BY 4.0",
+    "createdAt": "2026-10-22T20:24:08+0800",
+    "generationId": "763de745-0709-41fb-8843-e0a862011a41",
+    "bytes": 1169525
+  }
+]

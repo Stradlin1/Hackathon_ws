@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>404NotFound · 拍一张照片，找到它的主人</title>
+<title>Picture is All You Need · 拍一张照片，找到它的主人</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2316324F'/%3E%3Ccircle cx='16' cy='14' r='6' fill='none' stroke='%232DD4BF' stroke-width='2.5'/%3E%3Cpath d='M20 18l5 5' stroke='%232DD4BF' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/stage.css">
 </head>
@@ -31,9 +31,9 @@
 <section class="slide hero in" id="s1" data-title="封面">
   <div class="wrap hero-grid">
     <div class="hero-copy">
-      <p class="kicker"><span class="dot"></span>404NotFound · 跨模态失物招领</p>
+      <p class="kicker"><span class="dot"></span>Picture is All You Need · 文字与照片的失物招领</p>
       <h1>拍一张照片，<br><em>找到它的主人。</em></h1>
-      <p class="lede">失主只写一句话，拾获者只拍一张照片。我们把两边映射到同一个向量空间，再用<span class="hl">能核对的证据</span>把候选重新排一遍。</p>
+      <p class="lede"></p>
       <dl class="stats">
         <div><dt>12</dt><dd>组演示数据</dd></div>
         <div><dt>119</dt><dd>项自动化测试</dd></div>
@@ -59,7 +59,7 @@
 <section class="slide" id="s2" data-title="问题">
   <div class="wrap">
     <header class="sec-head"><span class="index">02</span><h2>两种人，两种信息</h2></header>
-    <p class="lede narrow">失主记得细节，但只有文字；拾获者手里有实物，但只拍了一张照片。中间隔着一层模态。</p>
+    <p class="lede narrow">失主记得细节，但只能写成文字；拾获者手里有实物，却只拍了一张照片。文字和照片长得完全不一样，机器没法直接拿来比——这是整个系统要跨过去的第一道坎。</p>
     <div class="split">
       <article class="panel quote">
         <span class="tag lost">失主</span>
@@ -107,13 +107,13 @@
 
 <section class="slide" id="s3b" data-title="语义">
   <div class="wrap">
-    <header class="sec-head"><span class="index">04</span><h2>语义：把一句话和一张照片放进同一个空间</h2><p class="sub">不是关键词匹配，是 CLIP 的两座塔：图像塔编码照片，多语文本塔编码中文；各出一个向量，再比方向。</p></header>
+    <header class="sec-head"><span class="index">04</span><h2>语义：把一句话和一张照片放进同一个空间</h2><p class="sub">不是关键词匹配。CLIP 有两座塔：一座把照片读成一串数字，一座把中文读成同样长度的数字；两串数字方向越接近，说的就越可能是同一类东西。</p></header>
     <div class="semantic-grid">
       <article class="panel vec-card">
         <span class="tag lost">失主的话</span>
         <p class="vec-text" id="vecText"></p>
         <div class="vec-bars" id="textBars" aria-hidden="true"></div>
-        <small id="textCaps">文本向量 · 512 维，这里画前 32 维</small>
+        <small id="textCaps">文本向量：512 个数字，这里只画前 32 个。每根竖条是一维，向上为正、向下为负。</small>
       </article>
       <div class="cos-badge">
         <b id="cosValue">0.000</b>
@@ -125,10 +125,22 @@
         <span class="tag found">拾获的照片</span>
         <img class="vec-photo" id="vecPhoto" src="assets/img/found-01.jpg" alt="白色充电宝">
         <div class="vec-bars" id="imageBars" aria-hidden="true"></div>
-        <small>图像向量 · 同一维度</small>
+        <small>图像向量：同样 512 个数字，和句子用同一把尺子，所以能直接比方向。</small>
       </article>
     </div>
-    <p class="note">0.323 不算高：同一句描述在 12 件物品里并不是只有一件像。语义负责“把可能的都捞进来”，顺序还要靠证据拉开。这个空间是怎么训出来的，下一页说。</p>
+    <div class="vec-map" id="vecMapCard">
+      <div class="vec-map-canvas" id="vecMap" role="img" aria-label="失主的话与 6 张拾获照片的向量投影；句子离充电宝最近"></div>
+      <div class="vec-map-side">
+        <div class="vm-head"><b>把 512 维压到一张平面</b><span id="vmCos">最近：充电宝 · 0.323</span></div>
+        <p class="vm-copy">7 个方向都来自真实向量；投影只为看清谁离谁近，真正的比较仍然在 512 维里做。点任意一个点，看它和失主的话有多像。</p>
+        <div class="vm-legend">
+          <span class="vm-key"><i class="vm-k-text"></i>失主的话</span>
+          <span class="vm-key"><i class="vm-k-photo"></i>拾获照片</span>
+          <span class="vm-key"><i class="vm-k-link"></i>最近的一对</span>
+        </div>
+      </div>
+    </div>
+    <p class="note">cos 相似度只看两串数字的方向像不像：越接近 1，说明这句话和这张照片越像在说同一类东西；接近 0，说明关系很弱。0.323 不算高——同一句描述在 12 件物品里并不是只有一件像。语义负责“把可能的都捞进来”，顺序还要靠证据拉开。这个空间是怎么训出来的，下一页说。</p>
   </div>
 </section>
 
@@ -149,6 +161,49 @@
             <b>文本塔</b>
             <small>一句话读成一个序列，再压成一个向量</small>
           </div>
+        </div>
+        <div class="train-figure">
+          <svg viewBox="0 0 400 150" role="img" aria-label="同一批四对样本：配对的方向拉近，同批其他方向推远；相似度矩阵只让对角线变亮">
+            <text class="tf-head" x="16" y="14">图片</text>
+            <text class="tf-head" x="108" y="14">文字</text>
+            <g class="tf-dots">
+              <circle cx="28" cy="34" r="4.5"/><circle cx="28" cy="62" r="4.5"/>
+              <circle cx="28" cy="90" r="4.5"/><circle cx="28" cy="118" r="4.5"/>
+              <circle cx="118" cy="34" r="4.5"/><circle cx="118" cy="62" r="4.5"/>
+              <circle cx="118" cy="90" r="4.5"/><circle cx="118" cy="118" r="4.5"/>
+            </g>
+            <g class="tf-lines">
+              <line class="tf-pos" x1="34" y1="34" x2="112" y2="34"/>
+              <line class="tf-pos" x1="34" y1="62" x2="112" y2="62"/>
+              <line class="tf-pos" x1="34" y1="90" x2="112" y2="90"/>
+              <line class="tf-pos" x1="34" y1="118" x2="112" y2="118"/>
+              <line class="tf-neg" x1="34" y1="34" x2="112" y2="62"/>
+              <line class="tf-neg" x1="34" y1="62" x2="112" y2="34"/>
+              <line class="tf-neg" x1="34" y1="90" x2="112" y2="118"/>
+            </g>
+            <text class="tf-head" x="254" y="14">相似度矩阵</text>
+            <g class="tf-grid" transform="translate(254,24)">
+              <rect class="tf-cell on" x="0" y="0" width="17" height="17"/>
+              <rect class="tf-cell" x="21" y="0" width="17" height="17"/>
+              <rect class="tf-cell" x="42" y="0" width="17" height="17"/>
+              <rect class="tf-cell" x="63" y="0" width="17" height="17"/>
+              <rect class="tf-cell" x="0" y="21" width="17" height="17"/>
+              <rect class="tf-cell on" x="21" y="21" width="17" height="17"/>
+              <rect class="tf-cell" x="42" y="21" width="17" height="17"/>
+              <rect class="tf-cell" x="63" y="21" width="17" height="17"/>
+              <rect class="tf-cell" x="0" y="42" width="17" height="17"/>
+              <rect class="tf-cell" x="21" y="42" width="17" height="17"/>
+              <rect class="tf-cell on" x="42" y="42" width="17" height="17"/>
+              <rect class="tf-cell" x="63" y="42" width="17" height="17"/>
+              <rect class="tf-cell" x="0" y="63" width="17" height="17"/>
+              <rect class="tf-cell" x="21" y="63" width="17" height="17"/>
+              <rect class="tf-cell" x="42" y="63" width="17" height="17"/>
+              <rect class="tf-cell on" x="63" y="63" width="17" height="17"/>
+            </g>
+            <text class="tf-cap" x="254" y="128">只让对角线变亮</text>
+            <text class="tf-cap" x="254" y="141">其余格子是同一批里的负样本</text>
+          </svg>
+          <p class="tf-legend"><span><i class="tf-swatch pos"></i>同一对：拉近</span><span><i class="tf-swatch neg"></i>同批其他：推远</span></p>
         </div>
         <ul class="train-list">
           <li><b>正样本</b><span>同一对（图，句）：把它们的方向拉近</span></li>
@@ -247,7 +302,7 @@
 
 <section class="slide" id="s5" data-title="追问">
   <div class="wrap">
-    <header class="sec-head"><span class="index">09</span><h2>排错了，就问一句</h2><p class="sub">这一对是真实的失败样本：只看语义，耳机掉到第 3。系统挑了一个最能分开候选的问题。</p></header>
+    <header class="sec-head"><span class="index">09</span><h2>信息增益追问</h2></header>
     <div class="clarify-grid">
       <article class="panel">
         <span class="tag lost">失主补充</span>
@@ -329,15 +384,14 @@
   <div class="wrap">
     <header class="sec-head"><span class="index">13</span><h2>所以，它到底做了什么</h2></header>
     <ol class="takeaways">
-      <li><b>跨模态召回</b><span>一句话和一张照片，进同一个向量空间。</span></li>
+      <li><b>跨模态集成</b><span>一句话和一张照片，进同一个向量空间。</span></li>
       <li><b>可核对证据</b><span>颜色、材质、标记逐项比对；缺失不扣分，矛盾才扣。</span></li>
       <li><b>信息增益追问</b><span>挑最能分开候选的问题，一次一个，最多四轮。</span></li>
     </ol>
     <div class="cta">
       <a class="btn primary big" id="openApp" href="http://127.0.0.1:8501/" target="_blank" rel="noreferrer">打开本地演示</a>
-      <figure class="qr"><img src="assets/img/qr.png" alt="本地演示地址二维码"><figcaption>手机扫码（同一 Wi-Fi）<br><b id="appUrl">127.0.0.1:8501</b></figcaption></figure>
     </div>
-    <p class="hint">404NotFound · 单机运行 · 数据不出机器</p>
+    <p class="hint">Picture is All You Need · 单机运行 · 数据不出机器</p>
   </div>
 </section>
 

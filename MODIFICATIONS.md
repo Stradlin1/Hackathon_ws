@@ -3,6 +3,7 @@
 > 面向：项目作者、队友、评审。
 > 范围：从最初的 P0 一轮一轮做到 P1 的失物照片与查重；只改本仓库的单机 Streamlit 应用。
 > 详细事实与不变量在 [`.dsh/agents/`](.dsh/agents/)，过程记录在 [`.dsh/logs/`](.dsh/logs/)。
+> 视觉改造（旧纸 / 铜版画 + 生成插图）见文末「十一」。
 
 ---
 
@@ -139,7 +140,7 @@ score = clamp(base + time + place, 0, 1)
 - **发布时间 + 内容指纹**：每帖底部显示 `首次发布于：… · 内容指纹 …`；指纹是规范化描述的 SHA-256 前 10 位。
 - **图片 dHash 查重**：新增 `image_hashes` 表，64-bit 感知哈希；上传时与已有帖子比对，Hamming ≤ 6 提示近似重复，**不阻断**。
 - **文本近似**：提交时用 `SequenceMatcher`，长度 ≥ 12、ratio ≥ 0.92 提示；匹配页顶部显示一次。
-- **公开图水印**：显示时加底部半透明条，写 `404NotFound · #帖子尾号 · 日期`；入库图片/向量/dHash 保持干净。
+- **公开图水印**：显示时加底部半透明条，写 `Picture is All You Need · #帖子尾号 · 日期`；窄图放不下品牌名时退化成 `#帖子尾号 · 日期`；入库图片/向量/dHash 保持干净。
 - **明确不做**：CSS/JS 禁止右键/选择、禁止保存。浏览器截图/OCR/开发者工具无法真正阻止；这些只能算“防顺手复制”，不能当安全边界。
 
 **相关文件**：[`matching/content_hash.py`](matching/content_hash.py)、[`state/lost.py`](state/lost.py)、[`state/found.py`](state/found.py)、[`state/browse.py`](state/browse.py)、[`state/profile.py`](state/profile.py)、[`state/notifications.py`](state/notifications.py)、[`state/interactive_match.py`](state/interactive_match.py)
@@ -363,3 +364,43 @@ $env:HF_HUB_OFFLINE='1'
 - **追溯**：dHash + 文本近似 + 水印（不假装能禁止截图）
 
 下一步最值得做的是 **来源可信度**：让机器读错的属性不再和用户陈述同等扣分。
+
+---
+
+## 十一、视觉改造：旧纸与铜版画（2026-10-22）
+
+**问题**：界面是蓝灰 SaaS 卡片风，与上台展示页的薄荷绿也各说各话；logo 是位图品牌图标，页面没有任何本项目专属的插图。
+
+**做法**：照 `../NEUP_protests/pioneer-wiki` 的旧纸档案视觉体系重做展示层，应用与展示页共用一套令牌。
+
+- 颜色：纸底 `#E9E1D1` / 纸片 `#F3EEE4` / 凹井 `#E0D7C5`；墨色三阶；失物砖红、拾获苔绿、警示金、中性靛蓝；方角 2–4px、1px 细线。
+- 排版：标题与数字用自托管 Noto Serif SC 子集（按实际用字裁剪到约 131 KB，SIL OFL）；正文仍是系统无衬线栈；不引 CDN。
+- 纸纹：两层 SVG `feTurbulence`（大块浓淡 + 细颗粒）画在背景上，不盖文字。
+- 组件：顶栏改成「P 印章 + 衬线字标 + 印刷式导航」；页头加金色步骤印章；卡片、表单、按钮、输入、提示条、胶囊、统计、空状态、照片框、进度条全部重绘。
+- 插图：用 pioneer-wiki 的生图网关（模型 `gpt-image-2.5-sunburst`）生成 8 张本项目专属图，`tools/prepare_art.py` 把纸底裁成透明；登录页是「账簿 + 蛋白照片 + 放大镜」卷首图，首页两张方向卡、三种空状态、登录页花饰、展示页印章/花饰分别接入。
+- 展示页：只换 CSS 令牌、字体与纹理，13 屏结构、文案、交互、`data/demo.json` 契约不变。
+- 展示页 04 页补「向量平面投影」：7×7 余弦矩阵在 `stage.js` 里做经典 MDS 现算，不新增数据字段；最近的一对标出 cos，点/hover 任意点看读数。
+- 展示页 05 页补「怎么训出来」的示意图：同一批 4 对（金色实线拉近）、同批其他（虚线推远）、4×4 相似度矩阵只亮对角线；平面网格来自生成插图 `vector-plane`。
+- 演示数据：新增 5 个水杯/马克杯（梅森杯、Volvic、CISOWIANKA、两种马克杯）与 5 个双肩包（绿色 Kånken + 红黑 / 迷彩 / ANIMEEXPO / 黑色电脑包）；seed 从 12 对扩到 22 对，8 张新图 CC BY 2.0，逐对用真实引擎排到第 1。
+- 项目更名为 **Picture is All You Need**：顶栏字标与印章、页面标题、登录页、展示页标题/眉标/收尾、公开图水印与文档同步；旧 `logo_rounded.png` 换成新的纸印章，历史日志保留旧名。
+
+**关键文件**：`ui/theme.py`、`ui/components.py`、`ui/art.py`（新增）、`ui/icons.py`、`state/login.py`、`state/register.py`、`state/lost_or_found.py`、`app.py`、`.streamlit/config.toml`、`showcase/assets/stage.css`、`tools/`（新增）、`static/art/`、`static/fonts/`、`.gitignore`。
+
+**验证**：
+
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 HF_HUB_OFFLINE=1 <aquacore>/bin/python -m pytest -q` → **119 passed**。
+- 真实应用（aquacore 环境，8502 端口）用 Playwright 登录 alice 后截了登录页、首页、近期动态、我的记录、通知、登记物品；1440×960 与 390×844 都检查过。
+- 展示页在 `http://127.0.0.1:8600` 截了封面 / 近期动态 / 收尾（1920×1080 与 1440×900），无纵向滚动。
+- 字体 `/app/static/fonts/noto-serif-sc-subset.woff2` → 200、`font/woff2`。
+- `python .dsh/tools/check_links.py` → 0 broken。
+
+**红线与边界**：
+
+- 证据照片**不加任何滤镜**（颜色是匹配属性），只加纸片边框；排序仍叫「排序指标」；联系方式门禁与全部业务逻辑未改。
+- 生图 key 只从环境变量 / `--env-file` 读取，没有写进仓库、manifest 或日志。
+- 字体或插图缺失时自动回退系统字体 / 少一张装饰图，不影响功能。
+
+**后续建议**：
+
+- 需要更多插图时只改 `tools/art-prompts.json` 重跑，不要手改 webp。
+- 如果最终部署环境低于 Streamlit 1.35 或禁用静态目录，字体需要改成 base64 内联（见 `.dsh/agents/ui.md`）。

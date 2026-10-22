@@ -24,8 +24,6 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import qrcode  # noqa: E402
-
 from db_manager import Database  # noqa: E402
 from evaluate import evaluate_pair, summarize  # noqa: E402
 from matching.engine import (  # noqa: E402
@@ -304,7 +302,6 @@ def main() -> int:
 
         lan = lan_address()
         app_lan = f"http://{lan}:8501"
-        qrcode.make(app_lan).save(IMG / "qr.png")
 
         payload = {
             "meta": {

@@ -65,11 +65,15 @@ def watermark(image, item_id, published_at=None) -> Image.Image:
     draw = ImageDraw.Draw(overlay)
     draw.rectangle([(0, height - band), (width, height)], fill=(0, 0, 0, 130))
     when = datetime.fromtimestamp(published_at).strftime("%Y-%m-%d") if published_at else ""
-    text = f"404NotFound · #{str(item_id)[-6:]}"
+    font = ImageFont.load_default()
+    serial = f"#{str(item_id)[-6:]}"
+    text = f"Picture is All You Need · {serial}"
     if when and width >= 240:
         text += f" · {when}"
-    draw.text((6, height - band + 3), text, fill=(255, 255, 255, 235),
-              font=ImageFont.load_default())
+    # The brand is long; on narrow images fall back to the serial so nothing is clipped.
+    if draw.textlength(text, font=font) > width - 12:
+        text = serial + (f" · {when}" if when and width >= 240 else "")
+    draw.text((6, height - band + 3), text, fill=(255, 255, 255, 235), font=font)
     return Image.alpha_composite(base.convert("RGBA"), overlay).convert("RGB")
 
 

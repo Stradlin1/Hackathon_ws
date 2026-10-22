@@ -9,6 +9,7 @@ import bcrypt
 import streamlit as st
 import yaml
 
+import ui.art as art
 from db_manager import Database, User
 from ui.components import LOGO, auth_point
 
@@ -66,7 +67,9 @@ def _insert_user(username: str, email: str) -> None:
 def register(_authenticator, config):
     left, right = st.columns([1.05, 1], gap='large', vertical_alignment='center')
     with left:
-        st.image(str(LOGO), width=72)
+        with st.container(key='auth-plate'):
+            st.image(str(art.path('frontispiece') or LOGO), width=320)
+        st.markdown('<div class="auth-kicker">本地账号 · 一位一档</div>', unsafe_allow_html=True)
         st.markdown('<div class="auth-title">创建本地账号</div>', unsafe_allow_html=True)
         st.markdown(
             '<p class="auth-lead">账号只保存在这台机器的 config_auth.yaml 里，密码以 bcrypt 哈希保存。</p>',

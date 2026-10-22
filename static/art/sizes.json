@@ -1,0 +1,56 @@
+{
+  "card-found": {
+    "width": 900,
+    "height": 600,
+    "ground": "rgb(232 222 203)",
+    "bytes": 156096
+  },
+  "card-lost": {
+    "width": 900,
+    "height": 600,
+    "ground": "rgb(234 224 205)",
+    "bytes": 148266
+  },
+  "empty-bell": {
+    "width": 900,
+    "height": 600,
+    "ground": "rgb(234 223 204)",
+    "bytes": 84230
+  },
+  "empty-box": {
+    "width": 900,
+    "height": 600,
+    "ground": "rgb(235 224 205)",
+    "bytes": 154302
+  },
+  "empty-search": {
+    "width": 900,
+    "height": 600,
+    "ground": "rgb(235 224 205)",
+    "bytes": 141788
+  },
+  "fleuron": {
+    "width": 900,
+    "height": 304,
+    "ground": "rgb(232 224 206)",
+    "bytes": 104656
+  },
+  "frontispiece": {
+    "width": 1200,
+    "height": 800,
+    "ground": "rgb(230 217 195)",
+    "bytes": 571968
+  },
+  "mark": {
+    "width": 640,
+    "height": 427,
+    "ground": "rgb(234 224 207)",
+    "bytes": 82420
+  },
+  "vector-plane": {
+    "width": 900,
+    "height": 600,
+    "ground": "rgb(231 221 203)",
+    "bytes": 52756
+  }
+}

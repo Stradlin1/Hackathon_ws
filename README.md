@@ -1,11 +1,11 @@
-# 404NotFound — 多模态失物招领匹配
+# Picture is All You Need — 多模态失物招领匹配
 
-404NotFound 是一个本地运行的 Streamlit 应用：失主用文字描述丢失的物品，拾获者上传物品照片，系统用 CLIP 做跨模态召回，用带证据校验的「物品指纹」重排候选，再通过信息增益驱动的追问逐步收敛，最后由双方确认后才交换联系方式。
+Picture is All You Need 是一个本地运行的 Streamlit 应用：失主用文字描述丢失的物品，拾获者上传物品照片，系统用 CLIP 做跨模态召回，用带证据校验的「物品指纹」重排候选，再通过信息增益驱动的追问逐步收敛，最后由双方确认后才交换联系方式。
 
 > **项目定位**：黑客松 / 课程演示用的单机原型。账号、数据与模型都跑在本机，界面文案为中文，**不包含**云端部署、多租户、真实校方系统对接或移动端适配。首次使用 CLIP/BLIP 时需要下载预训练权重。
 
 ## 目录
-- [404NotFound — 多模态失物招领匹配](#404notfound--多模态失物招领匹配)
+- [Picture is All You Need — 多模态失物招领匹配](#picture-is-all-you-need--多模态失物招领匹配)
   - [目录](#目录)
   - [能做什么](#能做什么)
   - [匹配流程](#匹配流程)
@@ -152,7 +152,7 @@ python reset_db.py
 HF_HUB_OFFLINE=1 python seed_demo.py
 ```
 
-它默认读 `demo/photos/` 里已提交的 12 张照片（充电宝 / 水杯 / 键盘 / 鼠标 / 耳机 / 钱包 / 棒球帽 / 背包 / 围巾 / 手提包 / 行李箱 / 雨伞），分给 6 个账号：**每个账号 2 件拾获 + 3 件失物**，合计 12 件拾获、18 件失物。
+它默认读 `demo/photos/` 里已提交的 22 张照片（充电宝 / 水杯 / 键盘 / 鼠标 / 耳机 / 钱包 / 棒球帽 / 背包 / 围巾 / 手提包 / 行李箱 / 雨伞 / 梅森杯 / 绿色双肩包 / Volvic矿泉水 / Cisowianka矿泉水 / 巧克力马克杯 / 天际线马克杯 / 红黑双肩包 / 迷彩双肩包 / 动漫展双肩包 / 黑色电脑双肩包），分给 6 个账号：**每个账号 3–4 件拾获 + 4–5 件失物**，合计 22 件拾获、28 件失物。
 
 - 同一件物品的拾获者和报失者**不是同一个人**（失物池里还混了 6 条没有对应照片的干扰项）；
 - 拾获描述按“捡到的人随手打字”的口吻写，失物描述用另一套说法，只保留颜色/材质/标记这类可核对的事实；
@@ -216,9 +216,9 @@ streamlit run app.py
 ```
 
 - 候选、分数、属性都来自 `python showcase/build_demo.py`（只读 `items.db`，调用真实匹配引擎）；换库或改演示数据后重跑一次即可。
-- 页面只读 `showcase/data/demo.json`，现场断网也能讲：没有 CDN、没有外部字体。
-- 交互：匹配重排、属性 hover 对照、权重滑块、追问后重排、隐私门、模块 hover 显示文件路径。
-- 二维码指向本机局域网地址的 `8501`，评委扫码即可打开真实应用（先 `./run.sh`）。
+- 页面只读 `showcase/data/demo.json`，现场断网也能讲：没有 CDN、没有外部字体（中文衬线子集随仓库自带）。
+- 交互：匹配重排、属性 hover 对照、权重滑块、追问后重排、隐私门、向量平面投影与 hover 读数、模块 hover 显示文件路径。
+- 收尾的「打开本地演示」指向本机局域网地址的 `8501`，评委点一下即可打开真实应用（先 `./run.sh`）。
 - 讲稿与现场检查清单在 [`showcase/SCRIPT.md`](showcase/SCRIPT.md)；数据契约见 [`.dsh/agents/showcase.md`](.dsh/agents/showcase.md)。
 
 ## 可选：接入 DeepSeek 视觉模型
@@ -281,16 +281,47 @@ fingerprint:
 python -m pip install -r requirements-dev.txt
 python -m pytest -q
 python -m compileall -q app.py matching state
-python evaluate.py                 # 12 对演示数据；对比时间/地点软先验开关
+python evaluate.py                 # 22 对演示数据；对比时间/地点软先验开关
 python evaluate.py --verbose       # 逐对输出 rank 与 top-1
 python evaluate.py --labels my_labels.json   # [{"lost_id":..., "found_id":...}, ...]
 ```
 
 - 测试覆盖中英属性抽取、生成式提案的拒绝与接受、信息增益追问、回答后重排、时间/地点软先验、文本+图像混合向量、内容指纹/图片 dHash/文本近似、指纹表 upsert、双方确认与拒绝、请求上限/冷却/自动关闭、订阅/通知去重与未读、归还/归档状态与候选池过滤、双向动态筛选、发布时间与公开开关、统一登记方向切换、页面烟测。
-- `evaluate.py` 默认用 `seed_demo.py` 的 12 对演示数据；它会把所有拾获报告都纳入候选（包括已配对），并同时输出软先验开启/关闭的 Recall@1、Recall@5、MRR。
+- `evaluate.py` 默认用 `seed_demo.py` 的 22 对演示数据；它会把所有拾获报告都纳入候选（包括已配对），并同时输出软先验开启/关闭的 Recall@1、Recall@5、MRR。
 - 演示数据里的失物默认没有照片，所以评估脚本覆盖的是文本路径；混合向量有单元测试，真实效果需要带失物照片的标注对。
 - 测试**全部 mock 掉模型权重**，可以离线运行；通过单元测试不等于真实模型下端到端可用。
 - 文档校验：`python .dsh/tools/check_links.py`，检查 `.dsh/` 与根目录 Markdown 的相对链接和锚点。
+
+## 界面风格与素材
+
+界面是**旧纸档案 / 铜版画**风格：纸色底 `#E9E1D1` + 两层程序化纸纹、墨色正文、衬线标题、1px 细线、方角纸片，失物用砖红、拾获用苔绿，状态是方形橡皮章而不是圆胶囊。展示页与 Streamlit 应用共用同一套令牌。
+
+| 素材 | 位置 | 许可 |
+| --- | --- | --- |
+| 生成插图（卷首图、印章、方向卡、空状态、花饰） | `static/art/*.webp`，提示词与时间在 `manifest.json`，署名在 `ATTRIBUTION.md` | CC BY 4.0 |
+| 中文衬线子集（Noto Serif SC，按实际用字裁剪） | `static/fonts/` 与 `showcase/assets/fonts/` | SIL OFL 1.1（`OFL.txt`） |
+
+开发期工具在 `tools/`（不参与运行）：
+
+```bash
+# 1) 重新生图：key 只从环境变量或 --env-file 读，不写进仓库
+python tools/generate_art.py --env-file /path/to/.env.local            # 全部
+python tools/generate_art.py --env-file /path/to/.env.local --only mark  # 单张
+python tools/prepare_art.py            # 纸底转透明、裁成 webp、更新 sizes/署名
+
+# 2) 重新裁剪中文字体子集（仅生成期需要 fonttools + brotli）
+python -m venv /tmp/fontenv && /tmp/fontenv/bin/pip install fonttools brotli
+/tmp/fontenv/bin/python tools/build_font.py
+
+# 3) 组件预览（只读 ui/*，不加载模型）
+ln -sfn ../static tools/static
+/tmp/ui-venv/bin/streamlit run tools/preview_ui.py --server.port 8599
+```
+
+- 字体文件缺失或 404 时自动回退系统字体；插图缺失只是少一张装饰图，不影响功能。
+- 字体走 Streamlit 的静态目录（`[server] enableStaticServing = true` → `/app/static/fonts/…`），没有 CDN。
+- 证据照片**不做任何调色或滤镜**：颜色、材质是匹配属性，只加纸片边框。
+- 预览与截图的具体命令、真实页面截图方法见 [`.dsh/agents/ui.md`](.dsh/agents/ui.md)。
 
 ## 目录与模块地图
 
@@ -309,11 +340,11 @@ python evaluate.py --labels my_labels.json   # [{"lost_id":..., "found_id":...},
 | `matching/report_meta.py` | `report_meta` 表：首次发布时间与公开/不公开 |
 | `matching/content_hash.py` | 内容指纹、图片 dHash、文本近似、展示水印 |
 | `state/` | 各页面的 Streamlit 流程（登录、统一登记、双向动态、通知、匹配、我的记录） |
-| `ui/` | 展示层：设计令牌与全局样式（`theme.py`）、顶栏 / 页头 / 卡片 / 统计等组件（`components.py`）、内联 SVG 图标（`icons.py`） |
+| `ui/` | 展示层：旧纸令牌与全局样式（`theme.py`）、顶栏 / 页头 / 卡片 / 统计等组件（`components.py`）、生成插图与内联 SVG（`art.py` / `icons.py`） |
 | `tests/` | 算法测试与页面烟测（mock 模型） |
 | `reset_db.py` | 删除并重建本地样例库 |
 | `create_demo_users.py` | 生成 `config_auth.yaml`：三个演示账号 + 随机 cookie key |
-| `seed_demo.py` | 从 `demo/photos/`（回退 `input/`）的 12 张照片灌入演示数据（bob 拾获 / alice 失物） |
+| `seed_demo.py` | 从 `demo/photos/`（回退 `input/`）的 22 张照片灌入多用户演示数据（6 个账号，3–4 拾获 + 4–5 失物） |
 | `evaluate.py` | 离线评估 Recall@1/5、MRR；对比时间/地点软先验开关，支持自定义 labels JSON |
 | `demo/photos/` | 演示照片（已提交），供 `seed_demo.py` 复现同一份数据；私人照片放 `input/`，不入库 |
 | `download_models.py` | 一次性拉取所有模型权重（默认 hf-mirror，已缓存则跳过） |
@@ -321,7 +352,8 @@ python evaluate.py --labels my_labels.json   # [{"lost_id":..., "found_id":...},
 | `rooms.json` | 地点选项 |
 | `config_auth.example.yaml` | 账号配置模板 |
 | `settings.example.yaml` | 可选配置模板（DeepSeek key、指纹生成器）；复制为 `settings.yaml` 后生效 |
-| `static/` | 品牌图 `logo_rounded.png`（页面图标与顶栏） |
+| `static/` | 品牌图、生成插图（`art/`，CC BY 4.0，带 `manifest.json` 与 `ATTRIBUTION.md`）、中文衬线子集字体（`fonts/`，OFL） |
+| `tools/` | 开发期工具：`generate_art.py` / `prepare_art.py` 生图与裁纸版、`build_font.py` 字体子集、`preview_ui.py` 组件预览 |
 | `.streamlit/config.toml` | Streamlit 主题与工具栏默认值；只在进程启动时读取，改完要重启 |
 | `.dsh/` | 项目知识库：分主题事实、开发日志、校验脚本 |
 | `AGENTS.md` | 智能体索引：分支纪律、红线、路由表 |
@@ -347,7 +379,7 @@ python evaluate.py --labels my_labels.json   # [{"lost_id":..., "found_id":...},
 - **归还是单方标记**：没有双方交接确认；也没有自动归档/保留期。首页统计仍按「已登记」总数计算，只有「我的记录」区分进行中/已处理。
 - 单进程 SQLite，没有迁移脚本；多会话并发写入的锁行为尚未实测。
 - 仓库只有单元测试与 mock 烟测；真实端到端与演示数据的离线评估已记录在 `.dsh/logs/`，但没有真实用户规模的数据。
-- `evaluate.py` 默认只有 12 对合成演示样本（12 条失物描述都来自照片而非真实用户口吻），且只评估“失物 → 拾获”方向；真实效果需要更多标注对。
+- `evaluate.py` 默认只有 22 对合成演示样本（22 条失物描述都来自照片而非真实用户口吻），且只评估“失物 → 拾获”方向；真实效果需要更多标注对。
 - 排名分不是所有权概率；生成属性也需要人工复核。
 - **Streamlit 自带控件的文案改不了**：文件上传的 `Upload`、日期选择器的月份与星期仍是英文，只能靠自定义组件解决。
 - **主题只在启动时生效**：改 `.streamlit/config.toml` 后必须重启 `streamlit run`，浏览器刷新不够。

@@ -34,7 +34,8 @@ def lost_or_found(authenticator):
     with left:
         with card('lost'):
             st.markdown(
-                pills_html('lost', '登记失物', '写下颜色、品牌、划痕或贴纸，越具体越容易匹配。'),
+                pills_html('lost', '登记失物', '写下颜色、品牌、划痕或贴纸，越具体越容易匹配。',
+                           art_name='card-lost'),
                 unsafe_allow_html=True,
             )
             if st.button('开始登记失物', key='cta-lost', type='primary', use_container_width=True):
@@ -44,7 +45,8 @@ def lost_or_found(authenticator):
     with right:
         with card('found'):
             st.markdown(
-                pills_html('found', '登记拾获', '上传一张照片，AI 会先生成描述，你可以随时修改。'),
+                pills_html('found', '登记拾获', '上传一张照片，AI 会先生成描述，你可以随时修改。',
+                           art_name='card-found'),
                 unsafe_allow_html=True,
             )
             if st.button('开始登记拾获', key='cta-found', type='primary', use_container_width=True):

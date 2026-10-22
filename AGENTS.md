@@ -1,4 +1,4 @@
-# 404NotFound — 项目索引（智能体入口）
+# Picture is All You Need — 项目索引（智能体入口）
 
 一个 Streamlit 单机应用：把失主的**文字描述**与拾获者的**物品照片**做跨模态匹配，按证据重排，并用信息增益追问收敛候选。
 本仓库**只负责这套本地应用**：页面流程、指纹抽取、检索/重排、SQLite 存储与双方确认。**不负责**账号后端（交给 `streamlit-authenticator` + 本地 `config_auth.yaml`）、云端部署、多租户或真实校方数据库对接。
@@ -8,7 +8,7 @@
 > [!IMPORTANT]
 > 1. **本文件只是索引 + 工作方式 + 红线 + 路由表 + 目录结构**。分主题事实在 `.dsh/agents/`——动手前按路由表读对应文档，改完回来更新它。
 > 2. **每句话都必须能归类**：`【事实】`= 代码/README/实测；`【设计】`= 本仓库已实现的方案；`【待验证】`= 假设，验证前不能作为依据。**没标 `【事实】` 的数字不许写进代码常量。**
-> 3. 本仓库已在本地环境跑通（119 tests；`streamlit` HTTP 200），上台演示页在 `showcase/`。本地 `items.db` 已灌入 6 个账号的演示数据：12 件拾获 + 18 件失物（每个账号 2 + 3），照片在 `demo/photos/`。当前卡点见 [`backlog.md`](backlog.md)。
+> 3. 本仓库已在本地环境跑通（119 tests；`streamlit` HTTP 200），上台演示页在 `showcase/`。本地 `items.db` 已灌入 6 个账号的演示数据：22 件拾获 + 28 件失物（各账号 3–4 + 4–5），照片在 `demo/photos/`。当前卡点见 [`backlog.md`](backlog.md)。
 
 ## 工作方式：git 分支纪律（**先读这条**）
 
@@ -72,7 +72,7 @@
 | `db_manager.py` | `items.db` 既有表访问层（物品、用户、归属、匹配） |
 | `reset_db.py` | **破坏性**：删除 `items.db` 并写入合成样例 |
 | `create_demo_users.py` | 生成 `config_auth.yaml`：六个演示账号（密码=用户名）+ 随机 cookie key |
-| `seed_demo.py` | 从 `demo/photos/`（回退 `input/`）照片灌入多用户演示数据：6 个账号各 2 拾获 + 3 失物，已有物品时拒绝运行 |
+| `seed_demo.py` | 从 `demo/photos/`（回退 `input/`）照片灌入多用户演示数据：6 个账号，3–4 拾获 + 4–5 失物，已有物品时拒绝运行 |
 | `evaluate.py` | 离线评估：Recall@1/5、MRR；对比时间/地点软先验开关，支持自定义 labels JSON |
 | `download_models.py` | 一次性拉取所有模型权重（默认 hf-mirror，已缓存则跳过） |
 | `run.sh` | 以 `HF_HUB_OFFLINE=1` 启动 Streamlit |
@@ -84,9 +84,10 @@
 | `state/` | 每个页面的 Streamlit 流程 |
 | `ui/` | 展示层：设计令牌 / 全局 CSS / 顶栏与卡片组件 / SVG 图标 |
 | `tests/` | 算法与页面烟测（模型权重被 mock） |
-| `static/` | 品牌图 `logo_rounded.png`（页面图标与顶栏） |
-| `demo/photos/` | 已提交的 12 张演示照片（8 张 CC BY 2.0，署名见 `SOURCES.md`），供 `seed_demo.py` 复现同一份数据 |
+| `static/` | 品牌图、生成插图（`art/`，CC BY 4.0）、自托管中文衬线子集（`fonts/`，OFL） |
+| `demo/photos/` | 已提交的 22 张演示照片（18 张 CC BY 2.0，署名见 `SOURCES.md`），供 `seed_demo.py` 复现同一份数据 |
 | `showcase/` | 上台演示用的静态单页（13 屏 + 交互，含 CLIP 原理与语义/证据），数据由 `build_demo.py` 从 `items.db` 生成 |
+| `tools/` | 开发期一次性工具：生图、裁纸版、字体子集、组件预览；不参与运行 |
 
 **为什么只记目录**：列到文件就成了文件系统的第二份副本，下一次提交就过期；目录职责很少变，写下来才守得住。想知道有哪些模块，代码才是权威。同理不要写「某目录下有几个文件」。
 

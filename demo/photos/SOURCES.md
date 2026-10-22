@@ -27,6 +27,31 @@
 Open Images 的标注数据以 CC BY 4.0 发布；上面的图像按各自原始许可（此处均为
 CC BY 2.0）使用，转载时请保留本文件的署名与许可链接。
 
+## 追加 2 张（2026-10-22）
+
+为演示「不同特征的水杯 / 书包」补充，同样取自 **Open Images V6 验证集**，许可均为
+**CC BY 2.0**，处理方式与上面 8 张一致（最长边 1024 px、JPEG 质量 88）：
+
+| 文件 | Open Images ID | 作者 | 原始页面 |
+| --- | --- | --- | --- |
+| `梅森杯.jpg` | `c914001730777e42` | adinaplus | <https://www.flickr.com/photos/48726352@N08/8177083595> |
+| `绿色双肩包.jpg` | `7491dc5b881626cd` | watashiwani | <https://www.flickr.com/photos/yukochatulapoly/5055254596> |
+
+
+## 再加 8 张（2026-10-22）
+
+继续补充「不同特征的水杯 / 书包」，同样取自 Open Images V6 验证集（Bottle 与 Mug 类），CC BY 2.0，最长边 1024 px、JPEG 质量 88：
+
+| 文件 | Open Images ID | 作者 | 原始页面 |
+| --- | --- | --- | --- |
+| Volvic矿泉水.jpg | 49e6a10cc09950c8 | pyntofmyld | <https://www.flickr.com/photos/pyntofmyld/213297601> |
+| Cisowianka矿泉水.jpg | 3f68d660d5fd07e5 | Jess Pac | <https://www.flickr.com/photos/7174132@N05/3878609409> |
+| 巧克力马克杯.jpg | c88aa18f9fffa58d | Wapster | <https://www.flickr.com/photos/wapster/8296913114> |
+| 天际线马克杯.jpg | 34aebaebe39bfaf0 | Carles Caño Valls | <https://www.flickr.com/photos/carlescv/6429975597> |
+| 红黑双肩包.jpg | 0eef565649be3038 | www.homejobsbymom.com | <https://www.flickr.com/photos/76588981@N02/16990442068> |
+| 迷彩双肩包.jpg | 2edc0212721c4f22 | Karl Baron | <https://www.flickr.com/photos/kalleboo/9400639906> |
+| 动漫展双肩包.jpg | ad6c671913df1a7d | porcupiny | <https://www.flickr.com/photos/porcupiny/4789162348> |
+| 黑色电脑双肩包.jpg | dc747e1d542bf243 | EHRENBERG Kommunikation | <https://www.flickr.com/photos/ehrenbergkommunikation/15823041733> |
 ## 换用自己的照片
 
 把照片放进仓库根目录的 `input/`（同名文件优先用 `demo/photos/`），

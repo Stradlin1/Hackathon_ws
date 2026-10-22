@@ -33,6 +33,6 @@ def icon(name: str, size: int = 18) -> str:
     body = _PATHS.get(name, '<circle cx="12" cy="12" r="3"/>')
     return (
         f'<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" '
-        f'stroke="currentColor" stroke-width="1.8" stroke-linecap="round" '
+        f'stroke="currentColor" stroke-width="1.4" stroke-linecap="round" '
         f'stroke-linejoin="round" aria-hidden="true">{body}</svg>'
     )

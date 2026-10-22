@@ -120,6 +120,8 @@ def test_formula_examples_add_up():
         assert abs(expected - example["score"]) < 0.002
 
 
-def test_qr_still_points_at_the_local_app():
-    assert (SHOW / "assets" / "img" / "qr.png").is_file()
+def test_open_demo_button_points_at_the_local_app():  # replaces the removed QR test
+    html = (SHOW / "index.html").read_text(encoding="utf-8")
+    assert 'id="openApp"' in html
+    assert "qr.png" not in html
     assert payload()["meta"]["app_lan"].startswith("http://")

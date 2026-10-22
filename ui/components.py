@@ -15,6 +15,7 @@ from pathlib import Path
 
 import streamlit as st
 
+import ui.art as art
 from ui.icons import icon
 
 ASSETS = Path(__file__).resolve().parent.parent / 'static'
@@ -44,13 +45,14 @@ def _go(state: str) -> None:
 def topbar(current: str, authenticator) -> None:
     """Brand, primary navigation and the only logout entry point."""
     with st.container(key='topbar'):
-        cols = st.columns([2.6, 1, 1, 1, 1, 1, 1.15], gap='small', vertical_alignment='center')
+        cols = st.columns([3.4, 1, 1, 1, 1, 1, 1.1], gap='small', vertical_alignment='center')
         with cols[0]:
-            mark, word = st.columns([0.55, 2.6], gap='small', vertical_alignment='center')
-            with mark:
-                st.image(str(LOGO), width=30)
-            with word:
-                st.markdown('<div class="brand-word">404NotFound</div>', unsafe_allow_html=True)
+            st.markdown(
+                '<div class="brand"><span class="brand-seal" aria-hidden="true">P</span>'
+                '<div><div class="brand-word">Picture is All You Need</div>'
+                '<div class="brand-sub">失物招领 · 本地档案</div></div></div>',
+                unsafe_allow_html=True,
+            )
         unread = int(st.session_state.get('unread_notifications', 0) or 0)
         for col, (state, label) in zip(cols[1:6], NAV):
             with col:
@@ -95,10 +97,11 @@ def pills(text: str) -> None:
     st.markdown(text, unsafe_allow_html=True)
 
 
-def pills_html(tone: str, title: str, detail: str) -> str:
+def pills_html(tone: str, title: str, detail: str, art_name: str = '') -> str:
     """Eyebrow chip + card title + one-line explanation as one HTML block."""
     label = '失物' if tone == 'lost' else '拾获'
     return (
+        f'{art.entry_art(art_name) if art_name else ""}'
         f'<div>{pill(label, tone)}</div>'
         f'<div class="card-title">{esc(title)}</div>'
         f'<div class="card-copy">{esc(detail)}</div>'
@@ -120,10 +123,27 @@ def stat_row(items) -> None:
     st.markdown(f'<div class="stat-grid">{cells}</div>', unsafe_allow_html=True)
 
 
-def empty(icon_name: str, title: str, hint: str = '') -> None:
+EMPTY_ART = {
+    'search': 'empty-search',
+    'bell': 'empty-bell',
+    'inbox': 'empty-box',
+    'folder': 'empty-box',
+    'clipboard': 'empty-box',
+    'camera': 'empty-box',
+    'check': 'empty-box',
+    'handshake': 'empty-box',
+}
+
+
+def empty(icon_name: str, title: str, hint: str = '', art_name: str = '') -> None:
+    """Empty state with a generated plate; falls back to the line icon."""
     hint_html = f'<div class="empty-hint">{esc(hint)}</div>' if hint else ''
+    plate = art_name or EMPTY_ART.get(icon_name, '')
+    declaration = art.background(plate) if plate else ''
+    art_html = f'<div class="empty-art" style="{declaration}"></div>' if declaration else ''
+    icon_html = '' if art_html else f'<div class="empty-icon">{icon(icon_name, 26)}</div>'
     st.markdown(
-        f'<div class="empty"><div class="empty-icon">{icon(icon_name, 26)}</div>'
+        f'<div class="empty">{art_html}{icon_html}'
         f'<div class="empty-title">{esc(title)}</div>{hint_html}</div>',
         unsafe_allow_html=True,
     )

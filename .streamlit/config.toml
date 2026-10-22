@@ -2,15 +2,19 @@
 # the config is read once at process start.
 [theme]
 base = "light"
-primaryColor = "#16324F"
-backgroundColor = "#F5F6FA"
-secondaryBackgroundColor = "#FFFFFF"
-textColor = "#111827"
-borderColor = "#E6E8EF"
-baseRadius = "16px"
-buttonRadius = "10px"
+primaryColor = "#34465A"
+backgroundColor = "#E9E1D1"
+secondaryBackgroundColor = "#F3EEE4"
+textColor = "#24221E"
+borderColor = "#D8CDB9"
+baseRadius = "3px"
+buttonRadius = "3px"
 font = "sans-serif"
 showWidgetBorder = true
+
+[server]
+# Serve static/fonts/ at /app/static/ so the self-hosted serif can load.
+enableStaticServing = true
 
 [client]
 # Hide deploy, rerun and cache options; the app has its own navigation.

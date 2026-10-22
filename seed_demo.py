@@ -1,8 +1,8 @@
 """Seed a multi-user demo from the photos in demo/photos (fallback: input/).
 
-Twelve photos become found items spread over six accounts; every account also
+Twenty-two photos become found items spread over six accounts; every account also
 owns a few text-only lost reports, so each user has both sides of the flow:
-2 found + 3 lost per account, 12 found and 18 lost in total.
+3–4 found and 4–5 lost per account, 22 found and 28 lost in total.
 
 The found reports read like a finder typing quickly; the matching lost reports
 describe the same object with different words, which is what makes retrieval
@@ -121,6 +121,76 @@ SAMPLES = [
         'found': '主入口捡到一把彩色条纹雨伞，伞面是红黄蓝绿相间的放射状条纹',
         'lost': '彩虹条纹雨伞丢了，打开是红黄蓝绿的放射状条纹',
         'location': '主入口',
+    },
+    {
+        'file': '梅森杯.jpg',
+        'found_owner': 'alice', 'lost_owner': 'carol',
+        'found': '食堂桌上捡到一个蓝色玻璃水杯，梅森杯样式，灰色金属旋盖，杯身有 Ball 和 PERFECT MASON 浮雕，里面还泡着柠檬片和薄荷叶',
+        'lost': '蓝色玻璃水杯忘在食堂了，灰色金属盖，杯身上有 Ball 字样，泡过柠檬和薄荷',
+        'location': '食堂',
+    },
+    {
+        'file': '绿色双肩包.jpg',
+        'found_owner': 'bob', 'lost_owner': 'david',
+        'found': '图书馆椅子上捡到一个绿色方形双肩包，正面缝着红白圆形标志，肩带很细，前面有个拉链小袋',
+        'lost': '绿色方形帆布双肩包丢了，正面有红白圆标，肩带很细，前袋是拉链的',
+        'location': '图书馆',
+    },
+    {
+        'file': 'Volvic矿泉水.jpg',
+        'found_owner': 'carol', 'lost_owner': 'erin',
+        'found': '食堂桌上捡到一瓶 Volvic 矿泉水，透明塑料水瓶，深蓝色瓶盖，蓝色标签，瓶里还剩半瓶',
+        'lost': 'Volvic 矿泉水忘在食堂了，透明塑料水瓶，深蓝色盖子，喝了一半',
+        'location': '食堂',
+    },
+    {
+        'file': 'Cisowianka矿泉水.jpg',
+        'found_owner': 'david', 'lost_owner': 'frank',
+        'found': '图书馆桌上捡到一瓶 CISOWIANKA 矿泉水，透明塑料水瓶，浅蓝色瓶盖，蓝色标签',
+        'lost': 'CISOWIANKA 矿泉水丢在图书馆，透明塑料水瓶，浅蓝盖子，蓝色标签',
+        'location': '图书馆',
+    },
+    {
+        'file': '巧克力马克杯.jpg',
+        'found_owner': 'erin', 'lost_owner': 'alice',
+        'found': '自习区捡到一个白色陶瓷马克杯，杯身印着粉色和棕色爱心，里面写着 choc',
+        'lost': '白色陶瓷马克杯忘在自习区，杯身上有粉棕爱心和 choc 字样',
+        'location': '自习区',
+    },
+    {
+        'file': '天际线马克杯.jpg',
+        'found_owner': 'frank', 'lost_owner': 'bob',
+        'found': '教室捡到一个白色陶瓷马克杯，杯身有一圈棕色城市天际线，杯口一圈细棕线',
+        'lost': '白色陶瓷马克杯落在教室，杯身印着棕色城市天际线，杯口有细棕边',
+        'location': '教室',
+    },
+    {
+        'file': '红黑双肩包.jpg',
+        'found_owner': 'alice', 'lost_owner': 'carol',
+        'found': '体育中心捡到一个红黑拼色双肩包，布面，正面一大块红色，黑色肩带和拉链',
+        'lost': '红黑拼色双肩包丢在体育中心，布的，正面是红色，黑色背带',
+        'location': '体育中心',
+    },
+    {
+        'file': '迷彩双肩包.jpg',
+        'found_owner': 'bob', 'lost_owner': 'david',
+        'found': '停车场捡到一个军绿色迷彩双肩包，长方形包身，帆布面料，正面有两个拉链袋',
+        'lost': '军绿色迷彩双肩包落在停车场，长方形包身，帆布面料，前面有拉链袋',
+        'location': '停车场',
+    },
+    {
+        'file': '动漫展双肩包.jpg',
+        'found_owner': 'carol', 'lost_owner': 'erin',
+        'found': '主入口捡到一个橄榄绿双肩包，正面印着 ANIMEEXPO 和 AX 标志',
+        'lost': '橄榄绿双肩包丢了，正面有 ANIMEEXPO 字母和 AX 标',
+        'location': '主入口',
+    },
+    {
+        'file': '黑色电脑双肩包.jpg',
+        'found_owner': 'david', 'lost_owner': 'frank',
+        'found': '礼堂捡到一个黑色电脑双肩包，正面有电脑隔层的拉链，黑色肩带',
+        'lost': '黑色电脑双肩包忘在礼堂，前面有电脑隔层拉链，黑色背带',
+        'location': '礼堂',
     },
 ]
 

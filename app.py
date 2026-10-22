@@ -20,10 +20,15 @@ from state.notifications import notifications
 from state.profile import profile
 from state.register import register
 from state.report import report
+from ui.art import path as art_path
 from ui.components import LOGO
 from ui.theme import inject as inject_theme
 
-st.set_page_config(page_title='404NotFound · 失物招领', page_icon=str(LOGO), layout='wide')
+st.set_page_config(
+    page_title='Picture is All You Need · 失物招领',
+    page_icon=str(art_path('mark-icon') or LOGO),
+    layout='wide',
+)
 config_file = Path(__file__).with_name('config_auth.yaml')
 if not config_file.exists():
     st.error('缺少 config_auth.yaml。请复制 config_auth.example.yaml 并配置本地账号。')

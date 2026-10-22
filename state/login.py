@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+import ui.art as art
 from db_manager import Database, User
 from ui.components import LOGO, auth_point
 
@@ -25,12 +26,15 @@ def login(authenticator, config):
 
     left, right = st.columns([1.15, 1], gap='large', vertical_alignment='center')
     with left:
-        st.image(str(LOGO), width=88)
-        st.markdown('<div class="auth-title">404NotFound</div>', unsafe_allow_html=True)
+        with st.container(key='auth-plate'):
+            st.image(str(art.path('frontispiece') or LOGO), width=360)
+        st.markdown('<div class="auth-kicker">失物招领 · 本地档案</div>', unsafe_allow_html=True)
+        st.markdown('<div class="auth-title">Picture is All You Need</div>', unsafe_allow_html=True)
         st.markdown(
             '<p class="auth-lead">丢了东西，或者捡到东西——让一段描述和一张照片重新对上。</p>',
             unsafe_allow_html=True,
         )
+        st.markdown(art.figure('fleuron'), unsafe_allow_html=True)
         auth_point('search', '跨模态检索', '文字描述与物品照片落在同一个向量空间')
         auth_point('layers', '证据重排', '一致的特征加分，矛盾的特征扣分')
         auth_point('lock', '双方确认', '只有对方接受之后才交换联系方式')
